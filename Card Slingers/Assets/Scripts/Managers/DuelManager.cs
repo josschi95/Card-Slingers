@@ -18,13 +18,23 @@ public class DuelManager : MonoBehaviour
     public OnPhaseChange onResolutionPhase;
     public OnPhaseChange onEndPhase;
 
-    [SerializeField] private FieldGrid<GridNode> grid;
+    [SerializeField] private Battlefield battleField;
     [SerializeField] private CommanderSO player, opponent;
 
 
     private void Start()
     {
-        
+        Invoke("PlaceCommanders", 0.01f);
+    }
+
+    private void PlaceCommanders()
+    {
+        float depth = battleField.Grid.GetDepth();
+        int playerZ = Mathf.CeilToInt(depth * 0.5f) - 1;
+        var playerPrefab = Instantiate(player.CommanderPrefab, battleField.Grid.GetCell(0, playerZ).transform.position, Quaternion.identity);
+
+        int opponentZ = Mathf.RoundToInt(depth * 0.5f);
+        var enemyPrefab = Instantiate(opponent.CommanderPrefab, battleField.Grid.GetCell(battleField.Grid.GetWidth() - 1, opponentZ).transform.position, Quaternion.identity);
     }
 
     private void OnAssignCommanders(CommanderSO player, CommanderSO opponent)
@@ -32,6 +42,7 @@ public class DuelManager : MonoBehaviour
         this.player = player;
         this.opponent = opponent;
 
+        PlaceCommanders();
         OnMatchStart();
     }
 

@@ -6,9 +6,12 @@ using UnityEngine;
 public class CommanderSO : ScriptableObject
 {
     new public string name;
-    public Faction faction;
+    [SerializeField] private Faction _faction;
+    public Faction Faction => _faction;
     [Space]
-
+    [SerializeField] private GameObject _commanderPrefab;
+    public GameObject CommanderPrefab => _commanderPrefab;
+    [Space]
     [SerializeField] private Deck _deck;
     public Deck Deck => _deck;
 

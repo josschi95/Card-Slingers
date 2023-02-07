@@ -7,7 +7,8 @@ public class Battlefield : MonoBehaviour
 {
     private const float CELL_SIZE = 2f;
 
-    private FieldGrid<GridNode> grid;
+    private FieldGrid<GridNode> _grid;
+    public FieldGrid<GridNode> Grid => _grid;
 
     [SerializeField] private int _width;
     [SerializeField] private int _height;
@@ -28,17 +29,17 @@ public class Battlefield : MonoBehaviour
 
     private void CreateGrid()
     {
-        grid = new FieldGrid<GridNode>(this, _width, _height, CELL_SIZE, _origin, (FieldGrid<GridNode> grid, int x, int z) => new GridNode(grid, x, z), nodeDisplay);
+        _grid = new FieldGrid<GridNode>(this, _width, _height, CELL_SIZE, _origin, (FieldGrid<GridNode> grid, int x, int z) => new GridNode(grid, x, z), nodeDisplay);
     }
 
     public void OnToggleNodeIsOccupied(int x, int z, bool isOccupied)
     {
-        grid.GetGridObject(x, z).SetOccupied(isOccupied);
+        _grid.GetGridObject(x, z).SetOccupied(isOccupied);
     }
 
     public GridNode GetNode(int x, int z)
     {
-        return grid.GetGridObject(x, z);
+        return _grid.GetGridObject(x, z);
     }
 
     /*public GridNode GetNode(Vector3 localPosition)
@@ -49,11 +50,11 @@ public class Battlefield : MonoBehaviour
     {
         openList = new List<GridNode>();
 
-        for (int x = 0; x < grid.GetWidth(); x++)
+        for (int x = 0; x < _grid.GetWidth(); x++)
         {
-            for (int y = 0; y < grid.GetHeight(); y++)
+            for (int y = 0; y < _grid.GetDepth(); y++)
             {
-                GridNode node = grid.GetGridObject(x, y);
+                GridNode node = _grid.GetGridObject(x, y);
                 if (!node.isOccupied)
                 {
                     openList.Add(node);
@@ -75,7 +76,7 @@ public class Battlefield : MonoBehaviour
             bool isClear = true;
             for (int x = startX; x < startX + width; x++)
             {
-                if (x >= grid.GetWidth())
+                if (x >= _grid.GetWidth())
                 {
                     //Debug.Log(x + "," + startY + " is out of bounds");
                     isClear = false;
@@ -91,7 +92,7 @@ public class Battlefield : MonoBehaviour
             }
             for (int y = startY; y < startY + height; y++)
             {
-                if (y >= grid.GetHeight())
+                if (y >= _grid.GetDepth())
                 {
                     //Debug.Log(startX + "," + y + " is out of bounds");
                     isClear = false;
@@ -142,7 +143,7 @@ public class Battlefield : MonoBehaviour
 
         for (int x = startX; x < startX + width; x++)
         {
-            if (x >= grid.GetWidth())
+            if (x >= _grid.GetWidth())
             {
                 //Debug.Log(x + "," + startY + " is out of bounds");
                 return false;
@@ -156,7 +157,7 @@ public class Battlefield : MonoBehaviour
         }
         for (int y = startY; y < startY + height; y++)
         {
-            if (y >= grid.GetHeight())
+            if (y >= _grid.GetDepth())
             {
                 //Debug.Log(startX + "," + y + " is out of bounds");
                 return false;

@@ -18,23 +18,24 @@ public class FieldGrid<TGridObject>
     public OnNodeSelected onNodeSelected;
 
     private int width; //The number of columns
-    private int height; //The number of rows
+    private int depth; //The number of rows
     private float cellSize; //The size of each grid element
     private Vector3 originPosition; //The bottom left corner of the grid, tile [0,0]
     private TGridObject[,] gridArray;
+    private GridCellDisplay[,] cellArray;
 
     private GameObject nodeDisplay;
 
-    public FieldGrid(Battlefield display, int width, int height, float cellSize, Transform origin, Func<FieldGrid<TGridObject>, int, int, TGridObject> createdGridObject, GameObject nodeDisplay, bool showDebug = false)
+    public FieldGrid(Battlefield display, int width, int depth, float cellSize, Transform origin, Func<FieldGrid<TGridObject>, int, int, TGridObject> createdGridObject, GameObject nodeDisplay, bool showDebug = false)
     {
         this.width = width;
-        this.height = height;
+        this.depth = depth;
         this.cellSize = cellSize;
         this.originPosition = origin.position;
 
         this.nodeDisplay = nodeDisplay;
 
-        gridArray = new TGridObject[width, height];
+        gridArray = new TGridObject[width, depth];
 
         for (int x = 0; x < gridArray.GetLength(0); x++)
         {
@@ -44,7 +45,7 @@ public class FieldGrid<TGridObject>
             }
         }
 
-        GridCellDisplay[,] nodeDisplayArray = new GridCellDisplay[width, height];
+        cellArray = new GridCellDisplay[width, depth];
         for (int x = 0; x < gridArray.GetLength(0); x++)
         {
             for (int z = 0; z < gridArray.GetLength(1); z++)
@@ -53,14 +54,14 @@ public class FieldGrid<TGridObject>
                 go.transform.SetParent(origin);
                 go.transform.SetParent(display.Origin);
 
-                nodeDisplayArray[x, z] = go.GetComponentInChildren<GridCellDisplay>();
-                nodeDisplayArray[x, z].OnAssignNode(gridArray[x, z] as GridNode);
+                cellArray[x, z] = go.GetComponentInChildren<GridCellDisplay>();
+                cellArray[x, z].OnAssignNode(gridArray[x, z] as GridNode);
             }
         }
 
         if (showDebug)
         {
-            TMP_Text[,] debugTextArray = new TMP_Text[width, height];
+            TMP_Text[,] debugTextArray = new TMP_Text[width, depth];
 
             for (int x = 0; x < gridArray.GetLength(0); x++)
             {
@@ -91,7 +92,7 @@ public class FieldGrid<TGridObject>
 
     public void SetGridObject(int x, int z, TGridObject value)
     {
-        if (x >= 0 && z >= 0 && x < width && z < height)
+        if (x >= 0 && z >= 0 && x < width && z < depth)
         {
             gridArray[x, z] = value;
             TriggerGridObjectChanged(x, z);
@@ -104,9 +105,19 @@ public class FieldGrid<TGridObject>
         if (onGridValueChanged != null) onGridValueChanged(this, new OnGridValueChangedEventArgs { x = x, z = z });
     }
 
+    public GridCellDisplay GetCell(int x, int z)
+    {
+        if (x >= 0 && z >= 0 && x < width && z < depth)
+        {
+            return cellArray[x, z];
+        }
+
+        throw new System.Exception("parameter " + x + "," + z + " outside bounds of array");
+    }
+
     public TGridObject GetGridObject(int x, int z)
     {
-        if (x >= 0 && z >= 0 && x < width && z < height)
+        if (x >= 0 && z >= 0 && x < width && z < depth)
         {
             return gridArray[x, z];
         }
@@ -120,8 +131,8 @@ public class FieldGrid<TGridObject>
         return width;
     }
 
-    public int GetHeight()
+    public int GetDepth()
     {
-        return height;
+        return depth;
     }
 }
