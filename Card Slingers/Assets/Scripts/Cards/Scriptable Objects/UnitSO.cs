@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Unit", menuName = "Scriptable Objects/Cards/Unit")]
-public class UnitSO : CardSO
+public class UnitSO : PermanentSO
 {
     private void Reset()
     {

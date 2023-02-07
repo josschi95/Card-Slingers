@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3777873372622269373}
   - component: {fileID: 3777873372622269370}
   m_Layer: 0
-  m_Name: Highlight Panel
+  m_Name: Grid Node
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -112,4 +112,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 3777873372622269368}
   normalMaterial: {fileID: 2100000, guid: b1b96d1609dd59e4aac568520db70399, type: 2}
-  highlightedMaterial: {fileID: 2100000, guid: 9ee2ed2ca4d8ad943a156a00fad944c2, type: 2}
+  blueHighlightedMaterial: {fileID: 2100000, guid: 9ee2ed2ca4d8ad943a156a00fad944c2, type: 2}
+  redHighlightedMaterial: {fileID: 2100000, guid: 1c0fb82eaef34d440be3637fbb1af13b, type: 2}

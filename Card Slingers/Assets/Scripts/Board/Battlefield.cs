@@ -7,148 +7,72 @@ public class Battlefield : MonoBehaviour
 {
     private const float CELL_SIZE = 2f;
 
-    private FieldGrid<GridNode> _grid;
-    public FieldGrid<GridNode> Grid => _grid;
+    public delegate void OnCellOccupantChangedCallback(int x, int y, Permanent occupant);
+    public OnCellOccupantChangedCallback onCellOccupied;
+    public OnCellOccupantChangedCallback onCellAbandoned;
 
     [SerializeField] private int _width;
-    [SerializeField] private int _height;
+    [SerializeField] private int _depth;
     [SerializeField] private Transform _origin;
     [SerializeField] private GameObject nodeDisplay;
 
     public int Width => _width;
-    public int Height => _height;
+    public int Depth => _depth;
     public float CellSize => CELL_SIZE;
     public Transform Origin => _origin;
 
-    private List<GridNode> openList; //nodes to search
+    private GridNode[,] cellArray;
 
     private void Start()
     {
         CreateGrid();
     }
 
+    #region - Grid -
     private void CreateGrid()
     {
-        _grid = new FieldGrid<GridNode>(this, _width, _height, CELL_SIZE, _origin, (FieldGrid<GridNode> grid, int x, int z) => new GridNode(grid, x, z), nodeDisplay);
-    }
-
-    public void OnToggleNodeIsOccupied(int x, int z, bool isOccupied)
-    {
-        _grid.GetGridObject(x, z).SetOccupied(isOccupied);
-    }
-
-    public GridNode GetNode(int x, int z)
-    {
-        return _grid.GetGridObject(x, z);
-    }
-
-    /*public GridNode GetNode(Vector3 localPosition)
-    {
-    }*/
-
-    public GridNode FindOpenNode(int width, int height, bool canRotate)
-    {
-        openList = new List<GridNode>();
-
-        for (int x = 0; x < _grid.GetWidth(); x++)
+        cellArray = new GridNode[_width, _depth];
+        for (int x = 0; x < cellArray.GetLength(0); x++)
         {
-            for (int y = 0; y < _grid.GetDepth(); y++)
+            for (int z = 0; z < cellArray.GetLength(1); z++)
             {
-                GridNode node = _grid.GetGridObject(x, y);
-                if (!node.isOccupied)
-                {
-                    openList.Add(node);
-                }
+                GameObject go = GameObject.Instantiate(nodeDisplay, GetGridPosition(x, z), Quaternion.identity);
+                go.transform.SetParent(_origin);
+
+                cellArray[x, z] = go.GetComponentInChildren<GridNode>();
+                cellArray[x, z].OnAssignCoordinates(x, z);
             }
         }
-
-        if (openList.Count == 0)
-        {
-            Debug.Log("Zero open nodes in inventory");
-        }
-
-        foreach (GridNode node in openList)
-        {
-            //Now I need to check if all of the nodes above it in height are open
-            //and all of the nodes to the right of it in width are open
-            int startX = node.x;
-            int startY = node.y;
-            bool isClear = true;
-            for (int x = startX; x < startX + width; x++)
-            {
-                if (x >= _grid.GetWidth())
-                {
-                    //Debug.Log(x + "," + startY + " is out of bounds");
-                    isClear = false;
-                    break;
-                }
-                if (GetNode(x, startY).isOccupied)
-                {
-                    //Debug.Log(x + "," + startY + " is not clear");
-                    isClear = false;
-                    break;
-                }
-                //Debug.Log(x + "," + startY + " is clear");
-            }
-            for (int y = startY; y < startY + height; y++)
-            {
-                if (y >= _grid.GetDepth())
-                {
-                    //Debug.Log(startX + "," + y + " is out of bounds");
-                    isClear = false;
-                    break;
-                }
-                if (GetNode(startX, y).isOccupied)
-                {
-                    //Debug.Log(startX + "," + y + " is not clear");
-                    isClear = false;
-                    break;
-                }
-                //Debug.Log(startX + "," + y + " is clear");
-            }
-
-            if (isClear)
-            {
-                //Debug.Log("Open Node Found at " + startX + "," + startY);
-                return node;
-            }
-        }
-
-        return null;
     }
 
-    public void ToggleNodesOccupied(GridNode startNode, int width, int height, bool isOccupied)
+    public GridNode GetCell(int x, int z)
     {
-        startNode.SetOccupied(isOccupied);
-
-        for (int x = 0; x < width; x++)
+        if (x >= 0 && z >= 0 && x < _width && z < _depth)
         {
-            for (int y = 0; y < height; y++)
-            {
-                GetNode(startNode.x + x, startNode.y + y).SetOccupied(isOccupied);
-                //Debug.Log("node " + (startNode.x + x) + "," + (startNode.y + y) + " is occupied: " + isOccupied);
-            }
+            return cellArray[x, z];
         }
+
+        throw new System.Exception("parameter " + x + "," + z + " outside bounds of array");
     }
 
     public Vector3 GetGridPosition(int x, int z)
     {
-        return _origin.position + new Vector3(x * CellSize, z * CellSize);
+        return GetCell(x, z).transform.position;
     }
 
     public bool OnValidateNewPosition(GridNode newNode, int width, int height)
     {
-        int startX = newNode.x;
-        int startY = newNode.y;
+        int startX = newNode.gridX;
+        int startY = newNode.gridZ;
 
         for (int x = startX; x < startX + width; x++)
         {
-            if (x >= _grid.GetWidth())
+            if (x >= _width)
             {
                 //Debug.Log(x + "," + startY + " is out of bounds");
                 return false;
             }
-            if (GetNode(x, startY).isOccupied)
+            if (GetCell(x, startY).occupant != null)
             {
                 //Debug.Log(x + "," + startY + " is not clear");
                 return false;
@@ -157,12 +81,12 @@ public class Battlefield : MonoBehaviour
         }
         for (int y = startY; y < startY + height; y++)
         {
-            if (y >= _grid.GetDepth())
+            if (y >= _depth)
             {
                 //Debug.Log(startX + "," + y + " is out of bounds");
                 return false;
             }
-            if (GetNode(startX, y).isOccupied)
+            if (GetCell(startX, y).occupant != null)
             {
                 //Debug.Log(startX + "," + y + " is not clear");
                 return false;
@@ -171,5 +95,16 @@ public class Battlefield : MonoBehaviour
         }
 
         return true;
+    }
+    #endregion
+
+    public void PlacePermanent(int x, int z, Permanent permanent)
+    {
+        GetCell(x, z).SetOccupant(permanent);
+    }
+
+    public void RemovePermanent(int x, int z)
+    {
+        GetCell(x, z).SetOccupant(null);
     }
 }

@@ -16,6 +16,6 @@ public class GameManager : MonoBehaviour
         
     }
 }
-
+public enum Phase { Begin, Summoning, Declaration, Resolution, End } 
 public enum CardType { Unit, Building, Trap, Equipment, Terrain, Spell }
 public enum Faction { Arcane, Kingdom, Goblins, Coven, Undead, Demons}

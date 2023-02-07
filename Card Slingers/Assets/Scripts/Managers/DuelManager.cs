@@ -18,8 +18,16 @@ public class DuelManager : MonoBehaviour
     public OnPhaseChange onResolutionPhase;
     public OnPhaseChange onEndPhase;
 
+    public delegate void OnNodeSelected(GridNode node);
+    public OnNodeSelected onNodeSelected;
+
     [SerializeField] private Battlefield battleField;
-    [SerializeField] private CommanderSO player, opponent;
+    [SerializeField] private CommanderSO _player, _opponent;
+
+    public CommanderController player, opponent;
+
+    public CommanderSO Player => _player;
+    public CommanderSO Opponent => _opponent;
 
 
     private void Start()
@@ -29,18 +37,20 @@ public class DuelManager : MonoBehaviour
 
     private void PlaceCommanders()
     {
-        float depth = battleField.Grid.GetDepth();
+        float depth = battleField.Depth;
         int playerZ = Mathf.CeilToInt(depth * 0.5f) - 1;
-        var playerPrefab = Instantiate(player.CommanderPrefab, battleField.Grid.GetCell(0, playerZ).transform.position, Quaternion.identity);
+        var playerPrefab = Instantiate(_player.CommanderPrefab, battleField.GetCell(0, playerZ).transform.position, Quaternion.identity);
+        battleField.PlacePermanent(0, playerZ, playerPrefab.GetComponent<Permanent>());
 
         int opponentZ = Mathf.RoundToInt(depth * 0.5f);
-        var enemyPrefab = Instantiate(opponent.CommanderPrefab, battleField.Grid.GetCell(battleField.Grid.GetWidth() - 1, opponentZ).transform.position, Quaternion.identity);
+        var enemyPrefab = Instantiate(_opponent.CommanderPrefab, battleField.GetCell(battleField.Width - 1, opponentZ).transform.position, Quaternion.identity);
+        battleField.PlacePermanent(0, opponentZ, enemyPrefab.GetComponent<Permanent>());
     }
 
     private void OnAssignCommanders(CommanderSO player, CommanderSO opponent)
     {
-        this.player = player;
-        this.opponent = opponent;
+        this._player = player;
+        this._opponent = opponent;
 
         PlaceCommanders();
         OnMatchStart();
@@ -48,7 +58,7 @@ public class DuelManager : MonoBehaviour
 
     private void OnMatchStart()
     {
-        if (Random.value >= 0.5f) onBeginPhase?.Invoke(player);
-        else onBeginPhase?.Invoke(opponent);
+        if (Random.value >= 0.5f) onBeginPhase?.Invoke(_player);
+        else onBeginPhase?.Invoke(_opponent);
     }
 }
