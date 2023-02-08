@@ -40,7 +40,9 @@ public class CommanderController : MonoBehaviour
 
         for (int i = 0; i < commander.Deck.cards.Count; i++)
         {
-            var newCard = new Card(commander.Deck.cards[i]);
+            var go = Instantiate(duelManager.cardPrefab);
+            var newCard = go.GetComponent<Card>();
+            newCard.AssignCard(commander.Deck.cards[i]);
             _cardsInDeck.Add(newCard);
         }
 

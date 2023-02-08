@@ -25,6 +25,8 @@ public class DuelManager : MonoBehaviour
     [SerializeField] private CommanderSO _player, _opponent;
 
     public CommanderController playerController, opponentController;
+    [Space]
+    public GameObject cardPrefab;
 
     public CommanderSO Player => _player;
     public CommanderSO Opponent => _opponent;
