@@ -11,6 +11,9 @@ public class Battlefield : MonoBehaviour
     public OnCellOccupantChangedCallback onCellOccupied;
     public OnCellOccupantChangedCallback onCellAbandoned;
 
+    private static Vector3 playerRotation = new Vector3(0, 90, 0);
+    private static Vector3 opponentRotation = new Vector3(0, -90, 0);
+
     [SerializeField] private int _width;
     [SerializeField] private int _depth;
     [SerializeField] private Transform _origin;
@@ -23,7 +26,7 @@ public class Battlefield : MonoBehaviour
 
     private GridNode[,] cellArray;
 
-    private void Start()
+    private void Awake()
     {
         CreateGrid();
     }
@@ -36,7 +39,9 @@ public class Battlefield : MonoBehaviour
         {
             for (int z = 0; z < cellArray.GetLength(1); z++)
             {
-                GameObject go = GameObject.Instantiate(nodeDisplay, GetGridPosition(x, z), Quaternion.identity);
+                var pos = GetGridPosition(x, z);
+                pos.y += 0.001f;
+                GameObject go = GameObject.Instantiate(nodeDisplay, pos, Quaternion.identity);
                 go.transform.SetParent(_origin);
 
                 cellArray[x, z] = go.GetComponentInChildren<GridNode>();
@@ -45,7 +50,7 @@ public class Battlefield : MonoBehaviour
         }
     }
 
-    public GridNode GetCell(int x, int z)
+    public GridNode GetNode(int x, int z)
     {
         if (x >= 0 && z >= 0 && x < _width && z < _depth)
         {
@@ -57,7 +62,12 @@ public class Battlefield : MonoBehaviour
 
     public Vector3 GetGridPosition(int x, int z)
     {
-        return GetCell(x, z).transform.position;
+        return _origin.transform.position + new Vector3(x * CELL_SIZE, 0, z * CELL_SIZE);
+    }
+
+    public Vector3 GetNodePosition(int x, int z)
+    {
+        return GetNode(x, z).transform.position;
     }
 
     public bool OnValidateNewPosition(GridNode newNode, int width, int height)
@@ -72,7 +82,7 @@ public class Battlefield : MonoBehaviour
                 //Debug.Log(x + "," + startY + " is out of bounds");
                 return false;
             }
-            if (GetCell(x, startY).occupant != null)
+            if (GetNode(x, startY).occupant != null)
             {
                 //Debug.Log(x + "," + startY + " is not clear");
                 return false;
@@ -86,7 +96,7 @@ public class Battlefield : MonoBehaviour
                 //Debug.Log(startX + "," + y + " is out of bounds");
                 return false;
             }
-            if (GetCell(startX, y).occupant != null)
+            if (GetNode(startX, y).occupant != null)
             {
                 //Debug.Log(startX + "," + y + " is not clear");
                 return false;
@@ -98,13 +108,27 @@ public class Battlefield : MonoBehaviour
     }
     #endregion
 
-    public void PlacePermanent(int x, int z, Permanent permanent)
+    public Permanent PlacePermanent(int x, int z, GameObject prefab, bool isPlayer)
     {
-        GetCell(x, z).SetOccupant(permanent);
+        var node = GetNode(x, z);
+        return PlacePermanent(node, prefab, isPlayer);
+    }
+
+    public Permanent PlacePermanent(GridNode node, GameObject prefab, bool isPlayer)
+    {
+        var unit = Instantiate(prefab, node.transform.position, Quaternion.identity);
+
+        if (isPlayer) unit.transform.localEulerAngles = playerRotation;
+        else unit.transform.localEulerAngles = opponentRotation;
+
+        var permanent = unit.GetComponent<Permanent>();
+        node.SetOccupant(permanent);
+
+        return permanent;
     }
 
     public void RemovePermanent(int x, int z)
     {
-        GetCell(x, z).SetOccupant(null);
+        GetNode(x, z).SetOccupant(null);
     }
 }

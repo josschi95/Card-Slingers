@@ -17,7 +17,7 @@ MonoBehaviour:
   _commanderPrefab: {fileID: 8186311580235951897, guid: 43c00384f54050e4784a1b218abca788, type: 3}
   _deck:
     cards: []
-  maxHealth: 0
-  attack: 0
+  maxHealth: 20
+  attack: 2
   defense: 0
-  speed: 0
+  speed: 2

@@ -13,15 +13,12 @@ public class CommanderController : MonoBehaviour
     [SerializeField] private List<Card> _cardsInPlay;
     [SerializeField] private List<Card> _discardPile;
     [Space]
-    [SerializeField] private Permanent _commanderPermanent;
     [SerializeField] private List<Permanent> permanentsInPlay;
     [SerializeField] private int currentActionPoints = 4;
-
 
     public List<Card> CardsInDeck => _cardsInDeck;
     public List<Card> CardsInHand => _cardsInHand;
     public List<Card> DiscardPile => _discardPile;
-    public Permanent CommanderPermanent => _commanderPermanent;
 
     private void Start()
     {

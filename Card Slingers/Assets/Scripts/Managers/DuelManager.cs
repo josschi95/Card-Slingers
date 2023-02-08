@@ -24,7 +24,7 @@ public class DuelManager : MonoBehaviour
     [SerializeField] private Battlefield battleField;
     [SerializeField] private CommanderSO _player, _opponent;
 
-    public CommanderController player, opponent;
+    public CommanderController playerController, opponentController;
 
     public CommanderSO Player => _player;
     public CommanderSO Opponent => _opponent;
@@ -32,25 +32,26 @@ public class DuelManager : MonoBehaviour
 
     private void Start()
     {
-        Invoke("PlaceCommanders", 0.01f);
+        OnAssignCommanders(_player, _opponent);
     }
 
     private void PlaceCommanders()
     {
         float depth = battleField.Depth;
+
         int playerZ = Mathf.CeilToInt(depth * 0.5f) - 1;
-        var playerPrefab = Instantiate(_player.CommanderPrefab, battleField.GetCell(0, playerZ).transform.position, Quaternion.identity);
-        battleField.PlacePermanent(0, playerZ, playerPrefab.GetComponent<Permanent>());
+        var playerPerm = battleField.PlacePermanent(0, playerZ, _player.CommanderPrefab, true);
+        playerController = playerPerm.GetComponent<CommanderController>();
 
         int opponentZ = Mathf.RoundToInt(depth * 0.5f);
-        var enemyPrefab = Instantiate(_opponent.CommanderPrefab, battleField.GetCell(battleField.Width - 1, opponentZ).transform.position, Quaternion.identity);
-        battleField.PlacePermanent(0, opponentZ, enemyPrefab.GetComponent<Permanent>());
+        var opponentPerm = battleField.PlacePermanent(battleField.Width - 1, opponentZ, _opponent.CommanderPrefab, false);
+        opponentController = opponentPerm.GetComponent<CommanderController>();
     }
 
     private void OnAssignCommanders(CommanderSO player, CommanderSO opponent)
     {
-        this._player = player;
-        this._opponent = opponent;
+        _player = player;
+        _opponent = opponent;
 
         PlaceCommanders();
         OnMatchStart();

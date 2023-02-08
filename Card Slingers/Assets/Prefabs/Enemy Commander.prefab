@@ -108,6 +108,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8186311580235951896}
   - component: {fileID: 9146858898119525554}
+  - component: {fileID: 2682176178752886060}
   m_Layer: 0
   m_Name: Enemy Commander
   m_TagString: Untagged
@@ -143,3 +144,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af2a8725e4e9ba04db26e434e8d58a92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _commander: {fileID: 2682176178752886060}
+  _card:
+    cardInfo: {fileID: 0}
+--- !u!114 &2682176178752886060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8186311580235951897}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4af945b07d58f8747b13c705e0b6a941, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentPhase: 0
+  _cardsInDeck: []
+  _cardsInHand: []
+  _cardsInPlay: []
+  _discardPile: []
+  permanentsInPlay: []
+  currentActionPoints: 4

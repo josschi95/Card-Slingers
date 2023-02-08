@@ -30,7 +30,7 @@ public class GridNode : MonoBehaviour
 
     private void OnMouseEnter()
     {
-        if (occupant != null && occupant.Commander == DuelManager.instance.opponent) SetColor(MaterialType.Red);
+        if (occupant != null && occupant.Commander == DuelManager.instance.opponentController) SetColor(MaterialType.Red);
         else SetColor(MaterialType.Blue);
     }
 
@@ -42,6 +42,7 @@ public class GridNode : MonoBehaviour
     private void OnMouseDown()
     {
         Debug.Log(gridX + "," + gridZ);
+        if (occupant != null) Debug.Log(occupant.gameObject.name);
         DuelManager.instance.onNodeSelected?.Invoke(this);
     }
 
