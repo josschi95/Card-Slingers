@@ -10,37 +10,39 @@ public class CommanderController : MonoBehaviour
     [Space]
     [SerializeField] private List<Card> _cardsInDeck;
     [SerializeField] private List<Card> _cardsInHand;
-    [SerializeField] private List<Card> _cardsInPlay;
+    //[SerializeField] private List<Card> _cardsInPlay;
     [SerializeField] private List<Card> _discardPile;
     [Space]
     [SerializeField] private List<Permanent> permanentsInPlay;
     [SerializeField] private int currentActionPoints = 4;
 
+    public bool isTurn { get; private set; }
+
+    public Transform deckPile, handPile, discardPile;
+
     public List<Card> CardsInDeck => _cardsInDeck;
     public List<Card> CardsInHand => _cardsInHand;
     public List<Card> DiscardPile => _discardPile;
 
-    private void Start()
+    public virtual void OnMatchStart(CommanderSO commander, Transform deckPile, Transform hand, Transform discard, int startingHandSize = 4)
     {
         duelManager = DuelManager.instance;
-        duelManager.onBeginPhase += delegate { OnBeginPhase(); };
-        duelManager.onSummoningPhase += delegate { OnSummoningPhase(); };
-        duelManager.onPlanningPhase += delegate { OnDeclarationPhase(); };
-        duelManager.onResolutionPhase += delegate { OnResolutionPhase(); };
-        duelManager.onEndPhase += delegate { OnEndPhase(); };
-    }
 
-    public virtual void OnMatchStart(CommanderSO commander, int startingHandSize = 4)
-    {
         _cardsInDeck = new List<Card>();
         _discardPile = new List<Card>();
-        _cardsInPlay = new List<Card>();
+        //_cardsInPlay = new List<Card>();
         _cardsInHand = new List<Card>();
         permanentsInPlay = new List<Permanent>();
+
+        this.deckPile = deckPile;
+        handPile = hand;
+        discardPile = discard;
 
         for (int i = 0; i < commander.Deck.cards.Count; i++)
         {
             var go = Instantiate(duelManager.cardPrefab);
+            go.transform.SetParent(this.deckPile, false);
+
             var newCard = go.GetComponent<Card>();
             newCard.AssignCard(commander.Deck.cards[i]);
             _cardsInDeck.Add(newCard);
@@ -55,7 +57,8 @@ public class CommanderController : MonoBehaviour
         }
     }
 
-    private void SetPhase(Phase phase)
+    #region - Phases -
+    public void SetPhase(Phase phase)
     {
         switch (phase)
         {
@@ -80,7 +83,7 @@ public class CommanderController : MonoBehaviour
     public void OnBeginPhase()
     {
         Debug.Log(gameObject.name + " Begin Phase");
-
+        isTurn = true;
         currentActionPoints = 4;
 
         DrawCard();
@@ -88,26 +91,28 @@ public class CommanderController : MonoBehaviour
         //For each card on the field, invoke an OnBeginPhase event
     }
 
-    public void OnSummoningPhase()
+    private void OnSummoningPhase()
     {
         Debug.Log(gameObject.name + " Summoning Phase");
 
 
     }
 
-    public void OnDeclarationPhase()
+    private void OnDeclarationPhase()
     {
         Debug.Log(gameObject.name + " Declaration Phase");
     }
 
-    public void OnResolutionPhase()
+    private void OnResolutionPhase()
     {
         Debug.Log(gameObject.name + " Resolution Phase");
     }
 
-    public void OnEndPhase()
+    private void OnEndPhase()
     {
         Debug.Log(gameObject.name + " End Phase");
+
+        isTurn = false;
     }
 
     public void OnNextPhase()
@@ -115,6 +120,7 @@ public class CommanderController : MonoBehaviour
         if (currentPhase == Phase.End) OnBeginPhase();
         else SetPhase(currentPhase + 1);
     }
+    #endregion
 
     private void ShuffleDeck()
     {
@@ -129,17 +135,25 @@ public class CommanderController : MonoBehaviour
 
     private void DrawCard()
     {
-        _cardsInHand.Add(_cardsInDeck[0]);
-        _cardsInDeck.RemoveAt(0);
+        if (_cardsInDeck.Count <= 0)
+        {
+            Debug.Log("No Remaining Cards in Deck");
+            return;
+        }
+
+        var cardToDraw = _cardsInDeck[0];
+        _cardsInDeck.Remove(cardToDraw);
+        _cardsInHand.Add(cardToDraw);
+        cardToDraw.transform.SetParent(handPile, false);
     }
 
     private void DiscardCard(Card cardToDiscard)
     {
-        if (_cardsInHand.Contains(cardToDiscard))
-        {
-            _cardsInHand.Remove(cardToDiscard);
-            _discardPile.Add(cardToDiscard);
-        }
+        if (!_cardsInHand.Contains(cardToDiscard)) return;
+
+        _cardsInHand.Remove(cardToDiscard);
+        _discardPile.Add(cardToDiscard);
+        cardToDiscard.transform.SetParent(discardPile);
     }
 
     public bool CanPlayCard(int cardCost)
@@ -166,7 +180,9 @@ public class CommanderController : MonoBehaviour
 
         permanentsInPlay.Add(newPermanent);
         newPermanent.OnEnterField(this, card);
+
         _cardsInHand.Remove(card);
+        card.transform.SetParent(go.transform, false);
     }
 
     public void OnPermanentRemovedFromField(Permanent permanent)

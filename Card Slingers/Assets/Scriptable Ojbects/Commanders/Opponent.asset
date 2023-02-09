@@ -16,7 +16,27 @@ MonoBehaviour:
   _faction: 0
   _commanderPrefab: {fileID: 8186311580235951897, guid: 43c00384f54050e4784a1b218abca788, type: 3}
   _deck:
-    cards: []
+    cards:
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
+    - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}
   maxHealth: 20
   attack: 2
   defense: 0

@@ -30,6 +30,7 @@ public class DuelManager : MonoBehaviour
 
     public CommanderSO Player => _player;
     public CommanderSO Opponent => _opponent;
+    public Battlefield Battlefield => battleField;
 
 
     private void Start()
@@ -44,10 +45,12 @@ public class DuelManager : MonoBehaviour
         int playerZ = Mathf.CeilToInt(depth * 0.5f) - 1;
         var playerPerm = battleField.PlacePermanent(0, playerZ, _player.CommanderPrefab, true);
         playerController = playerPerm.GetComponent<CommanderController>();
+        playerController.OnMatchStart(_player, battleField.PlayerDeck, battleField.PlayerHand, battleField.PlayerDiscard);
 
         int opponentZ = Mathf.RoundToInt(depth * 0.5f);
         var opponentPerm = battleField.PlacePermanent(battleField.Width - 1, opponentZ, _opponent.CommanderPrefab, false);
         opponentController = opponentPerm.GetComponent<CommanderController>();
+        opponentController.OnMatchStart(_opponent, battleField.OpponentDeck, battleField.OpponentHand, battleField.OpponentDiscard);
     }
 
     private void OnAssignCommanders(CommanderSO player, CommanderSO opponent)
@@ -61,7 +64,7 @@ public class DuelManager : MonoBehaviour
 
     private void OnMatchStart()
     {
-        if (Random.value >= 0.5f) onBeginPhase?.Invoke(_player);
-        else onBeginPhase?.Invoke(_opponent);
+        if (Random.value >= 0.5f) playerController.SetPhase(Phase.Begin);
+        else opponentController.SetPhase(Phase.Begin);
     }
 }

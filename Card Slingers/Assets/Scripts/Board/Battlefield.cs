@@ -13,18 +13,30 @@ public class Battlefield : MonoBehaviour
 
     private static Vector3 playerRotation = new Vector3(0, 90, 0);
     private static Vector3 opponentRotation = new Vector3(0, -90, 0);
+    
+    private GridNode[,] cellArray;
 
     [SerializeField] private int _width;
     [SerializeField] private int _depth;
     [SerializeField] private Transform _origin;
     [SerializeField] private GameObject nodeDisplay;
+    [Space]
+    [SerializeField] private Transform _playerDeck;
+    [SerializeField] private Transform _playerHand, _playerDiscard;
+    [SerializeField] private Transform _opponentDeck, _opponentHand, _opponentDiscard;
 
+    #region - Public Variable References -
     public int Width => _width;
     public int Depth => _depth;
     public float CellSize => CELL_SIZE;
     public Transform Origin => _origin;
-
-    private GridNode[,] cellArray;
+    public Transform PlayerDeck => _playerDeck;
+    public Transform PlayerHand => _playerHand;
+    public Transform PlayerDiscard => _playerDiscard;
+    public Transform OpponentDeck => _opponentDeck;
+    public Transform OpponentHand => _opponentHand;
+    public Transform OpponentDiscard => _opponentDiscard;
+    #endregion
 
     private void Awake()
     {
