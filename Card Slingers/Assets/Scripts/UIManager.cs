@@ -12,6 +12,11 @@ public class UIManager : MonoBehaviour
         instance = this;
     }
 
+    [Header("Commander Banner")]
+    [SerializeField] private TMP_Text playerCommanderName;
+    [SerializeField] private TMP_Text playerHealth, playerMana, opponentCommanderName, opponentHealth, opponentMana; 
+
+    [Header("Card Display")]
     [SerializeField] private RectTransform cardDisplayRect;
     [SerializeField] private Button hideCardDisplayButton;
     [Space]
@@ -25,11 +30,25 @@ public class UIManager : MonoBehaviour
     private void Start()
     {
         cardDisplayRect.anchoredPosition = cardDisplayHiddenPos;
-        hideCardDisplayButton.onClick.AddListener(delegate 
-        {
-            if (lerpCardDisplayCoroutine != null) StopCoroutine(lerpCardDisplayCoroutine);
-            lerpCardDisplayCoroutine = StartCoroutine(LerpCardDisplay(false));
-        });
+        hideCardDisplayButton.onClick.AddListener(HideCardDisplay);
+    }
+
+    private void OnMatchStart()
+    {
+        //Show top display
+        DuelManager.instance.playerController.onManaChange += OnCommanderValuesChanged;
+        DuelManager.instance.opponentController.onManaChange += OnCommanderValuesChanged;
+    }
+
+    private void OnCommanderValuesChanged()
+    {
+        playerCommanderName.text = DuelManager.instance.playerController.gameObject.name;
+        playerHealth.text = DuelManager.instance.playerController.name;
+        playerMana.text = DuelManager.instance.playerController.CurrentMana.ToString();
+        
+        opponentCommanderName.text = DuelManager.instance.opponentController.gameObject.name;
+        opponentHealth.text = DuelManager.instance.opponentController.name;
+        opponentMana.text = DuelManager.instance.opponentController.CurrentMana.ToString();
     }
 
     public void ShowCardDisplay(CardSO card)

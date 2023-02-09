@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 614a5a7bf186647468151d14b3311506, type: 3}
-  m_Name: Soldier
+  m_Name: Knight
   m_EditorClassIdentifier: 
-  name: Soldier
-  icon: {fileID: 21300000, guid: 58bac37f0d7391f4ca6d341174276884, type: 3}
+  name: Knight
+  icon: {fileID: 21300000, guid: e2e59673159616c44b546b4a66992a4f, type: 3}
   type: 0
   faction: 1
   cost: 1
   description: 'HP:5 ATK:1 DEF: 0 SPD: 2'
-  flavorText: 'A lowly peasant conscript. '
-  _permanentPrefab: {fileID: 1471423709927289214, guid: 4b8bc6de3e22f1e4aa762effeac0d891, type: 3}
-  maxHealth: 5
+  flavorText: A noble knight
+  _permanentPrefab: {fileID: 2720721032963671195, guid: 9126f6ba332a8624fbb02c34df798a14, type: 3}
+  maxHealth: 10
   attack: 1
-  defense: 0
-  speed: 2
+  defense: 1
+  speed: 1

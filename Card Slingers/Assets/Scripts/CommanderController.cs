@@ -1,9 +1,11 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class CommanderController : MonoBehaviour
 {
+    public delegate void OnManaChangeCallback();
+    public OnManaChangeCallback onManaChange;
+
     private DuelManager duelManager;
 
     [SerializeField] private Phase currentPhase;
@@ -12,9 +14,10 @@ public class CommanderController : MonoBehaviour
     [SerializeField] private List<Card> _cardsInHand;
     //[SerializeField] private List<Card> _cardsInPlay;
     [SerializeField] private List<Card> _cardsInDiscardPile;
+    //[SerializeField] private Card _cardToBePlayed;
     [Space]
     [SerializeField] private List<Permanent> permanentsInPlay;
-    [SerializeField] private int currentActionPoints = 4;
+    [SerializeField] private int _currentMana = 4;
 
     public bool isTurn { get; private set; }
 
@@ -23,6 +26,8 @@ public class CommanderController : MonoBehaviour
     public List<Card> CardsInDeck => _cardsInDeck;
     public List<Card> CardsInHand => _cardsInHand;
     public List<Card> CardsInDiscard => _cardsInDiscardPile;
+    public int CurrentMana => _currentMana;
+    //public Card CardToBePlayed => _cardToBePlayed;
 
     public virtual void OnMatchStart(CommanderSO commander, Transform deckPile, Transform hand, Transform discard, int startingHandSize = 4)
     {
@@ -85,7 +90,7 @@ public class CommanderController : MonoBehaviour
     {
         Debug.Log(gameObject.name + " entered Begin Phase");
         isTurn = true;
-        currentActionPoints = 4;
+        _currentMana = 4;
 
         DrawCard();
         //This will eventually have an animation, so wait until that is finished
@@ -181,27 +186,29 @@ public class CommanderController : MonoBehaviour
 
     public bool CanPlayCard(int cardCost)
     {
-        if (cardCost > currentActionPoints) return false;
+        if (cardCost > _currentMana) return false;
         return true;
     }
 
-    private void OnSpendActionPoints(int points)
+    private void OnSpendMana(int points)
     {
-        currentActionPoints -= points;
-        if (currentActionPoints <= 0)
+        _currentMana -= points;
+        if (_currentMana <= 0)
         {
-            currentActionPoints = 0;
+            _currentMana = 0;
             if (isTurn && currentPhase == Phase.Summoning)
             {
                 //End phase if all AP has been spent
                 duelManager.OnCurrentPhaseFinished();
             }
         }
+
+        onManaChange?.Invoke();
     }
 
     public void OnInstantPlayed(Card card)
     {
-        OnSpendActionPoints(card.cardInfo.cost);
+        OnSpendMana(card.cardInfo.cost);
 
         //If a target is needed, wait for a target to be selected
         //Trigger whatever effect the instant has
@@ -209,13 +216,13 @@ public class CommanderController : MonoBehaviour
         //Send to discard pile
     }
 
-    public void OnPermanentPlayed(int x, int z, Card card)
+    public void OnPermanentPlayed(GridNode node, Card card)
     {
-        OnSpendActionPoints(card.cardInfo.cost);
+        OnSpendMana(card.cardInfo.cost);
 
         var permanent = card.cardInfo as PermanentSO;
 
-        var go = Instantiate(permanent.Prefab, new Vector3(x, z), Quaternion.identity);
+        var go = Instantiate(permanent.Prefab, node.transform.position, Quaternion.identity);
         var newPermanent = go.GetComponent<Permanent>();
 
         permanentsInPlay.Add(newPermanent);
@@ -223,6 +230,7 @@ public class CommanderController : MonoBehaviour
 
         _cardsInHand.Remove(card);
         card.transform.SetParent(go.transform, false);
+        card.transform.localPosition = Vector3.zero;
         card.SetCardLocation(CardLocation.OnField);
     }
 

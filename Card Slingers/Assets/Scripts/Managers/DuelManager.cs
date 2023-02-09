@@ -24,6 +24,10 @@ public class DuelManager : MonoBehaviour
     public OnCardSelectedCallback onCardInPlaySelected; //This could be for a number of reasons, but I don't think it will be for targeting. Should likely only be to get a UI close up view of a card
     #endregion
 
+    [Header("Testing")]
+    public bool IS_TESTING = true;
+    [Space]
+
     [SerializeField] private Battlefield battleField;
     [SerializeField] private CommanderSO _player, _opponent;
     [SerializeField] private Phase _currentPhase;
@@ -32,6 +36,11 @@ public class DuelManager : MonoBehaviour
     private CommanderController commanderInTurn;
     [Space]
     public GameObject cardPrefab;
+
+
+    private Card _selectedCard;
+    private bool waitingForNodeToBeSelected;
+    private Coroutine cardPlacementCoroutine;
 
     #region - Public Variable References -
     public CommanderSO Player => _player;
@@ -78,6 +87,13 @@ public class DuelManager : MonoBehaviour
 
     private void OnMatchStart()
     {
+        if (IS_TESTING)
+        {
+            commanderInTurn = playerController;
+            playerController.SetPhase(Phase.Begin);
+            return;
+        }
+
         if (Random.value >= 0.5f)
         {
             commanderInTurn = playerController;
@@ -171,14 +187,16 @@ public class DuelManager : MonoBehaviour
 
     private void OnCardInHandSelected(Card card)
     {
-        if (card.IsPlayerCard || card.isRevealed)
-            UIManager.instance.ShowCardDisplay(card.cardInfo);
+        //Display card info
+        if (card.IsPlayerCard || card.isRevealed) UIManager.instance.ShowCardDisplay(card.cardInfo);
 
-        if (playerController.isTurn && _currentPhase == Phase.Summoning)
+        //Player selects a card to summon
+        if (card.IsPlayerCard && playerController.isTurn && _currentPhase == Phase.Summoning)
         {
-            Debug.Log("Waiting for tile to be selected");
-            cardWaitingToBePlayed = card;
-            StartCoroutine(WaitForPermanentToBePlayed());
+            //Debug.Log("Waiting for tile to be selected");
+            _selectedCard = card;
+            if (cardPlacementCoroutine != null) StopCoroutine(cardPlacementCoroutine);
+            cardPlacementCoroutine = StartCoroutine(WaitForPermanentToBePlayed());
         }
     }
 
@@ -186,8 +204,10 @@ public class DuelManager : MonoBehaviour
     {
         //Hide the display if action
         UIManager.instance.HideCardDisplay();
-        cardWaitingToBePlayed = null;
+
         //If waiting for a target, stop waiting
+        if (cardPlacementCoroutine != null) StopCoroutine(cardPlacementCoroutine);
+        _selectedCard = null;
     }
 
     private void OnCardInPlaySelected(Card card)
@@ -197,24 +217,23 @@ public class DuelManager : MonoBehaviour
 
     private void OnNodeSelected(GridNode node)
     {
-        if (waitingForNodeToBeSelected && commanderInTurn.CanPlayCard(cardWaitingToBePlayed.cardInfo.cost))
+        if (waitingForNodeToBeSelected && commanderInTurn.CanPlayCard(_selectedCard.cardInfo.cost))
         {
-            Debug.Log(cardWaitingToBePlayed.cardInfo.name + " is to be played at " + node.transform.position);
-            commanderInTurn.OnPermanentPlayed(node.gridX, node.gridZ, cardWaitingToBePlayed);
+            //Debug.Log(_selectedCard.cardInfo.name + " is to be played at " + node.transform.position);
+            commanderInTurn.OnPermanentPlayed(node, _selectedCard);
 
-            cardWaitingToBePlayed = null;
+            waitingForNodeToBeSelected = false;
+            OnCardDeselected();
         }
     }
 
-    private Card cardWaitingToBePlayed;
-    private bool waitingForNodeToBeSelected;
+
     private IEnumerator WaitForPermanentToBePlayed()
     {
-        while (cardWaitingToBePlayed != null)
+        waitingForNodeToBeSelected = true;
+        while (waitingForNodeToBeSelected == true)
         {
-            waitingForNodeToBeSelected = true;
             yield return null;
         }
-        waitingForNodeToBeSelected = false;
     }
 }
