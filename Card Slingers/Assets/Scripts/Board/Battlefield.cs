@@ -5,31 +5,33 @@ using UnityEngine.UI;
 
 public class Battlefield : MonoBehaviour
 {
-    private const float CELL_SIZE = 2f;
+    private const float CELL_SIZE = 5f;
 
     public delegate void OnCellOccupantChangedCallback(int x, int y, Permanent occupant);
     public OnCellOccupantChangedCallback onCellOccupied;
     public OnCellOccupantChangedCallback onCellAbandoned;
 
-    private static Vector3 playerRotation = new Vector3(0, 90, 0);
-    private static Vector3 opponentRotation = new Vector3(0, -90, 0);
+    private static Vector3 playerRotation = Vector3.zero;
+    private static Vector3 opponentRotation = new Vector3(0, 180, 0);
     
     private GridNode[,] cellArray;
 
     [SerializeField] private int _width;
     [SerializeField] private int _depth;
-    [SerializeField] private Transform _origin;
-    [SerializeField] private GameObject nodeDisplay;
+    [SerializeField] private GameObject node; //Move this to being pooled
+    [SerializeField] private GameObject checkerboardWhite, checkerboardGray;
     [Space]
-    [SerializeField] private Transform _playerDeck;
-    [SerializeField] private Transform _playerHand, _playerDiscard;
+    [SerializeField] private Transform _playerCardsParent;
+    [SerializeField] private Transform _playerDeck, _playerHand, _playerDiscard;
+    [Space]
+    [SerializeField] private Transform _opponentCardsParent;
     [SerializeField] private Transform _opponentDeck, _opponentHand, _opponentDiscard;
+    private Vector3 origin;
 
     #region - Public Variable References -
     public int Width => _width;
     public int Depth => _depth;
     public float CellSize => CELL_SIZE;
-    public Transform Origin => _origin;
     public Transform PlayerDeck => _playerDeck;
     public Transform PlayerHand => _playerHand;
     public Transform PlayerDiscard => _playerDiscard;
@@ -46,20 +48,62 @@ public class Battlefield : MonoBehaviour
     #region - Grid -
     private void CreateGrid()
     {
+        origin = new Vector3((-_width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f), 0, (-_depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f));
+
+        var parentDist = _width * CELL_SIZE * 0.5f + 2;
+        _playerCardsParent.position = new Vector3(transform.position.x, transform.position.y + 0.25f, -parentDist);
+        _opponentCardsParent.position = new Vector3(transform.position.x, transform.position.y + 0.25f, parentDist);
+
         cellArray = new GridNode[_width, _depth];
         for (int x = 0; x < cellArray.GetLength(0); x++)
         {
             for (int z = 0; z < cellArray.GetLength(1); z++)
             {
                 var pos = GetGridPosition(x, z);
+                CreateCheckerboard(pos, x, z);
+
                 pos.y += 0.001f;
-                GameObject go = GameObject.Instantiate(nodeDisplay, pos, Quaternion.identity);
-                go.transform.SetParent(_origin);
+                GameObject go = Instantiate(node, pos, Quaternion.identity);
+                go.transform.SetParent(transform);
 
                 cellArray[x, z] = go.GetComponentInChildren<GridNode>();
                 cellArray[x, z].OnAssignCoordinates(x, z);
             }
         }
+        float d = 25 + ((_depth - 6) * 2.5f);
+        Camera.main.GetComponent<FreeFlyCamera>().SetInit(new Vector3(0, 12, -d), new Vector3(35, 0, 0));
+    }
+
+    //For testing only
+    private void CreateCheckerboard(Vector3 pos, int x, int z)
+    {
+        var go = checkerboardGray;
+        pos.y -= 0.01f;
+        if (z%2 == 0) //row is even
+        {
+            if (x % 2 == 0) //column is even
+            {
+                //gray
+            }
+            else //column is odd
+            {
+                go = checkerboardWhite;
+            }
+        }
+        else //row is odd
+        {
+            if (x % 2 == 0) //column is even
+            {
+                go = checkerboardWhite;
+            }
+            else //column is odd
+            {
+                //gray
+            }
+        }
+
+        var newgo = Instantiate(go, pos, Quaternion.identity);
+        newgo.transform.SetParent(transform);
     }
 
     public GridNode GetNode(int x, int z)
@@ -74,7 +118,8 @@ public class Battlefield : MonoBehaviour
 
     public Vector3 GetGridPosition(int x, int z)
     {
-        return _origin.transform.position + new Vector3(x * CELL_SIZE, 0, z * CELL_SIZE);
+        return origin + new Vector3(x * CELL_SIZE, 0, z * CELL_SIZE);
+        //return _origin.transform.position + new Vector3(x * CELL_SIZE, 0, z * CELL_SIZE);
     }
 
     public Vector3 GetNodePosition(int x, int z)

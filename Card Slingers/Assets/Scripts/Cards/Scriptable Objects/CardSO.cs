@@ -12,4 +12,6 @@ public class CardSO : ScriptableObject
     [Space]
     [TextArea(3,5)]
     public string description;
+    [TextArea(3, 5)]
+    public string flavorText;
 }
