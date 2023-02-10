@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3810874859362294789}
+  - component: {fileID: 3423348407480956462}
   - component: {fileID: 5017396033689996882}
-  - component: {fileID: 7106964802618907547}
   m_Layer: 0
   m_Name: Player Commander
   m_TagString: Untagged
@@ -34,6 +34,25 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3423348407480956462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3810874859362294788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce5ffe4017d000746848b1b0ce4468a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _commanderInfo: {fileID: 11400000, guid: 976e9b0abbe12e240ade98a6315322c2, type: 2}
+  currentPhase: 0
+  _currentMana: 4
+  _cardsInDeck: []
+  _cardsInDiscardPile: []
+  _cardsInHand: []
+  _permanentsOnField: []
 --- !u!114 &5017396033689996882
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46,29 +65,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af2a8725e4e9ba04db26e434e8d58a92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _commander: {fileID: 7106964802618907547}
-  _card: {fileID: 0}
---- !u!114 &7106964802618907547
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3810874859362294788}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4af945b07d58f8747b13c705e0b6a941, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  currentPhase: 0
-  _cardsInDeck: []
-  _cardsInHand: []
-  _discardPile: []
-  permanentsInPlay: []
-  currentActionPoints: 4
-  deckPile: {fileID: 0}
-  handPile: {fileID: 0}
-  discardPile: {fileID: 0}
+  title: {fileID: 0}
+  description: {fileID: 0}
+  flavorText: {fileID: 0}
+  display: {fileID: 0}
+  costMarkers: []
+  _commander: {fileID: 0}
+  _cardInfo: {fileID: 0}
+  _occupiedNode: {fileID: 0}
+  _permanentObject: {fileID: 0}
 --- !u!1 &6951546250325523029
 GameObject:
   m_ObjectHideFlags: 0

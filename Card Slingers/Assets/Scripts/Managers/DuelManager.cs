@@ -14,102 +14,124 @@ public class DuelManager : MonoBehaviour
     #endregion
 
     #region - Callbacks -
+    public delegate void OnMatchCallback();
+    public OnMatchCallback onNewMatchStarted;
+    public OnMatchCallback onMatchEnded;
+
+    public delegate void OnPhaseChangeCallback(Phase newPhase);
+    public OnPhaseChangeCallback onPhaseChange;
+
     public delegate void OnNodeSelectedCallback(GridNode node);
     public OnNodeSelectedCallback onNodeSelected;
 
     public delegate void OnCardSelectedCallback(Card card);
-    public OnCardSelectedCallback onCardInDeckSelected; //This will probably only be used if the player is searching through the deck for a card
-    public OnCardSelectedCallback onCardInDiscardSelected; //This will probably also only be used for resurrection type effects
     public OnCardSelectedCallback onCardInHandSelected; //if player card, display a larger UI display, if can be played and then a valid tile is selected => play it, if in the enemy's hand, likely only to reveal a card or choose one to discard
     public OnCardSelectedCallback onCardInPlaySelected; //This could be for a number of reasons, but I don't think it will be for targeting. Should likely only be to get a UI close up view of a card
+    //public OnCardSelectedCallback onCardInDeckSelected; //This will probably only be used if the player is searching through the deck for a card
+    //public OnCardSelectedCallback onCardInDiscardSelected; //This will probably also only be used for resurrection type effects
     #endregion
 
     [Header("Testing")]
     public bool IS_TESTING = true;
+    [SerializeField] private CommanderSO playerSO, opponentSO;
     [Space]
 
-    [SerializeField] private Battlefield battleField;
-    [SerializeField] private CommanderSO _player, _opponent;
+    [SerializeField] private Battlefield _battleField;
     [SerializeField] private Phase _currentPhase;
 
     public CommanderController playerController, opponentController;
     private CommanderController commanderInTurn;
     [Space]
     public GameObject cardPrefab;
+    public GameObject cardPermanentPrefab;
 
+    private Card_Permanent _selectedPermanent;
 
-    private Card _selectedCard;
-    private bool waitingForNodeToBeSelected;
+    private bool _waitingForNodeSelection;
     private Coroutine cardPlacementCoroutine;
 
+    [HideInInspector] public bool deselectCard; //called by InputHandler when the player right clicks. Deselect any selected card
+
     #region - Public Variable References -
-    public CommanderSO Player => _player;
-    public CommanderSO Opponent => _opponent;
-    public Battlefield Battlefield => battleField;
-    public Phase CurrentPhase => _currentPhase;
+    public Battlefield Battlefield => _battleField;
+    public bool WaitingForNodeSelection => _waitingForNodeSelection;
     #endregion
 
     #region - Initial Methods -
     private void Start()
     {
-        OnAssignCommanders(_player, _opponent);
-
         onNodeSelected += OnNodeSelected;
-        onCardInDeckSelected += OnCardInDeckdSelected;
-        onCardInDiscardSelected += OnCardInDiscardSelected;
         onCardInHandSelected += OnCardInHandSelected;
-        onCardInPlaySelected += OnCardInPlaySelected;
+        onCardInPlaySelected += OnCardOnFieldSelected;
+        //onCardInDeckSelected += OnCardInDeckSelected;
+
+        //For testing, give other scripts time to get their stuff figured out
+        if (IS_TESTING) Invoke("BeginTestMatch", 0.1f);
     }
 
-    private void PlaceCommanders()
+    private void BeginTestMatch()
     {
-        float width = battleField.Width;
-
-        int playerX = Mathf.RoundToInt(width * 0.5f);
-        var playerPerm = battleField.PlacePermanent(playerX, 0, _player.CommanderPrefab, true);
-        playerController = playerPerm.GetComponent<CommanderController>();
-        playerController.OnMatchStart(_player, battleField.PlayerDeck, battleField.PlayerHand, battleField.PlayerDiscard);
-
-        int opponentX = Mathf.CeilToInt(width * 0.5f) - 1;
-        var opponentPerm = battleField.PlacePermanent(opponentX, battleField.Depth - 1, _opponent.CommanderPrefab, false);
-        opponentController = opponentPerm.GetComponent<CommanderController>();
-        opponentController.OnMatchStart(_opponent, battleField.OpponentDeck, battleField.OpponentHand, battleField.OpponentDiscard);
+        var player = Instantiate(playerSO.CommanderPrefab).GetComponent<CommanderController>();
+        var opponent = Instantiate(opponentSO.CommanderPrefab).GetComponent<CommanderController>();
+        OnMatchStart(player, opponent);
     }
 
-    private void OnAssignCommanders(CommanderSO player, CommanderSO opponent)
+    //Initiate a new match
+    private void OnMatchStart(CommanderController player, CommanderController opponent)
     {
-        _player = player;
-        _opponent = opponent;
+        playerController = player;
+        opponentController = opponent;
 
         PlaceCommanders();
-        OnMatchStart();
-    }
 
-    private void OnMatchStart()
-    {
         if (IS_TESTING)
         {
             commanderInTurn = playerController;
-            playerController.SetPhase(Phase.Begin);
+            playerController.OnFirstTurn();
+            onNewMatchStarted?.Invoke();
             return;
         }
 
         if (Random.value >= 0.5f)
         {
             commanderInTurn = playerController;
-            playerController.SetPhase(Phase.Begin);
+            playerController.OnFirstTurn();
         }
         else
         {
             commanderInTurn = opponentController;
-            opponentController.SetPhase(Phase.Begin);
-        } 
+            opponentController.OnFirstTurn();
+        }
+
+        onNewMatchStarted?.Invoke();
+    }
+
+    private void PlaceCommanders()
+    {
+        if (IS_TESTING)
+        {
+            float width = _battleField.Width;
+            int playerX = Mathf.RoundToInt(width * 0.5f);
+            int opponentX = Mathf.CeilToInt(width * 0.5f) - 1;
+            _battleField.PlaceCommander(playerX, 0, playerController.gameObject, true);
+            _battleField.PlaceCommander(opponentX, _battleField.Depth - 1, opponentController.gameObject, false);
+        }
+        else
+        {
+            //otherwise, the opponent should already be located in on their starting node, so I'll need to call for them to occupy it
+            //for the player, I'll need to set their destination to the proper node, likely in the same method as above
+            //But there shouldn't be any need 
+        }
+
+        playerController.OnMatchStart();
+        opponentController.OnMatchStart();
     }
     #endregion
 
     #region - Phases -
     public void OnCurrentPhaseFinished()
     {
+        Debug.Log("Current Phase Finished");
         //start next commander's turn
         if (_currentPhase == Phase.End)
         {
@@ -128,6 +150,7 @@ public class DuelManager : MonoBehaviour
 
     private void SetPhase(Phase phase)
     {
+        Debug.Log("Setting Phase to " + phase.ToString());
         _currentPhase = phase;
         switch (phase)
         {
@@ -147,56 +170,61 @@ public class DuelManager : MonoBehaviour
                 OnEndPhase();
                 break;
         }
+        onPhaseChange?.Invoke(_currentPhase);
     }
 
     private void OnBeginPhase()
     {
-        //Debug.Log("Begin Phase");
+        
     }
 
     private void OnSummoningPhase()
     {
-        //Debug.Log("Summoning Phase");
+        
     }
 
     private void OnDeclarationPhase()
     {
-        //Debug.Log("Declaration Phase");
+        
     }
 
     private void OnResolutionPhase()
     {
-        //Debug.Log("Resolution Phase Started");
+        
     }
 
     private void OnEndPhase()
     {
-        //Debug.Log("End Phase Started");
+        
     }
     #endregion
 
-    private void OnCardInDeckdSelected(Card card)
-    {
-
-    }
-
-    private void OnCardInDiscardSelected(Card card)
-    {
-
-    }
-
+    #region - Card/Node Selection -
     private void OnCardInHandSelected(Card card)
     {
-        //Display card info
-        if (card.IsPlayerCard || card.isRevealed) UIManager.instance.ShowCardDisplay(card.cardInfo);
-
-        //Player selects a card to summon
-        if (card.IsPlayerCard && playerController.isTurn && _currentPhase == Phase.Summoning)
+        //Player selects a card to summon... I need to find a way to simplify all of these and statements
+        if (card.Commander is PlayerCommander && playerController.isTurn && _currentPhase == Phase.Summoning && card is Card_Permanent perm)
         {
             //Debug.Log("Waiting for tile to be selected");
-            _selectedCard = card;
+            _selectedPermanent = perm;
             if (cardPlacementCoroutine != null) StopCoroutine(cardPlacementCoroutine);
-            cardPlacementCoroutine = StartCoroutine(WaitForPermanentToBePlayed());
+            cardPlacementCoroutine = StartCoroutine(WaitForPermanentToBePlayed(card));
+        }
+    }
+
+    private void OnCardOnFieldSelected(Card card)
+    {
+        if (card is not Card_Permanent) throw new System.Exception("Cannot select a non-permanent on the field");
+
+        var permanent = card as Card_Permanent;
+
+        //if waiting for a target of an effect, select the target
+        if (_currentPhase == Phase.Declaration)
+        {
+            if (permanent.FirstTurn)
+            {
+                //if it doesn't have haste, too bad
+            }
         }
     }
 
@@ -207,33 +235,34 @@ public class DuelManager : MonoBehaviour
 
         //If waiting for a target, stop waiting
         if (cardPlacementCoroutine != null) StopCoroutine(cardPlacementCoroutine);
-        _selectedCard = null;
-    }
-
-    private void OnCardInPlaySelected(Card card)
-    {
-        UIManager.instance.ShowCardDisplay(card.cardInfo);
+        _selectedPermanent = null;
     }
 
     private void OnNodeSelected(GridNode node)
     {
-        if (waitingForNodeToBeSelected && commanderInTurn.CanPlayCard(_selectedCard.cardInfo.cost))
+        if (_waitingForNodeSelection && commanderInTurn.CanPlayCard(_selectedPermanent.CardInfo.cost) && _battleField.NodeBelongsToCommander(node, commanderInTurn))
         {
-            //Debug.Log(_selectedCard.cardInfo.name + " is to be played at " + node.transform.position);
-            commanderInTurn.OnPermanentPlayed(node, _selectedCard);
+            commanderInTurn.OnPermanentPlayed(node, _selectedPermanent);
 
-            waitingForNodeToBeSelected = false;
+            _waitingForNodeSelection = false;
             OnCardDeselected();
         }
     }
 
-
-    private IEnumerator WaitForPermanentToBePlayed()
+    private IEnumerator WaitForPermanentToBePlayed(Card card)
     {
-        waitingForNodeToBeSelected = true;
-        while (waitingForNodeToBeSelected == true)
+        deselectCard = false;
+        _waitingForNodeSelection = true;
+        while (_waitingForNodeSelection == true)
         {
+            if (deselectCard)
+            {
+                card.OnDeSelectCard();
+                deselectCard = false;
+                yield break;
+            }
             yield return null;
         }
     }
+    #endregion
 }

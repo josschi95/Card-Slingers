@@ -8,64 +8,75 @@ public class CommanderController : MonoBehaviour
 
     private DuelManager duelManager;
 
+    [SerializeField] private CommanderSO _commanderInfo;
     [SerializeField] private Phase currentPhase;
+    [SerializeField] private int _currentMana = 4;
     [Space]
     [SerializeField] private List<Card> _cardsInDeck;
-    [SerializeField] private List<Card> _cardsInHand;
-    //[SerializeField] private List<Card> _cardsInPlay;
     [SerializeField] private List<Card> _cardsInDiscardPile;
-    //[SerializeField] private Card _cardToBePlayed;
+    [SerializeField] private List<Card> _cardsInHand;
     [Space]
-    [SerializeField] private List<Permanent> permanentsInPlay;
-    [SerializeField] private int _currentMana = 4;
-
+    [SerializeField] private List<Card_Permanent> _permanentsOnField;
     public bool isTurn { get; private set; }
 
-    public Transform deckPile, handPile, discardPile;
-
+    #region - Public Variable References -
+    public CommanderSO CommanderInfo => _commanderInfo;
     public List<Card> CardsInDeck => _cardsInDeck;
-    public List<Card> CardsInHand => _cardsInHand;
     public List<Card> CardsInDiscard => _cardsInDiscardPile;
+    public List<Card> CardsInHand => _cardsInHand;
+    public List<Card_Permanent> PermanentsOnField => _permanentsOnField;
     public int CurrentMana => _currentMana;
-    //public Card CardToBePlayed => _cardToBePlayed;
+    #endregion
 
-    public virtual void OnMatchStart(CommanderSO commander, Transform deckPile, Transform hand, Transform discard, int startingHandSize = 4)
+    private void Start()
     {
         duelManager = DuelManager.instance;
+    }
 
-        _cardsInDeck = new List<Card>();
-        _cardsInDiscardPile = new List<Card>();
-        //_cardsInPlay = new List<Card>();
-        _cardsInHand = new List<Card>();
-        permanentsInPlay = new List<Permanent>();
+    public virtual void OnMatchStart(int startingHandSize = 4)
+    {
+        //duelManager = DuelManager.instance;
 
-        this.deckPile = deckPile;
-        handPile = hand;
-        discardPile = discard;
-
-        for (int i = 0; i < commander.Deck.cards.Count; i++)
-        {
-            var go = Instantiate(duelManager.cardPrefab);
-            go.transform.SetParent(this.deckPile, false);
-
-            var newCard = go.GetComponent<Card>();
-            newCard.AssignCard(commander.Deck.cards[i], this == duelManager.playerController);
-            _cardsInDeck.Add(newCard);
-            newCard.SetCardLocation(CardLocation.InDeck);
-        }
+        GenerateDeck();
 
         ShuffleDeck();
 
-        //Draw cards
-        for (int i = 0; i < startingHandSize; i++)
+        DrawCards(startingHandSize);
+    }
+
+    //Set the commander as the first to go, normal but don't draw a card
+    public void OnFirstTurn()
+    {
+        currentPhase = Phase.Begin;
+        OnBeginPhase(false);
+    }
+
+    protected virtual void GenerateDeck()
+    {
+        _cardsInDeck = new List<Card>();
+        _cardsInDiscardPile = new List<Card>();
+        _cardsInHand = new List<Card>();
+        _permanentsOnField = new List<Card_Permanent>();
+
+        foreach (CardSO card in _commanderInfo.Deck.cards)
         {
-            DrawCard();
+            /***Later on I'll have to check for each subtype, but this should work for now***/
+
+            Card newCard;
+            if (card is PermanentSO) newCard = Instantiate(duelManager.cardPermanentPrefab).GetComponent<Card>();
+            else newCard = Instantiate(duelManager.cardPrefab).GetComponent<Card>();
+
+            newCard.AssignCard(card, this, this == duelManager.playerController);
+            _cardsInDeck.Add(newCard);
+            DuelManager.instance.Battlefield.PlaceCardInDeck(this, newCard);
         }
     }
 
     #region - Phases -
     public void SetPhase(Phase phase)
     {
+        Debug.Log(CommanderInfo.name + " entering " + phase.ToString() + " phase");
+        currentPhase = phase;
         switch (phase)
         {
             case Phase.Begin:
@@ -86,13 +97,12 @@ public class CommanderController : MonoBehaviour
         }
     }
 
-    public void OnBeginPhase()
+    public void OnBeginPhase(bool drawCard = true)
     {
-        Debug.Log(gameObject.name + " entered Begin Phase");
         isTurn = true;
         _currentMana = 4;
 
-        DrawCard();
+        if (drawCard) DrawCards();
         //This will eventually have an animation, so wait until that is finished
 
         //For each card on the field, invoke an OnBeginPhase event
@@ -102,25 +112,21 @@ public class CommanderController : MonoBehaviour
 
     private void OnSummoningPhase()
     {
-        Debug.Log(gameObject.name + " entered Summoning Phase");
-
 
     }
 
     private void OnDeclarationPhase()
     {
-        Debug.Log(gameObject.name + " entered Declaration Phase");
+
     }
 
     private void OnResolutionPhase()
     {
-        Debug.Log(gameObject.name + " entered Resolution Phase");
+
     }
 
     private void OnEndPhase()
     {
-        Debug.Log(gameObject.name + " entered End Phase");
-
         isTurn = false;
 
         DuelManager.instance.OnCurrentPhaseFinished();
@@ -133,7 +139,7 @@ public class CommanderController : MonoBehaviour
     }
     #endregion
 
-    #region - Card Movement -
+    #region - Card Movements -
     private void ShuffleDeck()
     {
         for (int i = 0; i < _cardsInDeck.Count; i++)
@@ -152,25 +158,26 @@ public class CommanderController : MonoBehaviour
             var card = _cardsInDiscardPile[i];
             _cardsInDiscardPile.Remove(card);
             _cardsInDeck.Add(card);
-            card.transform.SetParent(deckPile, false);
-            card.SetCardLocation(CardLocation.InDeck);
+            duelManager.Battlefield.PlaceCardInDeck(this, card);
         }
     }
 
-    private void DrawCard()
+    private void DrawCards(int count = 1)
     {
-        if (_cardsInDeck.Count <= 0)
+        for (int i = 0; i < count; i++)
         {
-            Debug.Log("No Remaining Cards in Deck");
-            ShuffleDiscardPile();
-            return;
-        }
+            if (_cardsInDeck.Count <= 0)
+            {
+                Debug.Log("No Remaining Cards in Deck");
+                ShuffleDiscardPile();
+                return;
+            }
 
-        var cardToDraw = _cardsInDeck[0];
-        _cardsInDeck.Remove(cardToDraw);
-        _cardsInHand.Add(cardToDraw);
-        cardToDraw.transform.SetParent(handPile, false);
-        cardToDraw.SetCardLocation(CardLocation.InHand);
+            var cardToDraw = _cardsInDeck[0];
+            _cardsInDeck.Remove(cardToDraw);
+            _cardsInHand.Add(cardToDraw);
+            DuelManager.instance.Battlefield.PlaceCardInHand(this, cardToDraw);
+        }
     }
 
     private void DiscardCard(Card cardToDiscard)
@@ -178,9 +185,7 @@ public class CommanderController : MonoBehaviour
         if (!_cardsInHand.Contains(cardToDiscard)) return;
 
         _cardsInHand.Remove(cardToDiscard);
-        _cardsInDiscardPile.Add(cardToDiscard);
-        cardToDiscard.transform.SetParent(discardPile);
-        cardToDiscard.SetCardLocation(CardLocation.InDiscard);
+        cardToDiscard.OnSendToDiscardPile();
     }
     #endregion
 
@@ -190,25 +195,26 @@ public class CommanderController : MonoBehaviour
         return true;
     }
 
-    private void OnSpendMana(int points)
+    public void OnSpendMana(int points)
     {
         _currentMana -= points;
-        if (_currentMana <= 0)
+        if (_currentMana <= 0) //End phase if all AP has been spent
         {
             _currentMana = 0;
-            if (isTurn && currentPhase == Phase.Summoning)
-            {
-                //End phase if all AP has been spent
-                duelManager.OnCurrentPhaseFinished();
-            }
+            if (isTurn && currentPhase == Phase.Summoning) duelManager.OnCurrentPhaseFinished();
         }
+        onManaChange?.Invoke();
+    }
 
+    public void OnGainMana(int mana)
+    {
+        _currentMana += mana;
         onManaChange?.Invoke();
     }
 
     public void OnInstantPlayed(Card card)
     {
-        OnSpendMana(card.cardInfo.cost);
+        OnSpendMana(card.CardInfo.cost);
 
         //If a target is needed, wait for a target to be selected
         //Trigger whatever effect the instant has
@@ -216,34 +222,30 @@ public class CommanderController : MonoBehaviour
         //Send to discard pile
     }
 
-    public void OnPermanentPlayed(GridNode node, Card card)
+    public void OnPermanentPlayed(GridNode node, Card_Permanent card)
     {
-        OnSpendMana(card.cardInfo.cost);
+        //Spend Mana cost of card
+        OnSpendMana(card.CardInfo.cost);
 
-        var permanent = card.cardInfo as PermanentSO;
-
-        var go = Instantiate(permanent.Prefab, node.transform.position, Quaternion.identity);
-        var newPermanent = go.GetComponent<Permanent>();
-
-        permanentsInPlay.Add(newPermanent);
-        newPermanent.OnEnterField(this, card);
-
+        //Remove from hand
         _cardsInHand.Remove(card);
-        card.transform.SetParent(go.transform, false);
-        card.transform.localPosition = Vector3.zero;
-        card.SetCardLocation(CardLocation.OnField);
+        _permanentsOnField.Add(card);
+
+        //Set the position of the card
+        //This should later change to a smooth animation or coroutine
+        card.transform.SetParent(duelManager.Battlefield.transform, false);
+        card.transform.localPosition = node.transform.localPosition;
+
+        //Trigger the card for creating its permanent prefab
+        card.OnEnterField(node);
     }
 
-    public void OnPermanentRemovedFromField(Permanent permanent)
+    public void OnRemovePermanentFromField(Card_Permanent permanent)
     {
-        //Move card to discard
-
-        //Removes from list of permanents under control
-        permanentsInPlay.Remove(permanent);
         //Trigger any exit effects
-        permanent.OnExitField();
-        //Add to discard pile
-        _cardsInDiscardPile.Add(permanent.Card);
-        permanent.Card.SetCardLocation(CardLocation.InDiscard);
+        permanent.OnRemoveFromField();
+        
+        //Moves the card to the discard pile
+        permanent.OnSendToDiscardPile();
     }
 }

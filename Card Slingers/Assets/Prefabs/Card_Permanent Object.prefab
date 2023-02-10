@@ -213,9 +213,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3756212882512421372}
   - component: {fileID: 7380287455565942880}
-  - component: {fileID: -5398954704871956848}
+  - component: {fileID: -2380579149125959350}
   m_Layer: 0
-  m_Name: Card Object
+  m_Name: Card_Permanent Object
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -250,7 +250,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1.187, y: 0.01, z: 1.68}
   m_Center: {x: 0, y: 0.01, z: 0}
---- !u!114 &-5398954704871956848
+--- !u!114 &-2380579149125959350
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -259,7 +259,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 3762046901689712160}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49ce173234ee50643865a1777e4279f9, type: 3}
+  m_Script: {fileID: 11500000, guid: af2a8725e4e9ba04db26e434e8d58a92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   title: {fileID: 6246531348697929808}
@@ -273,6 +273,7 @@ MonoBehaviour:
   - {fileID: 6246531350085708962}
   _commander: {fileID: 0}
   _cardInfo: {fileID: 0}
+  _permanentObject: {fileID: 0}
 --- !u!1 &4116788791218358760
 GameObject:
   m_ObjectHideFlags: 0

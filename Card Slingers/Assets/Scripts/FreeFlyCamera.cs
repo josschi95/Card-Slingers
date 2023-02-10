@@ -69,6 +69,12 @@ public class FreeFlyCamera : MonoBehaviour
     [Tooltip("This keypress will move the camera to initialization position")]
     private KeyCode _initPositonButton = KeyCode.R;
 
+    [Space]
+
+    [SerializeField]
+    [Tooltip("This keypress will move the camera to aerial position")]
+    private KeyCode _aerialPositionButton = KeyCode.F;
+
     #endregion UI
 
     private float _currentIncrease = 1;
@@ -76,6 +82,9 @@ public class FreeFlyCamera : MonoBehaviour
 
     private Vector3 _initPosition;
     private Vector3 _initRotation;
+
+    private Vector3 _aerialPosition = new Vector3(0, 40, 0);
+    private Vector3 _aerialRotation = new Vector3(90, 0, 0);
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -98,6 +107,11 @@ public class FreeFlyCamera : MonoBehaviour
 
         transform.position = _initPosition;
         transform.eulerAngles = _initRotation;
+    }
+
+    public void SetAerialView(float height)
+    {
+        _aerialPosition.y = height;
     }
 
     private void CalculateCurrentIncrease(bool moving)
@@ -125,6 +139,12 @@ public class FreeFlyCamera : MonoBehaviour
         {
             transform.position = _initPosition;
             transform.eulerAngles = _initRotation;
+        }
+
+        if (Input.GetKeyDown(_aerialPositionButton))
+        {
+            transform.position = _aerialPosition;
+            transform.eulerAngles = _aerialRotation;
         }
     }
 

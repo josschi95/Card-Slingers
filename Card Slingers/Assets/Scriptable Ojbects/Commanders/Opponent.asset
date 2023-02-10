@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad9f45906d504fd458cc1d3248c4f965, type: 3}
   m_Name: Opponent
   m_EditorClassIdentifier: 
-  name: Opponent
+  name: The Rouge Rogue
   _faction: 0
   _commanderPrefab: {fileID: 8186311580235951897, guid: 43c00384f54050e4784a1b218abca788, type: 3}
   _deck:

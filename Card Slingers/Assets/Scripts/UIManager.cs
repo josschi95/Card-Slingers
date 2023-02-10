@@ -12,42 +12,80 @@ public class UIManager : MonoBehaviour
         instance = this;
     }
 
+    #region - Commander Banner -
     [Header("Commander Banner")]
-    [SerializeField] private TMP_Text playerCommanderName;
-    [SerializeField] private TMP_Text playerHealth, playerMana, opponentCommanderName, opponentHealth, opponentMana; 
+    [SerializeField] private TMP_Text phaseText;
+    [SerializeField] private RectTransform bannerParent;
+    [SerializeField] private TMP_Text playerCommanderName, playerHealth, playerMana;
+    [Space]
+    [SerializeField] private TMP_Text opponentCommanderName;
+    [SerializeField] private TMP_Text opponentHealth, opponentMana;
 
+    private Coroutine lerpBannerCoroutine;
+    private Vector3 bannerShownPos = Vector3.zero;
+    private Vector3 bannerHiddenPos = new Vector3(0, 150, 0);
+    #endregion
+
+    #region - Card Display -
     [Header("Card Display")]
     [SerializeField] private RectTransform cardDisplayRect;
     [SerializeField] private Button hideCardDisplayButton;
-    [Space]
     [SerializeField] private Image cardIcon;
-    [SerializeField] private GameObject[] cardCostMarkers;
     [SerializeField] private TMP_Text cardTitle, cardDescription, cardFlavorText;
+    [SerializeField] private GameObject[] cardCostMarkers;
+
     private Coroutine lerpCardDisplayCoroutine;
     private Vector3 cardDisplayShownPos = Vector3.zero;
     private Vector3 cardDisplayHiddenPos = new Vector3(500, 0, 0);
+    #endregion
 
     private void Start()
     {
+        bannerParent.anchoredPosition = bannerHiddenPos;
         cardDisplayRect.anchoredPosition = cardDisplayHiddenPos;
+
         hideCardDisplayButton.onClick.AddListener(HideCardDisplay);
+        DuelManager.instance.onNewMatchStarted += OnMatchStart;
+        DuelManager.instance.onMatchEnded += OnMatchEnd;
+        DuelManager.instance.onPhaseChange += OnPhaseChange;
     }
 
     private void OnMatchStart()
     {
-        //Show top display
+        //Subscribe to events
         DuelManager.instance.playerController.onManaChange += OnCommanderValuesChanged;
         DuelManager.instance.opponentController.onManaChange += OnCommanderValuesChanged;
+
+        playerCommanderName.text = DuelManager.instance.playerController.CommanderInfo.name;
+        opponentCommanderName.text = DuelManager.instance.opponentController.CommanderInfo.name;
+
+        OnCommanderValuesChanged();
+
+        if (lerpBannerCoroutine != null) StopCoroutine(lerpBannerCoroutine);
+        lerpBannerCoroutine = StartCoroutine(LerpRectTransform(bannerParent, bannerShownPos));
+    }
+
+    private void OnMatchEnd()
+    {
+        //Unsubscribe to events
+        DuelManager.instance.playerController.onManaChange -= OnCommanderValuesChanged;
+        DuelManager.instance.opponentController.onManaChange -= OnCommanderValuesChanged;
+
+        if (lerpBannerCoroutine != null) StopCoroutine(lerpBannerCoroutine);
+        lerpBannerCoroutine = StartCoroutine(LerpRectTransform(bannerParent, bannerHiddenPos));
+    }
+
+    private void OnPhaseChange(Phase phase)
+    {
+        phaseText.text = phase.ToString() + " Phase";
     }
 
     private void OnCommanderValuesChanged()
     {
-        playerCommanderName.text = DuelManager.instance.playerController.gameObject.name;
-        playerHealth.text = DuelManager.instance.playerController.name;
+        playerHealth.text = "[NULL]";
         playerMana.text = DuelManager.instance.playerController.CurrentMana.ToString();
         
-        opponentCommanderName.text = DuelManager.instance.opponentController.gameObject.name;
-        opponentHealth.text = DuelManager.instance.opponentController.name;
+        opponentHealth.text = "[NULL]";
         opponentMana.text = DuelManager.instance.opponentController.CurrentMana.ToString();
     }
 
@@ -65,29 +103,25 @@ public class UIManager : MonoBehaviour
         }
 
         if (lerpCardDisplayCoroutine != null) StopCoroutine(lerpCardDisplayCoroutine);
-        lerpCardDisplayCoroutine = StartCoroutine(LerpCardDisplay(true));
+        lerpCardDisplayCoroutine = StartCoroutine(LerpRectTransform(cardDisplayRect, cardDisplayShownPos));
     }
 
     public void HideCardDisplay()
     {
         if (lerpCardDisplayCoroutine != null) StopCoroutine(lerpCardDisplayCoroutine);
-        lerpCardDisplayCoroutine = StartCoroutine(LerpCardDisplay(false));
+        lerpCardDisplayCoroutine = StartCoroutine(LerpRectTransform(cardDisplayRect, cardDisplayHiddenPos));
     }
 
-    private IEnumerator LerpCardDisplay(bool showDisplay)
+    private IEnumerator LerpRectTransform(RectTransform rect, Vector3 endPos, float timeToMove = 0.5f)
     {
         float timeElapsed = 0;
-        float timeToMove = 0.35f;
-
-        var endPos = cardDisplayHiddenPos;
-        if (showDisplay) endPos = cardDisplayShownPos;
 
         while (timeElapsed < timeToMove)
         {
-            cardDisplayRect.anchoredPosition = Vector3.Lerp(cardDisplayRect.anchoredPosition, endPos, (timeElapsed / timeToMove));
+            rect.anchoredPosition = Vector3.Lerp(rect.anchoredPosition, endPos, (timeElapsed / timeToMove));
             timeElapsed += Time.deltaTime;
             yield return null;
         }
-        cardDisplayRect.anchoredPosition = endPos;
+        rect.anchoredPosition = endPos;
     }
 }

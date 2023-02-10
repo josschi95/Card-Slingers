@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad9f45906d504fd458cc1d3248c4f965, type: 3}
   m_Name: _Player
   m_EditorClassIdentifier: 
-  name: Player
+  name: Merlinus Beardicus
   _faction: 0
   _commanderPrefab: {fileID: 3810874859362294788, guid: 563ed6d71480be44b9ce1e65d849aae0, type: 3}
   _deck:

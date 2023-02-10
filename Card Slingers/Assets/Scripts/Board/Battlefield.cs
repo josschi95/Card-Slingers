@@ -7,7 +7,7 @@ public class Battlefield : MonoBehaviour
 {
     private const float CELL_SIZE = 5f;
 
-    public delegate void OnCellOccupantChangedCallback(int x, int y, Permanent occupant);
+    public delegate void OnCellOccupantChangedCallback(int x, int y, Card_Permanent occupant);
     public OnCellOccupantChangedCallback onCellOccupied;
     public OnCellOccupantChangedCallback onCellAbandoned;
 
@@ -70,8 +70,11 @@ public class Battlefield : MonoBehaviour
                 cellArray[x, z].OnAssignCoordinates(x, z);
             }
         }
-        float d = 25 + ((_depth - 6) * 2.5f);
-        Camera.main.GetComponent<FreeFlyCamera>().SetInit(new Vector3(0, 12, -d), new Vector3(35, 0, 0));
+        float initZ = 25 + ((_depth - 6) * 2.5f);
+        float aerialY = 5 * _depth - 5;
+        var cam = Camera.main.GetComponent<FreeFlyCamera>();
+        cam.SetInit(new Vector3(0, 12, -initZ), new Vector3(35, 0, 0));
+        cam.SetAerialView(aerialY);
     }
 
     //For testing only
@@ -139,7 +142,7 @@ public class Battlefield : MonoBehaviour
                 //Debug.Log(x + "," + startY + " is out of bounds");
                 return false;
             }
-            if (GetNode(x, startY).occupant != null)
+            if (GetNode(x, startY).Occupant != null)
             {
                 //Debug.Log(x + "," + startY + " is not clear");
                 return false;
@@ -153,7 +156,7 @@ public class Battlefield : MonoBehaviour
                 //Debug.Log(startX + "," + y + " is out of bounds");
                 return false;
             }
-            if (GetNode(startX, y).occupant != null)
+            if (GetNode(startX, y).Occupant != null)
             {
                 //Debug.Log(startX + "," + y + " is not clear");
                 return false;
@@ -165,27 +168,57 @@ public class Battlefield : MonoBehaviour
     }
     #endregion
 
-    public Permanent PlacePermanent(int x, int z, GameObject prefab, bool isPlayer)
+    public void PlaceCommander(int x, int z, GameObject go, bool isPlayer)
     {
         var node = GetNode(x, z);
-        return PlacePermanent(node, prefab, isPlayer);
-    }
 
-    public Permanent PlacePermanent(GridNode node, GameObject prefab, bool isPlayer)
-    {
-        var unit = Instantiate(prefab, node.transform.position, Quaternion.identity);
+        go.transform.SetParent(transform, false);
+        go.transform.position = node.transform.position;
+        if (isPlayer) go.transform.localEulerAngles = playerRotation;
+        else go.transform.localEulerAngles = opponentRotation;
 
-        if (isPlayer) unit.transform.localEulerAngles = playerRotation;
-        else unit.transform.localEulerAngles = opponentRotation;
-
-        var permanent = unit.GetComponent<Permanent>();
+        var permanent = go.GetComponent<Card_Permanent>();
         node.SetOccupant(permanent);
-
-        return permanent;
+        permanent.SetNode(node);
     }
 
-    public void RemovePermanent(int x, int z)
+    public bool NodeBelongsToCommander(GridNode node, CommanderController commander)
     {
-        GetNode(x, z).SetOccupant(null);
+        float tempDepth = _depth;
+        int halfDepth = Mathf.RoundToInt(tempDepth * 0.5f);
+
+        if (commander is PlayerCommander)
+        {
+            if (node.gridZ < halfDepth) return true;
+            return false;
+        }
+        else
+        {
+            if (node.gridZ >= halfDepth) return true;
+            return false;
+        }
     }
+
+    #region - Card Placement - 
+    public void PlaceCardInDeck(CommanderController commander, Card card)
+    {
+        if (commander == DuelManager.instance.playerController) card.transform.SetParent(_playerDeck, false);
+        else card.transform.SetParent(_opponentDeck, false);
+        card.SetCardLocation(CardLocation.InDeck);
+    }
+
+    public void PlaceCardInDiscard(CommanderController commander, Card card)
+    {
+        if (commander == DuelManager.instance.playerController) card.transform.SetParent(_playerDiscard, false);
+        else card.transform.SetParent(_opponentDiscard, false);
+        card.SetCardLocation(CardLocation.InDiscard);
+    }
+
+    public void PlaceCardInHand(CommanderController commander, Card card)
+    {
+        if (commander == DuelManager.instance.playerController) card.transform.SetParent(_playerHand, false);
+        else card.transform.SetParent(_opponentHand, false);
+        card.SetCardLocation(CardLocation.InHand);
+    }
+    #endregion
 }
