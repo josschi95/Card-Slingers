@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -35,7 +36,8 @@ public class CommanderController : MonoBehaviour
 
     public virtual void OnMatchStart(int startingHandSize = 4)
     {
-        //duelManager = DuelManager.instance;
+        //Should only need this here for testing
+        duelManager = DuelManager.instance;
 
         GenerateDeck();
 
@@ -61,7 +63,6 @@ public class CommanderController : MonoBehaviour
         foreach (CardSO card in _commanderInfo.Deck.cards)
         {
             /***Later on I'll have to check for each subtype, but this should work for now***/
-
             Card newCard;
             if (card is PermanentSO) newCard = Instantiate(duelManager.cardPermanentPrefab).GetComponent<Card>();
             else newCard = Instantiate(duelManager.cardPrefab).GetComponent<Card>();
@@ -231,10 +232,35 @@ public class CommanderController : MonoBehaviour
         _cardsInHand.Remove(card);
         _permanentsOnField.Add(card);
 
-        //Set the position of the card
-        //This should later change to a smooth animation or coroutine
-        card.transform.SetParent(duelManager.Battlefield.transform, false);
-        card.transform.localPosition = node.transform.localPosition;
+        //Child to the battlefield
+        //card.transform.SetParent(duelManager.Battlefield.transform);
+        card.transform.SetParent(null);
+
+        //Move the card to its new position
+        StartCoroutine(MoveCard(card, node.transform.position, node));
+    }
+
+    private IEnumerator MoveCard(Card_Permanent card, Vector3 endPos, GridNode node = null)
+    {
+        float timeElapsed = 0f;
+        float timeToMove = 1.5f;
+        var startPos = card.transform.localPosition;
+        var startRot = card.transform.rotation;
+        var endRot = Quaternion.Euler(Vector3.zero);
+
+        while (timeElapsed < timeToMove)
+        {
+            timeElapsed += Time.deltaTime;
+
+            card.transform.localPosition = MathParabola.Parabola(startPos, endPos, timeElapsed / timeToMove);
+            card.transform.rotation = Quaternion.Slerp(startRot, endRot, timeElapsed / timeToMove);
+
+            yield return new WaitForEndOfFrame();
+        }
+
+        //card.transform.SetParent(duelManager.Battlefield.transform);
+        card.transform.localPosition = endPos;
+        card.transform.rotation = endRot;
 
         //Trigger the card for creating its permanent prefab
         card.OnEnterField(node);

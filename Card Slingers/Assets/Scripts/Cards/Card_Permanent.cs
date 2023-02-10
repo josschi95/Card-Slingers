@@ -28,6 +28,8 @@ public class Card_Permanent : Card
         //Instantiate permanent
         var permanent = CardInfo as PermanentSO;
         _permanentObject = Instantiate(permanent.Prefab, transform.position, Quaternion.identity);
+        _permanentObject.transform.SetParent(transform);
+
         //anim = _permanentObject.GetComponent<Animator>(); //This will only be for units, not buildings, traps, or equipment
         //Play enter animation
 

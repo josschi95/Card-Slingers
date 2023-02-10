@@ -70,7 +70,7 @@ public class GridNode : MonoBehaviour, IInteractable
         }
     }
 
-    void IInteractable.OnMouseEnter()
+    public void OnMouseEnter()
     {
         if (DuelManager.instance.WaitingForNodeSelection)
         {
