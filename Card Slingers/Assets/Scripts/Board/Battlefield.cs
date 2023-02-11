@@ -1,25 +1,16 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class Battlefield : MonoBehaviour
 {
     private const float CELL_SIZE = 5f;
-
-    public delegate void OnCellOccupantChangedCallback(int x, int y, Card_Permanent occupant);
-    public OnCellOccupantChangedCallback onCellOccupied;
-    public OnCellOccupantChangedCallback onCellAbandoned;
-
-    private static Vector3 playerRotation = Vector3.zero;
-    private static Vector3 opponentRotation = new Vector3(0, 180, 0);
     
-    private GridNode[,] cellArray;
+    private GridNode[,] gridArray;
 
     [SerializeField] private int _width;
     [SerializeField] private int _depth;
     [SerializeField] private GameObject node; //Move this to being pooled
-    [SerializeField] private GameObject checkerboardWhite, checkerboardGray;
+    [SerializeField] private GameObject checkerboardWhite, checkerboardGray; //these won't be needed beyond testing
     [Space]
     [SerializeField] private Transform _playerCardsParent;
     [SerializeField] private Transform _playerDeck, _playerHand, _playerDiscard;
@@ -29,24 +20,12 @@ public class Battlefield : MonoBehaviour
     private Vector3 origin;
 
     #region - Public Variable References -
-    public int Width => _width;
+    public int Width => _width; //These are currently only being used for early testing
     public int Depth => _depth;
-    public float CellSize => CELL_SIZE;
-    public Transform PlayerDeck => _playerDeck;
-    public Transform PlayerHand => _playerHand;
-    public Transform PlayerDiscard => _playerDiscard;
-    public Transform OpponentDeck => _opponentDeck;
-    public Transform OpponentHand => _opponentHand;
-    public Transform OpponentDiscard => _opponentDiscard;
     #endregion
 
-    private void Awake()
-    {
-        CreateGrid();
-    }
-
     #region - Grid -
-    private void CreateGrid()
+    public void CreateGrid()
     {
         origin = new Vector3((-_width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f), 0, (-_depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f));
 
@@ -57,10 +36,10 @@ public class Battlefield : MonoBehaviour
         float f = _depth;
         int playerDepth = Mathf.RoundToInt(f * 0.5f);
 
-        cellArray = new GridNode[_width, _depth];
-        for (int x = 0; x < cellArray.GetLength(0); x++)
+        gridArray = new GridNode[_width, _depth];
+        for (int x = 0; x < gridArray.GetLength(0); x++)
         {
-            for (int z = 0; z < cellArray.GetLength(1); z++)
+            for (int z = 0; z < gridArray.GetLength(1); z++)
             {
                 var pos = GetGridPosition(x, z);
                 CreateCheckerboard(pos, x, z);
@@ -69,10 +48,11 @@ public class Battlefield : MonoBehaviour
                 GameObject go = Instantiate(node, pos, Quaternion.identity);
                 go.transform.SetParent(transform);
 
-                cellArray[x, z] = go.GetComponentInChildren<GridNode>();
-                cellArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);
+                gridArray[x, z] = go.GetComponentInChildren<GridNode>();
+                gridArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);
             }
         }
+
         float initZ = 25 + ((_depth - 6) * 2.5f);
         float aerialY = 5 * _depth - 5;
         var cam = Camera.main.GetComponent<FreeFlyCamera>();
@@ -116,7 +96,7 @@ public class Battlefield : MonoBehaviour
     {
         if (x >= 0 && z >= 0 && x < _width && z < _depth)
         {
-            return cellArray[x, z];
+            return gridArray[x, z];
         }
 
         throw new System.Exception("parameter " + x + "," + z + " outside bounds of array");
@@ -128,9 +108,31 @@ public class Battlefield : MonoBehaviour
         //return _origin.transform.position + new Vector3(x * CELL_SIZE, 0, z * CELL_SIZE);
     }
 
-    public Vector3 GetNodePosition(int x, int z)
+    public GridNode[] GetAllNodesInLane(int laneX)
     {
-        return GetNode(x, z).transform.position;
+        var tempArray = new GridNode[_depth];
+
+        for (int i = 0; i < tempArray.Length; i++)
+        {
+            tempArray[i] = gridArray[laneX, i];
+        }
+
+        return tempArray;
+    }
+
+    public GridNode[] GetLaneNodesInRange(GridNode node, int range)
+    {
+        var tempList = new List<GridNode>();
+
+        for (int i = 0; i < _depth; i++)
+        {
+            var laneNode = gridArray[node.gridX, i];
+            if (laneNode == node) continue;
+
+            if (Mathf.Abs(node.gridZ - laneNode.gridZ) <= range) tempList.Add(laneNode);
+        }
+
+        return tempList.ToArray();
     }
 
     public bool OnValidateNewPosition(GridNode newNode, int width, int height)
@@ -169,23 +171,9 @@ public class Battlefield : MonoBehaviour
 
         return true;
     }
-    #endregion
 
-    public void PlaceCommander(int x, int z, GameObject go, bool isPlayer)
-    {
-        var node = GetNode(x, z);
-
-        go.transform.SetParent(transform, false);
-        go.transform.position = node.transform.position;
-        if (isPlayer) go.transform.localEulerAngles = playerRotation;
-        else go.transform.localEulerAngles = opponentRotation;
-
-        var permanent = go.GetComponent<Card_Permanent>();
-        node.SetOccupant(permanent);
-        permanent.SetNode(node);
-    }
-
-    public bool NodeBelongsToCommander(GridNode node, CommanderController commander)
+    //used to divide the field into two halves
+    /*public bool NodeBelongsToCommander(GridNode node, CommanderController commander)
     {
         float tempDepth = _depth;
         int halfDepth = Mathf.RoundToInt(tempDepth * 0.5f);
@@ -200,28 +188,30 @@ public class Battlefield : MonoBehaviour
             if (node.gridZ >= halfDepth) return true;
             return false;
         }
+    }*/
+    #endregion
+
+    #region - Card Placement Parents - 
+
+    //I'm likely going to end up moving these into a pooled object or just have a single one that I use for each dungeon,
+    //and have them held by a dungeon manager instead of every single battlefield having their own
+
+    public Transform GetDeckParent(CommanderController commander)
+    {
+        if (commander is PlayerCommander) return _playerDeck;
+        return _opponentDeck;
     }
 
-    #region - Card Placement - 
-    public void PlaceCardInDeck(CommanderController commander, Card card)
+    public Transform GetDiscardParent(CommanderController commander)
     {
-        if (commander == DuelManager.instance.playerController) card.transform.SetParent(_playerDeck, false);
-        else card.transform.SetParent(_opponentDeck, false);
-        card.SetCardLocation(CardLocation.InDeck);
+        if (commander is PlayerCommander) return _playerDiscard;
+        return _opponentDiscard;
     }
 
-    public void PlaceCardInDiscard(CommanderController commander, Card card)
+    public Transform GetHandParent(CommanderController commander)
     {
-        if (commander == DuelManager.instance.playerController) card.transform.SetParent(_playerDiscard, false);
-        else card.transform.SetParent(_opponentDiscard, false);
-        card.SetCardLocation(CardLocation.InDiscard);
-    }
-
-    public void PlaceCardInHand(CommanderController commander, Card card)
-    {
-        if (commander == DuelManager.instance.playerController) card.transform.SetParent(_playerHand, false);
-        else card.transform.SetParent(_opponentHand, false);
-        card.SetCardLocation(CardLocation.InHand);
+        if (commander is PlayerCommander) return _playerHand;
+        return _opponentHand;
     }
     #endregion
 }

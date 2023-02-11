@@ -60,7 +60,7 @@ public class InputHandler : MonoBehaviour
 
     private void OnRightClick()
     {
-        DuelManager.instance.deselectCard = true;
+        DuelManager.instance.OnCardDeselected();
         ray = cam.ScreenPointToRay(GetMousePos());
         if (Physics.Raycast(ray, out hit))
         {

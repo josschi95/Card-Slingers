@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3810874859362294789}
   - component: {fileID: 3423348407480956462}
-  - component: {fileID: 5017396033689996882}
   m_Layer: 0
   m_Name: Player Commander
   m_TagString: Untagged
@@ -26,7 +25,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3810874859362294788}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 9, y: 0, z: -1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -47,33 +46,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _commanderInfo: {fileID: 11400000, guid: 976e9b0abbe12e240ade98a6315322c2, type: 2}
+  _commanderCard: {fileID: 0}
   currentPhase: 0
   _currentMana: 4
   _cardsInDeck: []
   _cardsInDiscardPile: []
   _cardsInHand: []
   _permanentsOnField: []
---- !u!114 &5017396033689996882
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3810874859362294788}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af2a8725e4e9ba04db26e434e8d58a92, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  title: {fileID: 0}
-  description: {fileID: 0}
-  flavorText: {fileID: 0}
-  display: {fileID: 0}
-  costMarkers: []
-  _commander: {fileID: 0}
-  _cardInfo: {fileID: 0}
-  _occupiedNode: {fileID: 0}
-  _permanentObject: {fileID: 0}
 --- !u!1 &6951546250325523029
 GameObject:
   m_ObjectHideFlags: 0

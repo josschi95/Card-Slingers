@@ -16,14 +16,14 @@ public class Card_Permanent : Card
     public GameObject PermanentObject => _permanentObject;
     public bool FirstTurn => _firstTurn;
 
-    public void OnEnterField(GridNode node)
+    public void OnSummoned(GridNode node)
     {
         //Sets the card location as on the battlefield
         SetCardLocation(CardLocation.OnField);
-
-        //Set current node and occupy it
-        _occupiedNode = node;
-        _occupiedNode.SetOccupant(this);
+        //Set as child to the battlefield
+        transform.SetParent(DuelManager.instance.Battlefield.transform);
+        //Occupy the given node
+        OnOccupyNode(node);
 
         //Instantiate permanent
         var permanent = CardInfo as PermanentSO;
@@ -36,9 +36,20 @@ public class Card_Permanent : Card
         _firstTurn = true;
     }
 
-    public void SetNode(GridNode newNode)
+    //Set current node and occupy it
+    public void OnOccupyNode(GridNode newNode)
     {
         _occupiedNode = newNode;
+        _occupiedNode.SetOccupant(this);
+
+        transform.position = newNode.transform.position;
+    }
+
+    //Abandon the currently occupied node
+    public void OnAbandonNode()
+    {
+        _occupiedNode.SetOccupant(null);
+        _occupiedNode = null;
     }
 
     public void OnBeginPhase()
@@ -49,14 +60,11 @@ public class Card_Permanent : Card
 
     public void OnRemoveFromField() //Maybe change this to a method in the base Card class for OnEnterDiscard which will also set location
     {
-        _occupiedNode.SetOccupant(null);
+        OnAbandonNode();
         //Play death animation <= this will probably be separate and only for units,
         //because I'll have to wait for the animation to finish
         //and then I can call OnRemovePermanentFromField(this) 
 
         //destroy _permanentObject or return to pool
-
-        //Removes from commander's list of permanents under control
-        _commander.PermanentsOnField.Remove(this);
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GridNode : MonoBehaviour, IInteractable
 {
-    private enum MaterialType { Normal, Blue, Red };
+    public enum MaterialType { Normal, Blue, Red };
     [SerializeField] private MeshRenderer meshRenderer;
     [SerializeField] private Material normalMaterial;
     [SerializeField] private Material blueHighlightedMaterial;
@@ -16,6 +16,7 @@ public class GridNode : MonoBehaviour, IInteractable
     [SerializeField] Card _trap;
     [SerializeField] Card _terrain;
 
+    private bool _lockedForDisplay; //ignore mouse movements to change the color
 
     public int gridX { get; private set; }
     public int gridZ { get; private set; }
@@ -41,7 +42,7 @@ public class GridNode : MonoBehaviour, IInteractable
         //if (Occupant != null) Debug.Log(gridX + "," + gridZ + ": " + Occupant.gameObject.name);
         //else Debug.Log(gridX + "," + gridZ);
 
-        if (DuelManager.instance.WaitingForNodeSelection) DuelManager.instance.onNodeSelected?.Invoke(this);
+        DuelManager.instance.onNodeSelected?.Invoke(this);
 
     }
 
@@ -54,17 +55,18 @@ public class GridNode : MonoBehaviour, IInteractable
     {
         DuelManager.instance.onNodeMouseEnter?.Invoke(this);
 
-        if (DuelManager.instance.WaitingForNodeSelection)
-        {
-            if (Occupant != null && Occupant.Commander == DuelManager.instance.opponentController) SetColor(MaterialType.Red);
-            else SetColor(MaterialType.Blue);
-        }
+        if (_lockedForDisplay || Occupant == null) return;
+        else if (Occupant.Commander is PlayerCommander) SetColor(MaterialType.Blue);
+        else SetColor(MaterialType.Red);
     }
 
     private void OnMouseExit()
     {
-        SetColor(MaterialType.Normal);
         DuelManager.instance.onNodeMouseExit?.Invoke(this);
+        
+        if (_lockedForDisplay) return;
+
+        SetColor(MaterialType.Normal);
     }
 
     private void SetColor(MaterialType type)
@@ -83,5 +85,28 @@ public class GridNode : MonoBehaviour, IInteractable
         }
     }
 
+    public void SetLockedDisplay(MaterialType color)
+    {
+        _lockedForDisplay = true;
+        SetColor(color);
+    }
 
+    public void UnlockDisplay()
+    {
+        _lockedForDisplay = false;
+        SetColor(MaterialType.Normal);
+    }
+
+    public bool CanMoveIntoNode(Card_Permanent card)
+    {
+        if (card == _occupant) return false; //same occupant
+
+        if (_occupant == null) return true; //not occupied at all
+
+        if (_occupant.Commander != card.Commander) return false; //occupied by an enemy
+
+        if (_occupant is Card_Structure structure && structure.CanBeOccupied) return true; //can move into building
+
+        return false; //there is an allied occupant here
+    }
 }

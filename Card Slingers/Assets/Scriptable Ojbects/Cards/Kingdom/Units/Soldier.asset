@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Soldier
   m_EditorClassIdentifier: 
   name: Soldier
+  cardPrefab: {fileID: 3762046901689712160, guid: b7e6c0ddf4b9f044cb18ab65dc3884b5, type: 3}
   icon: {fileID: 21300000, guid: 58bac37f0d7391f4ca6d341174276884, type: 3}
   type: 0
   faction: 1

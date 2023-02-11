@@ -17,6 +17,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Text phaseText;
     [SerializeField] private RectTransform bannerParent;
     [SerializeField] private TMP_Text playerCommanderName, playerHealth, playerMana;
+    [SerializeField] private Button endPhaseButton;
     [Space]
     [SerializeField] private TMP_Text opponentCommanderName;
     [SerializeField] private TMP_Text opponentHealth, opponentMana;
@@ -48,16 +49,18 @@ public class UIManager : MonoBehaviour
         DuelManager.instance.onNewMatchStarted += OnMatchStart;
         DuelManager.instance.onMatchEnded += OnMatchEnd;
         DuelManager.instance.onPhaseChange += OnPhaseChange;
+
+        endPhaseButton.onClick.AddListener(OnPlayerEndPhase);
     }
 
     private void OnMatchStart()
     {
         //Subscribe to events
-        DuelManager.instance.playerController.onManaChange += OnCommanderValuesChanged;
-        DuelManager.instance.opponentController.onManaChange += OnCommanderValuesChanged;
+        DuelManager.instance.PlayerController.onManaChange += OnCommanderValuesChanged;
+        DuelManager.instance.OpponentController.onManaChange += OnCommanderValuesChanged;
 
-        playerCommanderName.text = DuelManager.instance.playerController.CommanderInfo.name;
-        opponentCommanderName.text = DuelManager.instance.opponentController.CommanderInfo.name;
+        playerCommanderName.text = DuelManager.instance.PlayerController.CommanderInfo.name;
+        opponentCommanderName.text = DuelManager.instance.OpponentController.CommanderInfo.name;
 
         OnCommanderValuesChanged();
 
@@ -68,11 +71,19 @@ public class UIManager : MonoBehaviour
     private void OnMatchEnd()
     {
         //Unsubscribe to events
-        DuelManager.instance.playerController.onManaChange -= OnCommanderValuesChanged;
-        DuelManager.instance.opponentController.onManaChange -= OnCommanderValuesChanged;
+        DuelManager.instance.PlayerController.onManaChange -= OnCommanderValuesChanged;
+        DuelManager.instance.OpponentController.onManaChange -= OnCommanderValuesChanged;
 
         if (lerpBannerCoroutine != null) StopCoroutine(lerpBannerCoroutine);
         lerpBannerCoroutine = StartCoroutine(LerpRectTransform(bannerParent, bannerHiddenPos));
+    }
+
+    private void OnPlayerEndPhase()
+    {
+        if (DuelManager.instance.PlayerController.isTurn)
+        {
+            DuelManager.instance.OnCurrentPhaseFinished();
+        }
     }
 
     private void OnPhaseChange(Phase phase)
@@ -83,10 +94,10 @@ public class UIManager : MonoBehaviour
     private void OnCommanderValuesChanged()
     {
         playerHealth.text = "[NULL]";
-        playerMana.text = DuelManager.instance.playerController.CurrentMana.ToString();
+        playerMana.text = DuelManager.instance.PlayerController.CurrentMana.ToString();
         
         opponentHealth.text = "[NULL]";
-        opponentMana.text = DuelManager.instance.opponentController.CurrentMana.ToString();
+        opponentMana.text = DuelManager.instance.OpponentController.CurrentMana.ToString();
     }
 
     public void ShowCardDisplay(CardSO card)
