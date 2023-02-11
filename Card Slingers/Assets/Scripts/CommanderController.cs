@@ -228,13 +228,18 @@ public class CommanderController : MonoBehaviour
         //Spend Mana cost of card
         OnSpendMana(card.CardInfo.cost);
 
+        //Parent to battlefield
+        card.transform.SetParent(duelManager.Battlefield.transform);
+
+        //Place card's location !!MUST CHANGE LOCATION BEFORE DESELECTING!!
+        card.SetCardLocation(CardLocation.OnField);
+
+        //This will probably move to when waiting for the node to be selected
+        duelManager.DisplayArc(card.transform.position, node.transform.position);
+
         //Remove from hand
         _cardsInHand.Remove(card);
-        _permanentsOnField.Add(card);
-
-        //Child to the battlefield
-        //card.transform.SetParent(duelManager.Battlefield.transform);
-        card.transform.SetParent(null);
+        _permanentsOnField.Add(card);        
 
         //Move the card to its new position
         StartCoroutine(MoveCard(card, node.transform.position, node));
@@ -242,9 +247,11 @@ public class CommanderController : MonoBehaviour
 
     private IEnumerator MoveCard(Card_Permanent card, Vector3 endPos, GridNode node = null)
     {
+        //float dist = Vector3.Distance(card.transform.position, endPos);
+        float timeToMove = Vector3.Distance(card.transform.position, endPos) / 25f;
+
         float timeElapsed = 0f;
-        float timeToMove = 1.5f;
-        var startPos = card.transform.localPosition;
+        var startPos = card.transform.position;
         var startRot = card.transform.rotation;
         var endRot = Quaternion.Euler(Vector3.zero);
 
@@ -252,18 +259,20 @@ public class CommanderController : MonoBehaviour
         {
             timeElapsed += Time.deltaTime;
 
-            card.transform.localPosition = MathParabola.Parabola(startPos, endPos, timeElapsed / timeToMove);
+            card.transform.position = MathParabola.Parabola(startPos, endPos, timeElapsed / timeToMove);
             card.transform.rotation = Quaternion.Slerp(startRot, endRot, timeElapsed / timeToMove);
 
-            yield return new WaitForEndOfFrame();
+            yield return null;
         }
 
-        //card.transform.SetParent(duelManager.Battlefield.transform);
-        card.transform.localPosition = endPos;
+        card.transform.position = endPos;
         card.transform.rotation = endRot;
 
         //Trigger the card for creating its permanent prefab
         card.OnEnterField(node);
+
+        //Remove trail display
+        duelManager.ClearTrail();
     }
 
     public void OnRemovePermanentFromField(Card_Permanent permanent)

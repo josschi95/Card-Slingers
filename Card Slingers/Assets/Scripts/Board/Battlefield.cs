@@ -54,6 +54,9 @@ public class Battlefield : MonoBehaviour
         _playerCardsParent.position = new Vector3(transform.position.x, transform.position.y + 0.25f, -parentDist);
         _opponentCardsParent.position = new Vector3(transform.position.x, transform.position.y + 0.25f, parentDist);
 
+        float f = _depth;
+        int playerDepth = Mathf.RoundToInt(f * 0.5f);
+
         cellArray = new GridNode[_width, _depth];
         for (int x = 0; x < cellArray.GetLength(0); x++)
         {
@@ -67,7 +70,7 @@ public class Battlefield : MonoBehaviour
                 go.transform.SetParent(transform);
 
                 cellArray[x, z] = go.GetComponentInChildren<GridNode>();
-                cellArray[x, z].OnAssignCoordinates(x, z);
+                cellArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);
             }
         }
         float initZ = 25 + ((_depth - 6) * 2.5f);

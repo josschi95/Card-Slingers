@@ -21,8 +21,10 @@ public class DuelManager : MonoBehaviour
     public delegate void OnPhaseChangeCallback(Phase newPhase);
     public OnPhaseChangeCallback onPhaseChange;
 
-    public delegate void OnNodeSelectedCallback(GridNode node);
-    public OnNodeSelectedCallback onNodeSelected;
+    public delegate void OnNodeFocusChangeCallback(GridNode node);
+    public OnNodeFocusChangeCallback onNodeSelected;
+    public OnNodeFocusChangeCallback onNodeMouseEnter;
+    public OnNodeFocusChangeCallback onNodeMouseExit;
 
     public delegate void OnCardSelectedCallback(Card card);
     public OnCardSelectedCallback onCardInHandSelected; //if player card, display a larger UI display, if can be played and then a valid tile is selected => play it, if in the enemy's hand, likely only to reveal a card or choose one to discard
@@ -44,9 +46,11 @@ public class DuelManager : MonoBehaviour
     [Space]
     public GameObject cardPrefab;
     public GameObject cardPermanentPrefab;
+    public GameObject empty;
 
     private Card_Permanent _selectedPermanent;
 
+    private GridNode highlightedNode;
     private bool _waitingForNodeSelection;
     private Coroutine cardPlacementCoroutine;
 
@@ -61,6 +65,9 @@ public class DuelManager : MonoBehaviour
     private void Start()
     {
         onNodeSelected += OnNodeSelected;
+        onNodeMouseEnter += OnNodeMouseEnter;
+        onNodeMouseExit += OnNodeMouseExit;
+
         onCardInHandSelected += OnCardInHandSelected;
         onCardInPlaySelected += OnCardOnFieldSelected;
         //onCardInDeckSelected += OnCardInDeckSelected;
@@ -131,7 +138,6 @@ public class DuelManager : MonoBehaviour
     #region - Phases -
     public void OnCurrentPhaseFinished()
     {
-        Debug.Log("Current Phase Finished");
         //start next commander's turn
         if (_currentPhase == Phase.End)
         {
@@ -238,15 +244,33 @@ public class DuelManager : MonoBehaviour
         _selectedPermanent = null;
     }
 
+    private void OnNodeMouseEnter(GridNode node)
+    {
+        highlightedNode = node;
+    }
+
+    private void OnNodeMouseExit(GridNode node)
+    {
+        if (node == highlightedNode) highlightedNode = null;
+    }
+
     private void OnNodeSelected(GridNode node)
     {
         if (_waitingForNodeSelection && commanderInTurn.CanPlayCard(_selectedPermanent.CardInfo.cost) && _battleField.NodeBelongsToCommander(node, commanderInTurn))
         {
             commanderInTurn.OnPermanentPlayed(node, _selectedPermanent);
-
+            if (cardPlacementCoroutine != null) StopCoroutine(cardPlacementCoroutine);
             _waitingForNodeSelection = false;
             OnCardDeselected();
         }
+    }
+
+    private bool NodeIsValid(GridNode node)
+    {
+        if (!node.IsPlayerNode) return false;
+        if (node.Occupant != null) return false;
+
+        return true;
     }
 
     private IEnumerator WaitForPermanentToBePlayed(Card card)
@@ -255,9 +279,15 @@ public class DuelManager : MonoBehaviour
         _waitingForNodeSelection = true;
         while (_waitingForNodeSelection == true)
         {
+            if (highlightedNode == null || !NodeIsValid(highlightedNode)) ClearTrail();
+            else DisplayArc(card.transform.position, highlightedNode.transform.position);
+            //only display if node is valid 
+
             if (deselectCard)
             {
+                Debug.Log("OnDeselect while waiting for permanent to be played");
                 card.OnDeSelectCard();
+                ClearTrail();
                 deselectCard = false;
                 yield break;
             }
@@ -265,4 +295,22 @@ public class DuelManager : MonoBehaviour
         }
     }
     #endregion
+
+    public void DisplayArc(Vector3 start, Vector3 end)
+    {
+        var trail = GetComponent<LineRenderer>();
+        trail.positionCount = 100;
+        
+        for (int i = 0; i < trail.positionCount; i++)
+        {
+            float index = i;
+            trail.SetPosition(i, MathParabola.Parabola(start, end, index / trail.positionCount));
+        }
+    }
+
+    public void ClearTrail()
+    {
+        var trail = GetComponent<LineRenderer>();
+        trail.positionCount = 0;
+    }
 }

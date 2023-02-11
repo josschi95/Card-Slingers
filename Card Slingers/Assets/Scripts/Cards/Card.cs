@@ -132,6 +132,9 @@ public class Card : MonoBehaviour, IInteractable
 
     protected IEnumerator LerpCardUpDown(bool up)
     {
+        //Ignore this if not placed in hand
+        if (_location != CardLocation.InHand) yield break;
+
         float timeElapsed = 0;
         float timeToMove = 0.25f;
         var endPos = transform.localPosition;

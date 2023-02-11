@@ -9,10 +9,9 @@ public class GridNode : MonoBehaviour, IInteractable
     [SerializeField] private Material normalMaterial;
     [SerializeField] private Material blueHighlightedMaterial;
     [SerializeField] private Material redHighlightedMaterial;
-    private Battlefield field;
-
     [Space]
 
+    [SerializeField] private bool _isPlayerNode;
     [SerializeField] Card_Permanent _occupant;
     [SerializeField] Card _trap;
     [SerializeField] Card _terrain;
@@ -20,14 +19,16 @@ public class GridNode : MonoBehaviour, IInteractable
 
     public int gridX { get; private set; }
     public int gridZ { get; private set; }
+    public bool IsPlayerNode => _isPlayerNode;
     public Card_Permanent Occupant => _occupant;
     public Card Trap => _trap;
     public Card Terrain => _terrain;
 
-    public void OnAssignCoordinates(int x, int z)
+    public void OnAssignCoordinates(int x, int z, bool isPlayerNode)
     {
         gridX = x;
         gridZ = z;
+        _isPlayerNode = isPlayerNode;
     }
 
     public void SetOccupant(Card_Permanent occupant)
@@ -49,9 +50,21 @@ public class GridNode : MonoBehaviour, IInteractable
         if (Occupant != null) UIManager.instance.ShowCardDisplay(_occupant.CardInfo);
     }
 
+    public void OnMouseEnter()
+    {
+        DuelManager.instance.onNodeMouseEnter?.Invoke(this);
+
+        if (DuelManager.instance.WaitingForNodeSelection)
+        {
+            if (Occupant != null && Occupant.Commander == DuelManager.instance.opponentController) SetColor(MaterialType.Red);
+            else SetColor(MaterialType.Blue);
+        }
+    }
+
     private void OnMouseExit()
     {
         SetColor(MaterialType.Normal);
+        DuelManager.instance.onNodeMouseExit?.Invoke(this);
     }
 
     private void SetColor(MaterialType type)
@@ -70,12 +83,5 @@ public class GridNode : MonoBehaviour, IInteractable
         }
     }
 
-    public void OnMouseEnter()
-    {
-        if (DuelManager.instance.WaitingForNodeSelection)
-        {
-            if (Occupant != null && Occupant.Commander == DuelManager.instance.opponentController) SetColor(MaterialType.Red);
-            else SetColor(MaterialType.Blue);
-        }
-    }
+
 }

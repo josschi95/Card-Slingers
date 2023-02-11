@@ -53,9 +53,6 @@ public class DeckHolder : MonoBehaviour
     {
         int cardCount = transform.childCount - objectsToIgnore.Length;
         float width = cardCount * (CARD_WIDTH + cardSpacing);
-
-        //Debug.Log(width);
-
         float cardXPos = -(width * 0.5f);
 
         for (int i = 0; i < transform.childCount; i++)
