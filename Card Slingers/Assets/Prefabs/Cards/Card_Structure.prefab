@@ -216,10 +216,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3756212882512421372}
   - component: {fileID: 7380287455565942880}
-  - component: {fileID: 8143303639936209591}
-  - component: {fileID: 1569306437134555641}
+  - component: {fileID: -8053979940324616043}
   m_Layer: 0
-  m_Name: Card_Commander
+  m_Name: Card_Structure
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -256,7 +255,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1.187, y: 0.01, z: 1.68}
   m_Center: {x: 0, y: 0.01, z: 0}
---- !u!114 &8143303639936209591
+--- !u!114 &-8053979940324616043
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -265,31 +264,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3762046901689712160}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4af945b07d58f8747b13c705e0b6a941, type: 3}
+  m_Script: {fileID: 11500000, guid: d1a5fa39c09b82a4bbee41a191b24375, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _commanderInfo: {fileID: 0}
-  _commanderCard: {fileID: 1569306437134555641}
-  currentPhase: 0
-  _currentMana: 4
-  _cardsInHand: []
-  _cardsInDeck: []
-  _cardsInDiscardPile: []
-  _cardsInExile: []
-  _permanentsOnField: []
---- !u!114 &1569306437134555641
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3762046901689712160}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 444b4251ff99f094e8bfbdea33ae567a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _outline: {fileID: 0}
   title: {fileID: 6246531348697929808}
   description: {fileID: 6246531348612789802}
   flavorText: {fileID: 5142495758485059072}
@@ -299,10 +276,13 @@ MonoBehaviour:
   - {fileID: 6246531350102624606}
   - {fileID: 6246531350575381036}
   - {fileID: 6246531350085708962}
-  _commander: {fileID: 8143303639936209591}
+  _commander: {fileID: 0}
   _cardInfo: {fileID: 0}
   _occupiedNode: {fileID: 0}
   _permanentObject: {fileID: 0}
+  _maxHealth: 0
+  _currentHealth: 0
+  _occupant: {fileID: 0}
 --- !u!1 &4652214776329499669
 GameObject:
   m_ObjectHideFlags: 0

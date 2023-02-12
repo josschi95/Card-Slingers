@@ -13,10 +13,10 @@ public class Battlefield : MonoBehaviour
     [SerializeField] private GameObject checkerboardWhite, checkerboardGray; //these won't be needed beyond testing
     [Space]
     [SerializeField] private Transform _playerCardsParent;
-    [SerializeField] private Transform _playerDeck, _playerHand, _playerDiscard;
+    [SerializeField] private Transform  _playerHand, _playerDeck, _playerDiscard, _playerExile;
     [Space]
     [SerializeField] private Transform _opponentCardsParent;
-    [SerializeField] private Transform _opponentDeck, _opponentHand, _opponentDiscard;
+    [SerializeField] private Transform _opponentHand, _opponentDeck, _opponentDiscard, _opponentExile;
     private Vector3 origin;
 
     #region - Public Variable References -
@@ -195,6 +195,11 @@ public class Battlefield : MonoBehaviour
 
     //I'm likely going to end up moving these into a pooled object or just have a single one that I use for each dungeon,
     //and have them held by a dungeon manager instead of every single battlefield having their own
+    public Transform GetHandParent(CommanderController commander)
+    {
+        if (commander is PlayerCommander) return _playerHand;
+        return _opponentHand;
+    }
 
     public Transform GetDeckParent(CommanderController commander)
     {
@@ -208,10 +213,10 @@ public class Battlefield : MonoBehaviour
         return _opponentDiscard;
     }
 
-    public Transform GetHandParent(CommanderController commander)
+    public Transform GetExileParent(CommanderController commander)
     {
-        if (commander is PlayerCommander) return _playerHand;
-        return _opponentHand;
+        if (commander is PlayerCommander) return _playerExile;
+        return _opponentExile;
     }
     #endregion
 }

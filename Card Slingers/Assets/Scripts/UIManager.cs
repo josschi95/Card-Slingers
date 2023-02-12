@@ -12,12 +12,14 @@ public class UIManager : MonoBehaviour
         instance = this;
     }
 
+    public Button TEST_SUMMON_BUTTON;
+
     #region - Commander Banner -
     [Header("Commander Banner")]
     [SerializeField] private TMP_Text phaseText;
     [SerializeField] private RectTransform bannerParent;
     [SerializeField] private TMP_Text playerCommanderName, playerHealth, playerMana;
-    [SerializeField] private Button endPhaseButton;
+    [SerializeField] private Button endPhaseButton, cancelActionButton;
     [Space]
     [SerializeField] private TMP_Text opponentCommanderName;
     [SerializeField] private TMP_Text opponentHealth, opponentMana;
@@ -51,6 +53,12 @@ public class UIManager : MonoBehaviour
         DuelManager.instance.onPhaseChange += OnPhaseChange;
 
         endPhaseButton.onClick.AddListener(OnPlayerEndPhase);
+        cancelActionButton.onClick.AddListener(delegate { DuelManager.instance.OnCancelAction(); });
+        
+        TEST_SUMMON_BUTTON.onClick.AddListener(delegate
+        {
+            DuelManager.instance.TEST_SUMMON_ENEMY = true;
+        });
     }
 
     private void OnMatchStart()

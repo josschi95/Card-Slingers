@@ -15,7 +15,7 @@ public class Card : MonoBehaviour, IInteractable
     [SerializeField] protected CommanderController _commander;
     [SerializeField] protected CardSO _cardInfo;
     protected CardLocation _location; //If the card is in the deck, discard, hand, or on the field
-    protected bool _raiseCard, _isSelected;
+    protected bool _isSelected;
     private Coroutine lerpCardUpCoroutine;
 
     #region - Public Variables -
@@ -68,23 +68,21 @@ public class Card : MonoBehaviour, IInteractable
     #region - IInteractable -
     public void OnMouseEnter()
     {
-        if (_commander is PlayerCommander && _location == CardLocation.InHand && !_raiseCard)
+        if (_commander is PlayerCommander && _location == CardLocation.InHand)
         {
-            _raiseCard = true;
             if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
-            lerpCardUpCoroutine = StartCoroutine(LerpCardUpDown(true));
+            lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(true));
         }
     }
 
     public void OnMouseExit()
     {
-        _raiseCard = false;
         if (_isSelected) return;
 
         if (_commander is PlayerCommander && _location == CardLocation.InHand)
         {
             if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
-            lerpCardUpCoroutine = StartCoroutine(LerpCardUpDown(false));
+            lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(false));
         }
     }
 
@@ -125,14 +123,21 @@ public class Card : MonoBehaviour, IInteractable
     public void OnDeSelectCard()
     {
         _isSelected = false;
-        if (!_raiseCard)
+
+        switch (_location)
         {
-            if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
-            lerpCardUpCoroutine = StartCoroutine(LerpCardUpDown(false));
+            case CardLocation.InHand:
+                if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
+                lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(false));
+                break;
+            case CardLocation.OnField:
+
+                break;
         }
+
     }
 
-    protected IEnumerator LerpCardUpDown(bool up)
+    protected IEnumerator RaiseCardInHand(bool up)
     {
         //Ignore this if not placed in hand
         if (_location != CardLocation.InHand) yield break;
@@ -153,4 +158,4 @@ public class Card : MonoBehaviour, IInteractable
     }
 }
 
-public enum CardLocation { InDeck, InDiscard, InHand, OnField }
+public enum CardLocation { InHand, InDeck, InDiscard, OnField, InExile }

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: _Player
   m_EditorClassIdentifier: 
   name: Merlinus Beardicus
-  cardPrefab: {fileID: 8145355139065452429, guid: 275972200b1aa9d43a9c4d98959092da, type: 3}
+  cardPrefab: {fileID: 3762046901689712160, guid: ce928bac281b5944ca19a2d1b05636dc, type: 3}
   cost: 0
   icon: {fileID: 21300000, guid: 1a594cce0076c0240aab3dabdec13eca, type: 3}
   type: 6
@@ -21,10 +21,11 @@ MonoBehaviour:
   description: 
   flavorText: 
   _permanentPrefab: {fileID: 3810874859362294788, guid: 563ed6d71480be44b9ce1e65d849aae0, type: 3}
-  maxHealth: 20
-  attack: 2
-  defense: 0
-  speed: 2
+  _maxHealth: 0
+  _attack: 0
+  _range: 0
+  _defense: 0
+  _speed: 0
   _deck:
     cards:
     - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}

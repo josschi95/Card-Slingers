@@ -13,15 +13,16 @@ MonoBehaviour:
   m_Name: Knight
   m_EditorClassIdentifier: 
   name: Knight
-  cardPrefab: {fileID: 3762046901689712160, guid: b7e6c0ddf4b9f044cb18ab65dc3884b5, type: 3}
+  cardPrefab: {fileID: 3762046901689712160, guid: 325c52135d74aa64bab77db000ae8436, type: 3}
+  cost: 1
   icon: {fileID: 21300000, guid: e2e59673159616c44b546b4a66992a4f, type: 3}
   type: 0
   faction: 1
-  cost: 1
   description: 'HP:5 ATK:1 DEF: 0 SPD: 2'
   flavorText: A noble knight
   _permanentPrefab: {fileID: 2720721032963671195, guid: 9126f6ba332a8624fbb02c34df798a14, type: 3}
-  maxHealth: 10
-  attack: 1
-  defense: 1
-  speed: 1
+  _maxHealth: 10
+  _attack: 1
+  _range: 1
+  _defense: 2
+  _speed: 1

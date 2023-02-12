@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Opponent
   m_EditorClassIdentifier: 
   name: The Rouge Rogue
-  cardPrefab: {fileID: 5675862582995661501, guid: 02f9755ece77011498e7610ede80d735, type: 3}
+  cardPrefab: {fileID: 3762046901689712160, guid: 9de5d73ca39d92b4d81691ac7edc7822, type: 3}
   cost: 0
   icon: {fileID: 21300000, guid: 8dbd05199e3ff3840ad70786c90bcc3e, type: 3}
   type: 6
@@ -21,10 +21,11 @@ MonoBehaviour:
   description: 
   flavorText: 
   _permanentPrefab: {fileID: 8186311580235951897, guid: 43c00384f54050e4784a1b218abca788, type: 3}
-  maxHealth: 20
-  attack: 2
-  defense: 0
-  speed: 2
+  _maxHealth: 0
+  _attack: 0
+  _range: 0
+  _defense: 0
+  _speed: 0
   _deck:
     cards:
     - {fileID: 11400000, guid: d156e83345aa28e42b80e6bab5826192, type: 2}

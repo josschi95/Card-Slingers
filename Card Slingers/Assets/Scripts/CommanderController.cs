@@ -4,8 +4,13 @@ using UnityEngine;
 
 public class CommanderController : MonoBehaviour
 {
+    public List<Card> CARDS_IN_HAND => _cardsInHand;
+
     public delegate void OnManaChangeCallback();
     public OnManaChangeCallback onManaChange;
+
+    public delegate void OnPermanentDestroyedCallback(Card_Permanent card);
+    public OnPermanentDestroyedCallback onPermanentDestroyed;
 
     private DuelManager duelManager;
 
@@ -14,9 +19,10 @@ public class CommanderController : MonoBehaviour
     [SerializeField] private Phase currentPhase;
     [SerializeField] private int _currentMana = 4;
     [Space]
+    [SerializeField] private List<Card> _cardsInHand;
     [SerializeField] private List<Card> _cardsInDeck;
     [SerializeField] private List<Card> _cardsInDiscardPile;
-    [SerializeField] private List<Card> _cardsInHand;
+    [SerializeField] private List<Card> _cardsInExile;
     [Space]
     [SerializeField] private List<Card_Permanent> _permanentsOnField;
     public bool isTurn { get; private set; }
@@ -30,6 +36,7 @@ public class CommanderController : MonoBehaviour
     private void Start()
     {
         duelManager = DuelManager.instance;
+        onPermanentDestroyed += SendPermanentToDiscard;
     }
 
     public virtual void OnAssignCommander(CommanderSO commanderInfo)
@@ -183,6 +190,12 @@ public class CommanderController : MonoBehaviour
     }
 
     //
+    private void PlaceCardInHand(Card card)
+    {
+        _cardsInHand.Add(card);
+        card.SetCardLocation(CardLocation.InHand);
+        card.transform.SetParent(duelManager.Battlefield.GetHandParent(this));
+    }
 
     private void PlaceCardInDeck(Card card)
     {
@@ -198,13 +211,12 @@ public class CommanderController : MonoBehaviour
         card.transform.SetParent(duelManager.Battlefield.GetDiscardParent(this));
     }
 
-    private void PlaceCardInHand(Card card)
+    private void PlaceCardInExile(Card card)
     {
-        _cardsInHand.Add(card);
-        card.SetCardLocation(CardLocation.InHand);
-        card.transform.SetParent(duelManager.Battlefield.GetHandParent(this));
+        _cardsInExile.Add(card);
+        card.SetCardLocation(CardLocation.InExile);
+        card.transform.SetParent(duelManager.Battlefield.GetExileParent(this));
     }
-
     //
 
     private void DiscardCardFromHand(Card cardToDiscard)

@@ -16,7 +16,7 @@ public class Card_Permanent : Card
     public GameObject PermanentObject => _permanentObject;
     public bool FirstTurn => _firstTurn;
 
-    public void OnSummoned(GridNode node)
+    public virtual void OnSummoned(GridNode node)
     {
         //Sets the card location as on the battlefield
         SetCardLocation(CardLocation.OnField);

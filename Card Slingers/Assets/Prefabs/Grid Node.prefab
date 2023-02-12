@@ -111,6 +111,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 3777873372622269368}
-  normalMaterial: {fileID: 2100000, guid: b1b96d1609dd59e4aac568520db70399, type: 2}
-  blueHighlightedMaterial: {fileID: 2100000, guid: 9ee2ed2ca4d8ad943a156a00fad944c2, type: 2}
-  redHighlightedMaterial: {fileID: 2100000, guid: 1c0fb82eaef34d440be3637fbb1af13b, type: 2}
+  highlightMats:
+  - {fileID: 2100000, guid: b1b96d1609dd59e4aac568520db70399, type: 2}
+  - {fileID: 2100000, guid: 9ee2ed2ca4d8ad943a156a00fad944c2, type: 2}
+  - {fileID: 2100000, guid: 1c0fb82eaef34d440be3637fbb1af13b, type: 2}
+  - {fileID: 2100000, guid: fcda4a977c9c8ef49b660ad15ab03d43, type: 2}
+  _isPlayerNode: 0
+  _occupant: {fileID: 0}
+  _trap: {fileID: 0}
+  _terrain: {fileID: 0}

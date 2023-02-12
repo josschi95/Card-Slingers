@@ -37,6 +37,18 @@ public class DuelManager : MonoBehaviour
     public bool IS_TESTING = true;
     [SerializeField] private CommanderSO playerSO, opponentSO;
     [SerializeField] private Battlefield _battleField;
+    [SerializeField] private GameObject lineIndicator, hostileLineIndicator;
+    public bool TEST_SUMMON_ENEMY;
+
+    public void SummonTestEnemy(GridNode node)
+    {
+        if (TEST_SUMMON_ENEMY)
+        {
+            _opponentController.OnPermanentPlayed(node, _opponentController.CARDS_IN_HAND[0] as Card_Permanent);
+
+            TEST_SUMMON_ENEMY = false;
+        }
+    }
 
     [Space]
 
@@ -52,18 +64,21 @@ public class DuelManager : MonoBehaviour
     private GridNode highlightedNode; //the node that the mouse is currently over
 
     private bool _isPlayerTurn;
-    private bool _waitingForNodeSelection; //waiting for a node to be targeted
+    private bool _waitForSummonNode; //waiting for a node to be selected to summon a card
     private Coroutine cardPlacementCoroutine;
 
-    [SerializeField] private List<Card_Permanent> _permanentsToAct; //shitty name but it works for now
-
+    private bool _waitForTargetNode; //waitinf for a node to be selected to perform an action
+    private GridNode _nodeToTarget; //the node that will be targeted to move/attack 
+    //[SerializeField] 
+    private List<DeclaredAction> _declaredActions = new List<DeclaredAction>();
+    private Coroutine declareActionCoroutine; //keep available nodes highlighted while a unit is selected to act
 
 
     #region - Public Variable References -
     public Battlefield Battlefield => _battleField;
     public CommanderController PlayerController => _playerController;
     public CommanderController OpponentController => _opponentController;
-    public bool WaitingForNodeSelection => _waitingForNodeSelection;
+    public bool WaitingForNodeSelection => _waitForSummonNode;
     #endregion
 
     #region - Initial Methods -
@@ -153,17 +168,12 @@ public class DuelManager : MonoBehaviour
     }
     #endregion
 
-    #region - Phases -
+    #region - Phase Control -
     public void OnCurrentPhaseFinished()
     {
         //start next commander's turn
-        if (_currentPhase == Phase.End)
-        {
-            _isPlayerTurn = !_isPlayerTurn;
-            SetPhase(Phase.Begin);
-        }
-        //Begin next phase
-        else SetPhase(_currentPhase + 1);
+        if (_currentPhase == Phase.End) SetPhase(Phase.Begin);
+        else SetPhase(_currentPhase + 1); //Begin next phase
 
         if (_isPlayerTurn) PlayerController.SetPhase(_currentPhase);
         else OpponentController.SetPhase(_currentPhase);
@@ -174,7 +184,7 @@ public class DuelManager : MonoBehaviour
         Debug.Log("Setting Phase to " + phase.ToString());
         _currentPhase = phase;
 
-        /*switch (phase)
+        switch (phase)
         {
             case Phase.Begin:
                 OnBeginPhase();
@@ -182,8 +192,8 @@ public class DuelManager : MonoBehaviour
             case Phase.Summoning:
                 OnSummoningPhase();
                 break;
-            case Phase.Declaration:
-                OnDeclarationPhase();
+            case Phase.Attack:
+                OnAttackPhase();
                 break;
             case Phase.Resolution:
                 OnResolutionPhase();
@@ -191,12 +201,12 @@ public class DuelManager : MonoBehaviour
             case Phase.End:
                 OnEndPhase();
                 break;
-        }*/
+        }
 
         onPhaseChange?.Invoke(_currentPhase);
     }
 
-    /*private void OnBeginPhase()
+    private void OnBeginPhase()
     {
         _isPlayerTurn = !_isPlayerTurn;
     }
@@ -206,28 +216,37 @@ public class DuelManager : MonoBehaviour
         
     }
 
-    private void OnDeclarationPhase()
+    private void OnAttackPhase()
     {
         
     }
 
     private void OnResolutionPhase()
     {
-        
+        //run through all declared actions one by one
+        ResolveAllDeclaredActions();
     }
 
     private void OnEndPhase()
     {
         
-    }*/
+    }
 
     #endregion
+
+    //The player cancels their previously chosen action
+    public void OnCancelAction()
+    {
+        _waitForSummonNode = false; //stop coroutine
+        _waitForTargetNode = false; //stop coroutine
+        _cardToSummon = null;
+    }
 
     #region - Node Selection 
     private void OnNodeMouseEnter(GridNode node)
     {
         highlightedNode = node;
-        if (_waitingForNodeSelection && NodeIsValid(node)) DisplayLineArc(_cardToSummon.transform.position, node.transform.position);
+        if (_waitForSummonNode && NodeIsValid(node)) DisplayLineArc(_cardToSummon.transform.position, node.transform.position);
     }
 
     private void OnNodeMouseExit(GridNode node)
@@ -242,90 +261,110 @@ public class DuelManager : MonoBehaviour
         switch (_currentPhase)
         {
             case Phase.Summoning:
-                if (_waitingForNodeSelection && node.IsPlayerNode)
+                if (_waitForSummonNode && node.IsPlayerNode)
                 {
                     PlayerController.OnPermanentPlayed(node, _cardToSummon);
-                    OnCardDeselected();
+                    OnCancelAction();
                 }
                 break;
             case Phase.Attack:
-                //not waiting for a node currently, this means there's no selected unit
-                if (!_waitingForNodeSelection)
+                if (!_waitForTargetNode) //not waiting for a node currently, this means there's no selected unit
                 {
-                    var occupant = node.Occupant; //node is not empty               //occupant belongs to player
-                    if (occupant != null && occupant.Commander is PlayerCommander) HighlightAvailableNodes(occupant);
+                    var occupant = node.Occupant; //node is not empty and occupant belongs to player
+                    if (occupant != null && occupant is Card_Unit unit && occupant.Commander is PlayerCommander)
+                    {
+                        OnBeginDeclareAction(unit);
+                    }
                 }
-                else
+                else //waiting for a node to be targeted (either to move or to attack)
                 {
-                    //waiting for a node to be targeted (either to move or to attack)
-
+                    _nodeToTarget = node;
+                    _waitForTargetNode = false;
                 }
                 break;
         }
-
-
     }
 
-    //Highlight nodes in range of the card
-    //This is getting increasingly disgusting....
-    //I think I basically jsut want to run a function in all nodes forward and back using GridNode.CanMoveIntoNode(card)
-    //but that doesn't solve the issue for enemies... if false then I could also check to see if it's an enemy, and stop checking in that direction.
-    private void HighlightAvailableNodes(Card_Permanent card)
+    private ValidNodes GetValidNodes(Card_Unit unit, GridNode[] laneNodes)
     {
-        Debug.Log("Pickup work here");
+        var walkableNodes = new List<GridNode>(); var attackNodes = new List<GridNode>();
+        bool enemyFound = false; //an enemy has been found in the lane, used to prevent adding nodes past that enemy
 
-        var info = card.CardInfo as UnitSO;
-        //Get an array of all nodes in the same lane
-        var availableNodes = _battleField.GetAllNodesInLane(card.OccupiedNode.gridX);
-
-        //divide the nodes up by those which are walkable, and those which are targetable
-        var walkableNodes = new List<GridNode>();
-
-        for (int i = 0; i < availableNodes.Length; i++)
+        //Check all nodes below the card, iterating backwards starting from the occupied node
+        for (int i = unit.OccupiedNode.gridZ - 1; i >= 0; i--)
         {
-            //ignore nodes that are further than the unit can walk
-            if (Mathf.Abs(card.OccupiedNode.gridZ - availableNodes[i].gridZ) > info.speed) continue;
+            //node is further than the unit can walk + their attack range, exit loop
+            if (Mathf.Abs(unit.OccupiedNode.gridZ - laneNodes[i].gridZ) > unit.Speed + unit.Range) break;
+            //any node past this point is at least within the max attack range of the card
+            
+            //the node contains an enemy unit/structure, can attack it but cannot move there
+            if (laneNodes[i].CanBeAttacked(unit))
+            {
+                if (!enemyFound) //encountered the first enemy
+                {
+                    attackNodes.Add(laneNodes[i]);
+                    enemyFound = true;
+                    continue; //do not check if it can be moved to, it cannot
+                }
+                else if (Mathf.Abs(attackNodes[0].gridZ - laneNodes[i].gridZ) < unit.Range) //compare the gridZ of the first enemy that was encountered
+                {
+                    attackNodes.Add(laneNodes[i]);
+                    continue;
+                }
+                else break; //cannot attack beyond this point
+            }
+            else if (enemyFound) continue; //an enemy was found in a closer node, not looking for unoccupied nodes, only ones within attack range
+            //past this point, I am only looking for nodes that the card can move to, or occupy
 
-            //same node, occupied by enemy/allied unit/occupied allied structure
-            if (!availableNodes[i].CanMoveIntoNode(card)) continue;
+            //the node is occupied by a unit, check next one
+            if (!laneNodes[i].CanBeOccupied(unit)) continue;
 
-            walkableNodes.Add(availableNodes[i]);
+            //the node is further than the unit can move, exit loop
+            if (Mathf.Abs(unit.OccupiedNode.gridZ - laneNodes[i].gridZ) > unit.Speed) break;
+            //any node past this point is at least within movement distance of the card
+
+            //All other criteria has been check, no enemies, within walking range, not occupied
+            walkableNodes.Add(laneNodes[i]);
         }
-        for (int i = 0; i < walkableNodes.Count; i++)
+
+        enemyFound = false; //reset bool for use again
+
+        //Check all nodes above the card, all code here is copy and past as above but the loop is ran in the opposite direction
+        for (int i = unit.OccupiedNode.gridZ + 1; i < laneNodes.Length; i++)
         {
-            walkableNodes[i].SetLockedDisplay(GridNode.MaterialType.Blue);
+            if (Mathf.Abs(unit.OccupiedNode.gridZ - laneNodes[i].gridZ) > unit.Speed + unit.Range) break;
+            if (laneNodes[i].CanBeAttacked(unit))
+            {
+                if (!enemyFound)
+                {
+                    attackNodes.Add(laneNodes[i]);
+                    enemyFound = true;
+                    continue;
+                }
+                else if (Mathf.Abs(attackNodes[0].gridZ - laneNodes[i].gridZ) < unit.Range)
+                {
+                    attackNodes.Add(laneNodes[i]);
+                    continue;
+                }
+                else break;
+            }
+            else if (enemyFound) continue; 
+            if (!laneNodes[i].CanBeOccupied(unit)) continue;
+            if (Mathf.Abs(unit.OccupiedNode.gridZ - laneNodes[i].gridZ) > unit.Speed) break;
+            walkableNodes.Add(laneNodes[i]);
         }
 
-        var targetableNodes = new List<GridNode>();
-        targetableNodes.AddRange(availableNodes);
-
-        //Will also need to track nodes which are occupied by an ally that the card can use an ability on
-
-        for (int i = 0; i < availableNodes.Length; i++)
-        {
-            if (availableNodes[i].Occupant != null) walkableNodes.Remove(availableNodes[i]);
-            //so here is where it gets tricky
-
-            //if there is an enemy unit, you cannot move past it, all nodes beyond it are removed, and its node is red
-
-            //if there is an allied unit, you can move through its space but not occupy it
-
-            //if there is an allied structure, I can move past it, or into it if it is occupiable and open
-
-        }
+        return new ValidNodes(walkableNodes.ToArray(), attackNodes.ToArray());
     }
 
     private bool NodeIsValid(GridNode node)
     {
-        if (!node.IsPlayerNode) return false;
-        if (node.Occupant != null) return false;
-        //if (node.IsBlocked) return false; //I'll figure this out later
-
-        return true;
+        //the node belongs to the player, and it is not occupied
+        return (node.IsPlayerNode && node.Occupant == null);
     }
     #endregion
 
-    #region - Card/Node Selection -
+    #region - Card Selection -
     private void OnCardInHandSelected(Card card)
     {
         //Player selects a card to summon
@@ -353,14 +392,6 @@ public class DuelManager : MonoBehaviour
         }
     }
 
-    public void OnCardDeselected()
-    {
-        //Hide the display if action
-        UIManager.instance.HideCardDisplay();
-        _waitingForNodeSelection = false; //stop coroutine
-        _cardToSummon = null;
-    }
-
     private bool PlayerCanSummonCard(Card card)
     {
         if (!_isPlayerTurn) return false; //not their turn
@@ -374,9 +405,9 @@ public class DuelManager : MonoBehaviour
 
     private IEnumerator WaitForPermanentToBePlayed(Card card)
     {
-        _waitingForNodeSelection = true;
+        _waitForSummonNode = true;
 
-        while (_waitingForNodeSelection == true)
+        while (_waitForSummonNode == true)
         {
             //only display if node is valid 
             //if (highlightedNode == null || !NodeIsValid(highlightedNode)) ClearLineArc();
@@ -388,6 +419,102 @@ public class DuelManager : MonoBehaviour
         card.OnDeSelectCard();
         ClearLineArc();
     }
+    #endregion
+
+    #region - Action Declaration -
+    //The player selects a unit to perfor an action during the attack phase
+    private void OnBeginDeclareAction(Card_Unit unit)
+    {
+        for (int i = _declaredActions.Count - 1; i >= 0; i--)
+        {
+            if (_declaredActions[i].unit == unit)
+            {
+                OnDeclaredActionCancelled(_declaredActions[i]);
+                break;
+            }
+        }
+
+        if (declareActionCoroutine != null) StopCoroutine(declareActionCoroutine);
+        declareActionCoroutine = StartCoroutine(DisplayAvailableNodes(unit));
+    }
+
+    //find the available nodes which the chosen unit can target
+    private IEnumerator DisplayAvailableNodes(Card_Unit unit)
+    {
+        _waitForTargetNode = true;
+        var availableNodes = _battleField.GetAllNodesInLane(unit.OccupiedNode.gridX);
+        var validNodes = GetValidNodes(unit, availableNodes);
+        var walkableNodes = validNodes.nodesToOccupy;
+        var attackNodes = validNodes.attackNodes;
+
+        //set the highlight colors of the nodes to their appropriate color
+        unit.OccupiedNode.SetLockedDisplay(GridNode.MaterialType.Yellow);
+        for (int i = 0; i < walkableNodes.Count; i++) walkableNodes[i].SetLockedDisplay(GridNode.MaterialType.Blue);
+        for (int i = 0; i < attackNodes.Count; i++) attackNodes[i].SetLockedDisplay(GridNode.MaterialType.Red);
+
+        while (_waitForTargetNode == true)
+        {
+            if (highlightedNode == null) ClearLineArc();
+            else
+            {
+                if (walkableNodes.Contains(highlightedNode)) DisplayLineArc(unit.OccupiedNode.transform.position, highlightedNode.transform.position);
+                else if (attackNodes.Contains(highlightedNode)) DisplayLineArc(unit.OccupiedNode.transform.position, highlightedNode.transform.position);
+                else ClearLineArc();
+            }
+
+            yield return null;
+        }
+
+        if (_nodeToTarget != null)
+        {
+            //player is moving their unit
+            if (walkableNodes.Contains(_nodeToTarget)) OnActionDeclared(unit, _nodeToTarget, ActionType.Move);
+            //player is attacking another unit/structure
+            else if (attackNodes.Contains(_nodeToTarget)) OnActionDeclared(unit, _nodeToTarget, ActionType.Attack);
+        }
+
+        unit.OccupiedNode.UnlockDisplay();
+        for (int i = 0; i < walkableNodes.Count; i++) walkableNodes[i].UnlockDisplay();
+        for (int i = 0; i < attackNodes.Count; i++) attackNodes[i].UnlockDisplay();
+
+    }
+
+    //the player has selected a valid node to target
+    private void OnActionDeclared(Card_Unit unit, GridNode node, ActionType action)
+    {
+        var go = lineIndicator;
+        if (action == ActionType.Attack) go = hostileLineIndicator;
+        var newLine = Instantiate(go).GetComponent<LineRenderer>();
+        newLine.positionCount = 100;
+
+        for (int i = 0; i < newLine.positionCount; i++)
+        {
+            float index = i;
+            newLine.SetPosition(i, MathParabola.Parabola(unit.transform.position, node.transform.position, index / newLine.positionCount));
+        }
+
+        _declaredActions.Add(new DeclaredAction(unit, node, action, newLine.gameObject));
+    }
+
+    //Remove a previously declared action
+    private void OnDeclaredActionCancelled(DeclaredAction action)
+    {
+        _declaredActions.Remove(action);
+        Destroy(action.lineIndicator);
+    }
+    #endregion
+
+    #region - Action Resolution -
+    private void ResolveAllDeclaredActions()
+    {
+        Debug.Log("Pickup from here");
+        for (int i = 0; i < _declaredActions.Count; i++)
+        {
+
+        }
+    }
+
+
     #endregion
 
     public void DisplayLineArc(Vector3 start, Vector3 end)
@@ -406,3 +533,33 @@ public class DuelManager : MonoBehaviour
         arcLine.positionCount = 0;
     }
 }
+
+public struct ValidNodes
+{
+    public List<GridNode> nodesToOccupy;
+    public List<GridNode> attackNodes;
+
+    public ValidNodes(GridNode[] nodesToOccupy, GridNode[] attackNodes)
+    {
+        this.nodesToOccupy = new List<GridNode>(nodesToOccupy);
+        this.attackNodes = new List<GridNode>(attackNodes);
+    }
+}
+
+public struct DeclaredAction
+{
+    public Card_Unit unit;
+    public GridNode targetNode;
+    public ActionType action;
+    public GameObject lineIndicator;
+
+    public DeclaredAction(Card_Unit unit, GridNode node, ActionType action, GameObject go)
+    {
+        this.unit = unit;
+        targetNode = node;
+        this.action = action;
+        lineIndicator = go;
+    }
+}
+
+public enum ActionType { Move, Attack, Ability }

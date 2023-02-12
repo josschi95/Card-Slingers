@@ -34,20 +34,6 @@ public class InputHandler : MonoBehaviour
         playerInput.actions["Right Click"].performed -= i => OnRightClick();
     }
 
-    /*private void Update()
-    {
-        RaycastMousePosition();
-    }
-
-    private void RaycastMousePosition()
-    {
-        ray = cam.ScreenPointToRay(GetMousePos());
-        if (Physics.Raycast(ray, out hit))
-        {
-            //hit.transform?.GetComponent<IInteractable>()?.OnMouseEnter();
-        }
-    }*/
-
     private void OnLeftClick()
     {
         ray = cam.ScreenPointToRay(GetMousePos());
@@ -60,7 +46,6 @@ public class InputHandler : MonoBehaviour
 
     private void OnRightClick()
     {
-        DuelManager.instance.OnCardDeselected();
         ray = cam.ScreenPointToRay(GetMousePos());
         if (Physics.Raycast(ray, out hit))
         {
