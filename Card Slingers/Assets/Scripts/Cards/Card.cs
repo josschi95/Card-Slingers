@@ -112,6 +112,12 @@ public class Card : MonoBehaviour, IInteractable
                 _isSelected = true;
                 DuelManager.instance.onCardInPlaySelected?.Invoke(this);
                 break;
+            case CardLocation.InExile:
+                //Maybe show display, the current route is that cards in exile are removed from the game for the current match
+                //I could make it so that they're removed from the deck entirely, for the rest of the dungeon crawl,
+                //but that would make exile effects against the player significantly more impactful than those used by the player
+                //if that were the case, then the player must also be able to add cards to their deck during the dungeon crawl.
+                break;
         }
     }
 

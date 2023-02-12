@@ -181,7 +181,6 @@ public class DuelManager : MonoBehaviour
 
     private void SetPhase(Phase phase)
     {
-        Debug.Log("Setting Phase to " + phase.ToString());
         _currentPhase = phase;
 
         switch (phase)
@@ -223,8 +222,8 @@ public class DuelManager : MonoBehaviour
 
     private void OnResolutionPhase()
     {
-        //run through all declared actions one by one
-        ResolveAllDeclaredActions();
+        if (_declaredActions.Count == 0) OnCurrentPhaseFinished();
+        else StartCoroutine(ResolveAllDeclaredActions());
     }
 
     private void OnEndPhase()
@@ -429,7 +428,7 @@ public class DuelManager : MonoBehaviour
         {
             if (_declaredActions[i].unit == unit)
             {
-                OnDeclaredActionCancelled(_declaredActions[i]);
+                OnDeclaredActionRemoved(_declaredActions[i]);
                 break;
             }
         }
@@ -497,7 +496,7 @@ public class DuelManager : MonoBehaviour
     }
 
     //Remove a previously declared action
-    private void OnDeclaredActionCancelled(DeclaredAction action)
+    private void OnDeclaredActionRemoved(DeclaredAction action)
     {
         _declaredActions.Remove(action);
         Destroy(action.lineIndicator);
@@ -505,13 +504,38 @@ public class DuelManager : MonoBehaviour
     #endregion
 
     #region - Action Resolution -
-    private void ResolveAllDeclaredActions()
+    private IEnumerator ResolveAllDeclaredActions()
     {
-        Debug.Log("Pickup from here");
-        for (int i = 0; i < _declaredActions.Count; i++)
+        while (_declaredActions.Count > 0)
         {
+            if (_declaredActions[0].action == ActionType.Move)
+            {
+                _declaredActions[0].unit.MoveToNode(_declaredActions[0].targetNode);
+            }
+            else if (_declaredActions[0].action == ActionType.Attack)
+            {
+                //Move to required node to attack, based on attack range
+            }
+            else if (_declaredActions[0].action == ActionType.Ability)
+            {
+                //Move to required node to use ability, based on ability range
+            }
 
+            //wait to proceed to next action until the current one is resolved
+            while(_declaredActions[0].unit.isActing)
+            {
+                Debug.Log("Current unit still acting, returning");
+                yield return null;
+            }
+
+            Debug.Log("Declared action resolved");
+            OnDeclaredActionRemoved(_declaredActions[0]); //removes from list of declared actions
+            yield return new WaitForSeconds(1); //short delay, this will be changed later
         }
+
+        Debug.Log("All declared actions have been resolved");
+        //all declared actions have been resolved, end the phase
+        OnCurrentPhaseFinished();
     }
 
 

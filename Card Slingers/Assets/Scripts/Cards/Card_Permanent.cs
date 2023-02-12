@@ -48,7 +48,7 @@ public class Card_Permanent : Card
     //Abandon the currently occupied node
     public void OnAbandonNode()
     {
-        _occupiedNode.SetOccupant(null);
+        _occupiedNode.ClearOccupant();
         _occupiedNode = null;
     }
 

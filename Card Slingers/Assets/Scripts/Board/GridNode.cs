@@ -16,7 +16,7 @@ public class GridNode : MonoBehaviour, IInteractable
 
     //[SerializeField] 
     private bool _isPlayerNode;
-    [SerializeField] Card_Permanent _occupant;
+    [SerializeField] Card_Permanent _occupant = null;
     [SerializeField] Card _trap;
     [SerializeField] Card _terrain;
 
@@ -38,9 +38,16 @@ public class GridNode : MonoBehaviour, IInteractable
 
     public void SetOccupant(Card_Permanent occupant)
     {
+        if (_occupant != null) throw new System.Exception("Node " + gridX + "," + gridZ + "is already occupied by " + _occupant.name);
         _occupant = occupant;
     }
 
+    public void ClearOccupant()
+    {
+        _occupant = null;
+    }
+
+    #region - Interactions -
     public void OnLeftClick()
     {
         //if (Occupant != null) Debug.Log(gridX + "," + gridZ + ": " + Occupant.gameObject.name);
@@ -74,7 +81,9 @@ public class GridNode : MonoBehaviour, IInteractable
 
         SetColor(MaterialType.Normal);
     }
+    #endregion
 
+    #region - Display -
     private void SetColor(MaterialType type)
     {
         meshRenderer.material = highlightMats[(int)type];
@@ -91,7 +100,9 @@ public class GridNode : MonoBehaviour, IInteractable
         _lockedForDisplay = false;
         SetColor(MaterialType.Normal);
     }
+    #endregion
 
+    #region - Queries -
     public bool CanBeOccupied(Card_Permanent card)
     {
         if (_occupant == null) return true; //not occupied at all
@@ -107,4 +118,17 @@ public class GridNode : MonoBehaviour, IInteractable
         if (_occupant.Commander == attacker.Commander) return false; //same team
         return true; //occupied by enemy
     }
+
+    public void OnEnterNode(Card_Unit unit)
+    {
+        if (_trap != null && _trap.Commander != unit.Commander)
+        {
+            Debug.Log("Trap has been activated!");
+
+            //apply effects of trap
+            //could be damage, could be a persistent effect, could be counters, could be StopMovement
+            //don't deal with speed -1 while the unit is already mvoing
+        }
+    }
+    #endregion
 }

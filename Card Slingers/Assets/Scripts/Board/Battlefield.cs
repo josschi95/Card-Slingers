@@ -42,7 +42,7 @@ public class Battlefield : MonoBehaviour
             for (int z = 0; z < gridArray.GetLength(1); z++)
             {
                 var pos = GetGridPosition(x, z);
-                CreateCheckerboard(pos, x, z);
+                TESTING_CreateCheckerboard(pos, x, z);
 
                 pos.y += 0.001f;
                 GameObject go = Instantiate(node, pos, Quaternion.identity);
@@ -61,7 +61,7 @@ public class Battlefield : MonoBehaviour
     }
 
     //For testing only
-    private void CreateCheckerboard(Vector3 pos, int x, int z)
+    private void TESTING_CreateCheckerboard(Vector3 pos, int x, int z)
     {
         var go = checkerboardGray;
         pos.y -= 0.01f;
@@ -133,6 +133,21 @@ public class Battlefield : MonoBehaviour
         }
 
         return tempList.ToArray();
+    }
+
+    public GridNode[] GetNodePath(GridNode startNode, GridNode endNode)
+    {
+        var nodePath = new GridNode[Mathf.Abs(startNode.gridZ - endNode.gridZ) + 1];
+        int mod = 1;
+        if (startNode.gridZ > endNode.gridZ) mod = -1;
+
+        for (int i = 0; i < nodePath.Length; i++)
+        {
+            //get the node in the same lane, with the gridZ increasing/decreasing based on direction
+            nodePath[i] = GetNode(startNode.gridX, startNode.gridZ + i * mod);   
+        }
+
+        return nodePath;
     }
 
     public bool OnValidateNewPosition(GridNode newNode, int width, int height)
