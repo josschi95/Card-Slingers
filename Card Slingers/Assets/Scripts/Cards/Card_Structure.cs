@@ -15,6 +15,7 @@ public class Card_Structure : Card_Permanent
     public bool CanBeOccupied => StructureCanBeOccupied();
     public bool IsOccupied => _occupant != null;
 
+    #region - Override Methods -
     protected override void SetCardDisplay()
     {
         base.SetCardDisplay();
@@ -33,14 +34,9 @@ public class Card_Structure : Card_Permanent
         _currentHealth = _maxHealth;
     }
 
-    private bool StructureCanBeOccupied()
+    protected override int GetPowerLevel()
     {
-        var info = CardInfo as StructureSO;
-
-        if (!info.canBeOccupied) return false;
-        if (IsOccupied) return false;
-
-        return true;
+        return _currentHealth;
     }
 
     public override void OnTakeDamage(int damage)
@@ -58,6 +54,18 @@ public class Card_Structure : Card_Permanent
         //start a coroutine to wait until anim is finished playing
         StartCoroutine(WaitToRemove());
     }
+    #endregion
+    private bool StructureCanBeOccupied()
+    {
+        var info = CardInfo as StructureSO;
+
+        if (!info.canBeOccupied) return false;
+        if (IsOccupied) return false;
+
+        return true;
+    }
+
+
 
     private IEnumerator WaitToRemove()
     {

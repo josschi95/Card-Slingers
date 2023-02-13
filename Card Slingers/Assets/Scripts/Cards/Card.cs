@@ -20,7 +20,7 @@ public class Card : MonoBehaviour, IInteractable
     private Coroutine lerpCardUpCoroutine;
 
     #region - Public Variables -
-    public bool isRevealed { get; private set; } //If the player is able to see the card
+    public bool isRevealed { get; protected set; } //If the player is able to see the card
     public CommanderController Commander => _commander;
     public CardSO CardInfo => _cardInfo; //Scriptable object to hold the card stats 
     public CardLocation Location => _location;

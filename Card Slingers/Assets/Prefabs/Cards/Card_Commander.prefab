@@ -216,7 +216,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3756212882512421372}
   - component: {fileID: 7380287455565942880}
-  - component: {fileID: 8143303639936209591}
+  - component: {fileID: -5240717928650317146}
   - component: {fileID: 1569306437134555641}
   m_Layer: 0
   m_Name: Card_Commander
@@ -254,7 +254,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1.187, y: 0.01, z: 1.68}
   m_Center: {x: 0, y: 0.01, z: 0}
---- !u!114 &8143303639936209591
+--- !u!114 &-5240717928650317146
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -263,7 +263,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 3762046901689712160}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4af945b07d58f8747b13c705e0b6a941, type: 3}
+  m_Script: {fileID: 11500000, guid: be81b7571fdd5484cabdf3b9a7789da6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _commanderInfo: {fileID: 0}
@@ -297,10 +297,17 @@ MonoBehaviour:
   - {fileID: 6246531350102624606}
   - {fileID: 6246531350575381036}
   - {fileID: 6246531350085708962}
-  _commander: {fileID: 8143303639936209591}
+  _commander: {fileID: -5240717928650317146}
   _cardInfo: {fileID: 0}
   _occupiedNode: {fileID: 0}
   _permanentObject: {fileID: 0}
+  _currentHealth: 0
+  _equipment: []
+  _healthModifiers: 
+  _attackModifiers: 
+  _rangeModifiers: 
+  _defenseModifiers: 
+  _speedModifiers: 
 --- !u!1 &4652214776329499669
 GameObject:
   m_ObjectHideFlags: 0

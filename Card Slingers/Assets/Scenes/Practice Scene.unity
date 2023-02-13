@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028331, g: 0.2257133, b: 0.3069217, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -378,8 +378,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ffc893a64859654683f7a062ab4055c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _width: 8
-  _depth: 8
+  _width: 6
+  _depth: 6
   node: {fileID: 3777873372622269367, guid: ee29f5833272e544bbd39bb561198829, type: 3}
   checkerboardWhite: {fileID: 6063408864358170968, guid: 494e1dc97aecda8429378a1ef7827ab0, type: 3}
   checkerboardGray: {fileID: 8361856957321750763, guid: b5222de106068de43beebac15ac77cc0, type: 3}
@@ -1403,7 +1403,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 500, y: 0}
   m_SizeDelta: {x: 480, y: 680}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!1 &477348934

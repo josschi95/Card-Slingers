@@ -12,11 +12,13 @@ public class Card_Permanent : Card
 
     public GridNode OccupiedNode => _occupiedNode;
     public GameObject PermanentObject => _permanentObject;
+    public int PowerLevel => GetPowerLevel();
 
     public virtual void OnSummoned(GridNode node)
     {
         //Sets the card location as on the battlefield
         SetCardLocation(CardLocation.OnField);
+        isRevealed = true;
         //Set as child to the battlefield
         transform.SetParent(DuelManager.instance.Battlefield.transform);
         //Occupy the given node
@@ -27,6 +29,7 @@ public class Card_Permanent : Card
         _permanentObject = Instantiate(permanent.Prefab, transform.position, transform.rotation);
         _permanentObject.transform.SetParent(transform);
         cardGFX.SetActive(false); //Disable the physical card display
+        GetComponent<Collider>().enabled = false; //Disable collider to not interfere with node selection
     }
 
     //Set current node and occupy it
@@ -45,6 +48,11 @@ public class Card_Permanent : Card
         _occupiedNode = null;
     }
 
+    protected virtual int GetPowerLevel()
+    {
+        return 0;
+    }
+
     public void OnBeginPhase()
     {
         //Trigger any relevant abilities
@@ -54,6 +62,7 @@ public class Card_Permanent : Card
     {
         OnAbandonNode();
         cardGFX.SetActive(true); //Disable the physical card display
+        GetComponent<Collider>().enabled = true; //re-enable collider for card selection
         //Play death animation <= this will probably be separate and only for units,
         //because I'll have to wait for the animation to finish
         //and then I can call OnRemovePermanentFromField(this) 

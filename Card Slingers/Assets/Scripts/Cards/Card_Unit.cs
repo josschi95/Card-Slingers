@@ -64,6 +64,11 @@ public class Card_Unit : Card_Permanent
         _currentHealth = NetMaxHealth();
     }
 
+    protected override int GetPowerLevel()
+    {
+        return _currentHealth + Damage + Defense;
+    }
+
     public override void OnCommanderVictory()
     {
         _animator.SetTrigger("victory");
@@ -248,14 +253,14 @@ public class Card_Unit : Card_Permanent
 
     protected override void OnPermanentDestroyed()
     {
-        Debug.Log("unit has been destroyed");
+        //Debug.Log("unit has been destroyed");
         _animator.SetTrigger("death");
         StartCoroutine(WaitForDeathAnim());
     }
 
     public void OnDeathAnimCompleted()
     {
-        Debug.Log("Death Anim Complete");
+        //Debug.Log("Death Anim Complete");
         _waitingForDeathAnim = false;
     }
 
@@ -266,22 +271,20 @@ public class Card_Unit : Card_Permanent
         {
             yield return null;
         }
-        yield return new WaitForSeconds(1f); //short delay
 
-        float timeElapsed = 0, timeToMove = 1.5f;
+        float timeElapsed = 0, timeToMove = 2f;
         
         while (timeElapsed < timeToMove)
         {
-            timeElapsed += Time.deltaTime;
-            Debug.Log("Sinking");
-            PermanentObject.transform.position = Vector3.Lerp(PermanentObject.transform.position, Vector3.down, timeElapsed / timeToMove);
+            timeElapsed += Time.deltaTime; //slowly sink the unit beneath the playing field before destroying it
+            PermanentObject.transform.localPosition = Vector3.Lerp(PermanentObject.transform.localPosition, Vector3.down, timeElapsed / timeToMove);
             yield return null;
         }
 
-        //include a part where the gameObject sinks beneath the battlefield
         cardGFX.SetActive(true); //Re-enable card
         Destroy(PermanentObject); //Destroy unit
 
+        yield return new WaitForSeconds(0.1f);
         //Invoke an event for the commander to listen to
         Commander.onPermanentDestroyed?.Invoke(this);
     }

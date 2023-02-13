@@ -19,15 +19,16 @@ public class CommanderController : MonoBehaviour
     [SerializeField] private Phase currentPhase;
     [SerializeField] private int _currentMana = 4;
     [Space]
-    [SerializeField] private List<Card> _cardsInHand;
+    [SerializeField] protected List<Card> _cardsInHand;
     [SerializeField] private List<Card> _cardsInDeck;
     [SerializeField] private List<Card> _cardsInDiscardPile;
     [SerializeField] private List<Card> _cardsInExile;
     [Space]
-    [SerializeField] private List<Card_Permanent> _permanentsOnField;
+    [SerializeField] protected List<Card_Permanent> _permanentsOnField;
     public bool isTurn { get; private set; }
-    private int _handSize;
-    private bool firstDraw;
+
+    private int _defaultMana = 4;
+    private int _handSize = 4;
 
     #region - Public Variable References -
     public bool isDrawingCards { get; private set; } //drawing cards, don't trigger raise card
@@ -49,11 +50,13 @@ public class CommanderController : MonoBehaviour
         _commanderCard.AssignCard(commanderInfo, this, true);
     }
 
-    public virtual void OnMatchStart(int startingHandSize = 4)
+    public virtual void OnMatchStart(int startingHandSize = 4, int mana = 4)
     {
         //Should only need this here for testing
         duelManager = DuelManager.instance;
         duelManager.onPhaseChange += SetPhase;
+
+        _defaultMana = mana;
         _handSize = startingHandSize;
 
         _cardsInDeck = new List<Card>();
@@ -63,7 +66,6 @@ public class CommanderController : MonoBehaviour
 
         GenerateDeck();
         ShuffleDeck();
-        firstDraw = true;
         StartCoroutine(DrawCards());
     }
 
@@ -127,12 +129,13 @@ public class CommanderController : MonoBehaviour
         }
     }
 
-    private void OnBeginPhase()
+    protected virtual void OnBeginPhase()
     {
         isTurn = true;
-        _currentMana = 4;
+        RefillMana();
 
-        if (!firstDraw) StartCoroutine(DrawCards());
+        //isDrawingCards should only stop this at the start of the match
+        if (!isDrawingCards) StartCoroutine(DrawCards());
 
         //For each card on the field, invoke an OnBeginPhase event
         for (int i = 0; i < _permanentsOnField.Count; i++)
@@ -144,22 +147,22 @@ public class CommanderController : MonoBehaviour
         DuelManager.instance.Invoke("OnCurrentPhaseFinished", 1f);
     }
 
-    private void OnSummoningPhase()
+    protected virtual void OnSummoningPhase()
     {
 
     }
 
-    private void OnDeclarationPhase()
+    protected virtual void OnDeclarationPhase()
     {
 
     }
 
-    private void OnResolutionPhase()
+    protected virtual void OnResolutionPhase()
     {
 
     }
 
-    private void OnEndPhase()
+    protected virtual void OnEndPhase()
     {
         isTurn = false;
 
@@ -190,7 +193,6 @@ public class CommanderController : MonoBehaviour
             yield return null;
         }
         isDrawingCards = false;
-        firstDraw = false;
     }
 
     private void ShuffleDeck()
@@ -257,6 +259,7 @@ public class CommanderController : MonoBehaviour
         //Trigger any exit effects
         permanent.OnRemoveFromField();
 
+        //Remove from list
         _permanentsOnField.Remove(permanent);
 
         //Moves the card to the discard pile
@@ -337,6 +340,12 @@ public class CommanderController : MonoBehaviour
     }
 
     #region - Mana -
+    private void RefillMana()
+    {
+        _currentMana = _defaultMana;
+        onManaChange?.Invoke();
+    }
+
     public void OnSpendMana(int points)
     {
         _currentMana -= points;

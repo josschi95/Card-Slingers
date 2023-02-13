@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class GridNode : MonoBehaviour, IInteractable
 {
+    public delegate void OnGridNodeValueChanged();
+    public OnGridNodeValueChanged onNodeValueChanged;
+
     private void TEST_SUMMON_ENEMY()
     {
         DuelManager.instance.SummonTestEnemy(this);
@@ -16,9 +19,11 @@ public class GridNode : MonoBehaviour, IInteractable
 
     //[SerializeField] 
     private bool _isPlayerNode;
-    [SerializeField] Card_Permanent _occupant = null;
-    [SerializeField] Card _trap;
-    [SerializeField] Card _terrain;
+    [SerializeField] private Card_Permanent _occupant = null;
+    [SerializeField] private Card _trap;
+    [SerializeField] private Card _terrain;
+
+    public int OccupantPower => CalculateOccupantPower();
 
     private bool _lockedForDisplay; //ignore mouse movements to change the color
 
@@ -45,6 +50,12 @@ public class GridNode : MonoBehaviour, IInteractable
     public void ClearOccupant()
     {
         _occupant = null;
+    }
+
+    private int CalculateOccupantPower()
+    {
+        if (_occupant == null) return 0;
+        else return _occupant.PowerLevel;
     }
 
     #region - Interactions -

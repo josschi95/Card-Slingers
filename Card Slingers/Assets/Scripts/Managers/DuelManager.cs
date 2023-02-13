@@ -499,11 +499,7 @@ public class DuelManager : MonoBehaviour
             bool nodeClaimed = false;
             for (int d = 0; d < _declaredActions.Count; d++)
             {
-                if (_declaredActions[d].targetNode == laneNodes[i])
-                {
-                    Debug.Log("Node Claimed");
-                    nodeClaimed = true;
-                }
+                if (_declaredActions[d].targetNode == laneNodes[i]) nodeClaimed = true;
             }
             if (nodeClaimed) continue;
             walkableNodes.Add(laneNodes[i]);
@@ -525,10 +521,13 @@ public class DuelManager : MonoBehaviour
             if (distanceFromTarget <= unit.Range) AddNewDeclaredAction(unit, _nodeToTarget, ActionType.Attack);
             else //unit needs to move first
             {
-                Debug.Log("Attack target out of range");
+                Debug.Log("Attack target out of range, distance = " + distanceFromTarget);
+                Debug.Log("Range = " + unit.Range);
                 for (int i = 0; i < walkableNodes.Count; i++)
                 {
-                    if (Mathf.Abs(walkableNodes[i].gridZ - _nodeToTarget.gridZ) < distanceFromTarget - unit.Range)
+                    Debug.Log("Node at " + walkableNodes[i].gridX + "," + walkableNodes[i].gridZ + " Dist: " + Mathf.Abs(walkableNodes[i].gridZ - _nodeToTarget.gridZ));
+
+                    if (Mathf.Abs(walkableNodes[i].gridZ - _nodeToTarget.gridZ) <= distanceFromTarget - unit.Range)
                     {
                         Debug.Log("Intermediary node found");
                         AddNewDeclaredAction(unit, walkableNodes[i], ActionType.Move);
@@ -584,6 +583,7 @@ public class DuelManager : MonoBehaviour
             yield return new WaitForSeconds(0.5f); //short delay, this will be changed later
         }
 
+        yield return new WaitForSeconds(2.5f); //add a delay so any cards removed can be returned to their owner's deck
         //all declared actions have been resolved, end the phase
         OnCurrentPhaseFinished();
     }

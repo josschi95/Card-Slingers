@@ -15,6 +15,7 @@ public class DeckHolder : MonoBehaviour
     [SerializeField] private bool isPlayer;
     private Vector3 faceDown = new Vector3(0, 0, 180);
     private int _cardsInHand;
+    private int _cardsInDiscard;
 
     public void OnTransformChildrenChanged()
     {
@@ -27,12 +28,12 @@ public class DeckHolder : MonoBehaviour
                 OrderHand();
                 break;
             case HolderType.Discard:
-                OrderDeckPile(false);
+                OrderDiscardPile();
                 break;
         }
     }
 
-    private void OrderDeckPile(bool isDeck = true)
+    private void OrderDeckPile()
     {
         int cardCount = transform.childCount - objectsToIgnore.Length;
         float height = cardSpacing * cardCount;
@@ -44,9 +45,29 @@ public class DeckHolder : MonoBehaviour
             var newPos = Vector3.zero;
             newPos.y = height;
             transform.GetChild(i).localPosition = newPos;
-            if (isDeck) transform.GetChild(i).localEulerAngles = faceDown;
+            transform.GetChild(i).localEulerAngles = faceDown;
             height -= cardSpacing;
+        }
+    }
 
+    private void OrderDiscardPile()
+    {
+        int cardCount = transform.childCount - objectsToIgnore.Length;
+        float height = cardSpacing * cardCount;
+        bool addedNewCard = false;
+        if (cardCount > _cardsInDiscard) addedNewCard = true;
+        _cardsInDiscard = cardCount;
+
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            if (i < objectsToIgnore.Length) continue;
+            var child = transform.GetChild(i);
+
+            var newPos = Vector3.zero;
+            newPos.y = height;
+
+            StartCoroutine(SmoothCardMovement(child.gameObject, newPos, (addedNewCard && i == transform.childCount - 1)));
+            height -= cardSpacing;
         }
     }
 
