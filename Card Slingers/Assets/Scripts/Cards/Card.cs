@@ -6,6 +6,7 @@ using TMPro;
 public class Card : MonoBehaviour, IInteractable
 {
     [Header("Card Display")]
+    [SerializeField] protected GameObject cardGFX;
     [SerializeField] private TMP_Text title;
     [SerializeField] private TMP_Text description, flavorText;
     [SerializeField] private Image display;
@@ -108,9 +109,9 @@ public class Card : MonoBehaviour, IInteractable
                 _isSelected = true;
                 DuelManager.instance.onCardInHandSelected?.Invoke(this);
                 break;
-            case CardLocation.OnField:
+            case CardLocation.OnField: //cards on the field wiill never be selected, the nodes they are occupying will be selected
                 _isSelected = true;
-                DuelManager.instance.onCardInPlaySelected?.Invoke(this);
+                //DuelManager.instance.onCardInPlaySelected?.Invoke(this);
                 break;
             case CardLocation.InExile:
                 //Maybe show display, the current route is that cards in exile are removed from the game for the current match

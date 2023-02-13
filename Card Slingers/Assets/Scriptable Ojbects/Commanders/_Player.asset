@@ -20,7 +20,7 @@ MonoBehaviour:
   faction: 0
   description: 
   flavorText: 
-  _permanentPrefab: {fileID: 3810874859362294788, guid: 563ed6d71480be44b9ce1e65d849aae0, type: 3}
+  _permanentPrefab: {fileID: 1125088666059422, guid: 252a512dd98766344a3e98962ce240d7, type: 3}
   _maxHealth: 0
   _attack: 0
   _range: 0

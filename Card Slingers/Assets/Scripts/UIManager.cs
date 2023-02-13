@@ -12,10 +12,11 @@ public class UIManager : MonoBehaviour
         instance = this;
     }
 
-    public Button TEST_SUMMON_BUTTON;
+    public Button TEST_SUMMON_BUTTON, TEST_END_PHASE_BUTTON;
 
     #region - Commander Banner -
     [Header("Commander Banner")]
+    [SerializeField] private RectTransform phaseBanner;
     [SerializeField] private TMP_Text phaseText;
     [SerializeField] private RectTransform bannerParent;
     [SerializeField] private TMP_Text playerCommanderName, playerHealth, playerMana;
@@ -24,9 +25,11 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Text opponentCommanderName;
     [SerializeField] private TMP_Text opponentHealth, opponentMana;
 
+
     private Coroutine lerpBannerCoroutine;
     private Vector3 bannerShownPos = Vector3.zero;
     private Vector3 bannerHiddenPos = new Vector3(0, 150, 0);
+    private Vector2 phaseBannerPos = new Vector2(157.5f, 0);
     #endregion
 
     #region - Card Display -
@@ -55,9 +58,11 @@ public class UIManager : MonoBehaviour
         endPhaseButton.onClick.AddListener(OnPlayerEndPhase);
         cancelActionButton.onClick.AddListener(delegate { DuelManager.instance.OnCancelAction(); });
         
-        TEST_SUMMON_BUTTON.onClick.AddListener(delegate
+        TEST_SUMMON_BUTTON.onClick.AddListener(delegate { DuelManager.instance.TEST_SUMMON_ENEMY = true; });
+        TEST_END_PHASE_BUTTON.onClick.AddListener(delegate
         {
-            DuelManager.instance.TEST_SUMMON_ENEMY = true;
+            Debug.Log("TEST END PHASE");
+            DuelManager.instance.OnCurrentPhaseFinished(); 
         });
     }
 
@@ -86,6 +91,7 @@ public class UIManager : MonoBehaviour
         lerpBannerCoroutine = StartCoroutine(LerpRectTransform(bannerParent, bannerHiddenPos));
     }
 
+    //Player has selected to end their current phase
     private void OnPlayerEndPhase()
     {
         if (DuelManager.instance.PlayerController.isTurn)
@@ -94,9 +100,13 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void OnPhaseChange(Phase phase)
+
+    private void OnPhaseChange(bool playerTurn, Phase phase)
     {
         phaseText.text = phase.ToString() + " Phase";
+
+        phaseBanner.anchoredPosition = phaseBannerPos;
+        if (playerTurn) phaseBanner.anchoredPosition *= Vector2.left;
     }
 
     private void OnCommanderValuesChanged()

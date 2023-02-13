@@ -20,7 +20,7 @@ MonoBehaviour:
   faction: 1
   description: 'HP:5 ATK:1 DEF: 0 SPD: 2'
   flavorText: 'A lowly peasant conscript. '
-  _permanentPrefab: {fileID: 1471423709927289214, guid: 4b8bc6de3e22f1e4aa762effeac0d891, type: 3}
+  _permanentPrefab: {fileID: 1140322766594170, guid: 084d983feb3cc754a8dc6647297cd52f, type: 3}
   _maxHealth: 5
   _attack: 1
   _range: 1

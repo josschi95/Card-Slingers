@@ -20,7 +20,7 @@ MonoBehaviour:
   faction: 1
   description: 'HP:5 ATK:1 DEF: 0 SPD: 2'
   flavorText: A noble knight
-  _permanentPrefab: {fileID: 2720721032963671195, guid: 9126f6ba332a8624fbb02c34df798a14, type: 3}
+  _permanentPrefab: {fileID: 1581596896999312, guid: c1bf78096101892488e2d81d47664125, type: 3}
   _maxHealth: 10
   _attack: 1
   _range: 1

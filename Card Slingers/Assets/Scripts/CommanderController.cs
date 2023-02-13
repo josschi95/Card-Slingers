@@ -26,6 +26,7 @@ public class CommanderController : MonoBehaviour
     [Space]
     [SerializeField] private List<Card_Permanent> _permanentsOnField;
     public bool isTurn { get; private set; }
+    private int _handSize;
 
     #region - Public Variable References -
     public CommanderSO CommanderInfo => _commanderInfo;
@@ -33,6 +34,7 @@ public class CommanderController : MonoBehaviour
     public int CurrentMana => _currentMana;
     #endregion
 
+    #region - Initial Methods -
     private void Start()
     {
         duelManager = DuelManager.instance;
@@ -49,6 +51,8 @@ public class CommanderController : MonoBehaviour
     {
         //Should only need this here for testing
         duelManager = DuelManager.instance;
+        duelManager.onPhaseChange += SetPhase;
+        _handSize = startingHandSize;
 
         _cardsInDeck = new List<Card>();
         _cardsInDiscardPile = new List<Card>();
@@ -56,17 +60,8 @@ public class CommanderController : MonoBehaviour
         _permanentsOnField = new List<Card_Permanent>();
 
         GenerateDeck();
-
         ShuffleDeck();
-
-        DrawCards(startingHandSize);
-    }
-
-    //Set the commander as the first to go, normal but don't draw a card
-    public void OnFirstTurn()
-    {
-        currentPhase = Phase.Begin;
-        OnBeginPhase(false);
+        DrawCards();
     }
 
     protected virtual void GenerateDeck()
@@ -80,12 +75,35 @@ public class CommanderController : MonoBehaviour
             PlaceCardInDeck(newCard);
         }
     }
+    #endregion
+
+    public void OnVictory()
+    {
+        duelManager.onPhaseChange -= SetPhase; //unsubscribe
+        for (int i = 0; i < _permanentsOnField.Count; i++)
+        {
+            _permanentsOnField[i].OnCommanderVictory();
+        }
+    }
+
+    public void OnDefeat()
+    {
+        duelManager.onPhaseChange -= SetPhase; //unsubscribe
+        for (int i = 0; i < _permanentsOnField.Count; i++)
+        {
+            _permanentsOnField[i].OnCommanderDefeat();
+        }
+    }
 
     #region - Phases -
-    public void SetPhase(Phase phase)
+    private void SetPhase(bool playerTurn, Phase phase)
     {
+        if (playerTurn && this is not PlayerCommander) return;
+        else if (!playerTurn && this is PlayerCommander) return;
+
         Debug.Log(CommanderInfo.name + " entering " + phase.ToString() + " phase");
         currentPhase = phase;
+
         switch (phase)
         {
             case Phase.Begin:
@@ -106,17 +124,21 @@ public class CommanderController : MonoBehaviour
         }
     }
 
-    public void OnBeginPhase(bool drawCard = true)
+    private void OnBeginPhase()
     {
         isTurn = true;
         _currentMana = 4;
 
-        if (drawCard) DrawCards();
-        //This will eventually have an animation, so wait until that is finished
+        DrawCards();
 
         //For each card on the field, invoke an OnBeginPhase event
+        for (int i = 0; i < _permanentsOnField.Count; i++)
+        {
+            _permanentsOnField[i].OnBeginPhase();
+        }
 
-        DuelManager.instance.OnCurrentPhaseFinished();
+        //Wait 1 second after drawing before starting the next phase
+        DuelManager.instance.Invoke("OnCurrentPhaseFinished", 1f);
     }
 
     private void OnSummoningPhase()
@@ -138,31 +160,29 @@ public class CommanderController : MonoBehaviour
     {
         isTurn = false;
 
-        DuelManager.instance.OnCurrentPhaseFinished();
-    }
-
-    public void OnNextPhase()
-    {
-        if (currentPhase == Phase.End) OnBeginPhase();
-        else SetPhase(currentPhase + 1);
+        //Wait 1 second before starting the next phase
+        DuelManager.instance.Invoke("OnCurrentPhaseFinished", 1f);
     }
     #endregion
 
     #region - Card Movements -
-    private void DrawCards(int count = 1)
+    private void DrawCards()
     {
-        for (int i = 0; i < count; i++)
+        int cardsToDraw = _handSize - _cardsInHand.Count;
+        Debug.Log("hand size " + _handSize);
+        Debug.Log("cards in hand: " + _cardsInHand.Count);
+        Debug.Log("Cards to draw: " + cardsToDraw);
+
+        for (int i = 0; i < cardsToDraw; i++)
         {
             if (_cardsInDeck.Count <= 0)
             {
                 Debug.Log("No Remaining Cards in Deck");
                 ReturnDiscardPileToDeck();
-                return;
             }
 
             var cardToDraw = _cardsInDeck[0];
             _cardsInDeck.Remove(cardToDraw);
-            _cardsInHand.Add(cardToDraw);
             PlaceCardInHand(cardToDraw);
         }
     }
@@ -273,26 +293,28 @@ public class CommanderController : MonoBehaviour
         _permanentsOnField.Add(card);
 
         //Move the card to its new position
-        StartCoroutine(MoveCard(card, node.transform.position, node));
+        StartCoroutine(MoveCardToField(card, node));
     }
 
-    private IEnumerator MoveCard(Card_Permanent card, Vector3 endPos, GridNode node = null)
+    private IEnumerator MoveCardToField(Card_Permanent card, GridNode node)
     {
         //float dist = Vector3.Distance(card.transform.position, endPos);
-        float timeToMove = Vector3.Distance(card.transform.position, endPos) / 25f;
+        float timeToMove = Vector3.Distance(card.transform.position, node.transform.position) / 25f;
         //I actually think I want to increase the time for shorter distances
 
 
         float timeElapsed = 0f;
         var startPos = card.transform.position;
         var startRot = card.transform.rotation;
-        var endRot = Quaternion.Euler(Vector3.zero);
+        var endRot = transform.rotation; //set to same rotation as commander
+
+        if (this is not PlayerCommander) endRot = Quaternion.Euler(0, 180, 0);
 
         while (timeElapsed < timeToMove)
         {
             timeElapsed += Time.deltaTime;
 
-            card.transform.position = MathParabola.Parabola(startPos, endPos, timeElapsed / timeToMove);
+            card.transform.position = MathParabola.Parabola(startPos, node.transform.position, timeElapsed / timeToMove);
             card.transform.rotation = Quaternion.Slerp(startRot, endRot, timeElapsed / timeToMove);
 
             yield return null;

@@ -43,5 +43,41 @@ public class Card_Structure : Card_Permanent
         return true;
     }
 
+    public override void OnTakeDamage(int damage)
+    {
+        _currentHealth -= damage;
+        if (_currentHealth <= 0) OnPermanentDestroyed();
+    }
 
+    protected override void OnPermanentDestroyed()
+    {
+        Debug.Log("unit has been destroyed");
+
+        //explosions or something
+
+        //start a coroutine to wait until anim is finished playing
+        StartCoroutine(WaitToRemove());
+    }
+
+    private IEnumerator WaitToRemove()
+    {
+        yield return new WaitForSeconds(2);
+        //include a part where the gameObject sinks beneath the battlefield
+        cardGFX.SetActive(true); //Re-enable card
+        Destroy(PermanentObject); //Destroy unit
+
+        //Invoke an event for the commander to listen to
+        Commander.onPermanentDestroyed?.Invoke(this);
+    }
+
+    public override void OnCommanderVictory()
+    {
+        StartCoroutine(WaitToRemove());
+    }
+
+    public override void OnCommanderDefeat()
+    {
+        OnPermanentDestroyed();
+    }
 }
+

@@ -59,17 +59,33 @@ public class DeckHolder : MonoBehaviour
         {
             if (i < objectsToIgnore.Length) continue;
             var child = transform.GetChild(i);
-            
-            child.localPosition = new Vector3(cardXPos, 0, 0);
-            cardXPos += CARD_WIDTH + cardSpacing;
 
-            if (isPlayer) child.localEulerAngles = Vector3.zero;
-            else
-            {
-                if (child.GetComponent<Card>().isRevealed) child.localEulerAngles = Vector3.zero;
-                else child.localEulerAngles = faceDown;
-            }
+            StartCoroutine(SmoothCardMovement(child.gameObject, new Vector3(cardXPos, 0, 0)));
+            cardXPos += CARD_WIDTH + cardSpacing;
         }
     }
 
+    private IEnumerator SmoothCardMovement(GameObject card, Vector3 endPos)
+    {
+        float timeElapsed = 0f, timeToMove = 0.5f;
+        var startPos = card.transform.localPosition;
+        var startRot = card.transform.localRotation;
+
+        var endRot = Quaternion.Euler(Vector3.zero);
+        if (!card.GetComponent<Card>().isRevealed) endRot = Quaternion.Euler(faceDown);
+
+        while (timeElapsed < timeToMove)
+        {
+            timeElapsed += Time.deltaTime;
+
+            card.transform.localPosition = Vector3.Lerp(startPos, endPos, timeElapsed / timeToMove);
+            //card.transform.localPosition = MathParabola.Parabola(startPos, endPos, timeElapsed / timeToMove);
+            card.transform.localRotation = Quaternion.Slerp(startRot, endRot, timeElapsed / timeToMove);
+
+            yield return null;
+        }
+
+        card.transform.localPosition = endPos;
+        card.transform.localRotation = endRot;
+    }
 }

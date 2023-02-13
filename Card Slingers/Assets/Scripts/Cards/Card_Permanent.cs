@@ -9,12 +9,9 @@ public class Card_Permanent : Card
 {
     [SerializeField] private GridNode _occupiedNode;
     [SerializeField] private GameObject _permanentObject;
-    private bool _firstTurn; //Prevent the card from taking any actions same turn it was summoned
-    //private Animator anim; //this will only be for Card_Unit ...we'll see. buildings may just have VFX, traps may have a "Sprung" anim
 
     public GridNode OccupiedNode => _occupiedNode;
     public GameObject PermanentObject => _permanentObject;
-    public bool FirstTurn => _firstTurn;
 
     public virtual void OnSummoned(GridNode node)
     {
@@ -27,13 +24,9 @@ public class Card_Permanent : Card
 
         //Instantiate permanent
         var permanent = CardInfo as PermanentSO;
-        _permanentObject = Instantiate(permanent.Prefab, transform.position, Quaternion.identity);
+        _permanentObject = Instantiate(permanent.Prefab, transform.position, transform.rotation);
         _permanentObject.transform.SetParent(transform);
-
-        //anim = _permanentObject.GetComponent<Animator>(); //This will only be for units, not buildings, traps, or equipment
-        //Play enter animation
-
-        _firstTurn = true;
+        cardGFX.SetActive(false); //Disable the physical card display
     }
 
     //Set current node and occupy it
@@ -48,23 +41,43 @@ public class Card_Permanent : Card
     //Abandon the currently occupied node
     public void OnAbandonNode()
     {
-        _occupiedNode.ClearOccupant();
+        _occupiedNode?.ClearOccupant();
         _occupiedNode = null;
     }
 
     public void OnBeginPhase()
     {
-        _firstTurn = false;
         //Trigger any relevant abilities
     }
 
     public void OnRemoveFromField() //Maybe change this to a method in the base Card class for OnEnterDiscard which will also set location
     {
         OnAbandonNode();
+        cardGFX.SetActive(true); //Disable the physical card display
         //Play death animation <= this will probably be separate and only for units,
         //because I'll have to wait for the animation to finish
         //and then I can call OnRemovePermanentFromField(this) 
 
         //destroy _permanentObject or return to pool
+    }
+
+    public virtual void OnTakeDamage(int dmg)
+    {
+        //Meant to be overridden
+    }
+
+    protected virtual void OnPermanentDestroyed()
+    {
+        //Meant to be overridden
+    }
+
+    public virtual void OnCommanderVictory()
+    {
+        //Meant to be overridden
+    }
+
+    public virtual void OnCommanderDefeat()
+    {
+        //Meant to be overridden
     }
 }

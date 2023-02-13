@@ -5,8 +5,8 @@ using UnityEngine;
 public class Card_Unit : Card_Permanent
 {
     [Header("Unit Info")]
-    [SerializeField] private Animator _animator;
-    [SerializeField] private int _currentHealth;
+    protected Animator _animator;
+    [SerializeField] protected int _currentHealth;
     [SerializeField] private List<Card_Permanent> _equipment;
 
     [SerializeField] private List<int> _healthModifiers;
@@ -15,9 +15,8 @@ public class Card_Unit : Card_Permanent
     [SerializeField] private List<int> _defenseModifiers;
     [SerializeField] private List<int> _speedModifiers;
 
-    private bool _canMove = true, _canAttack = true;
-
-    public bool isActing { get; private set; } //reference for if the unit is moving/attacking 
+    private bool _isMoving;
+    private bool _isAttacking;
 
     #region - Public Reference Variables -
     public int MaxHealth => NetMaxHealth();
@@ -27,9 +26,14 @@ public class Card_Unit : Card_Permanent
     public int Defense => NetDefense();
     public int Speed => NetSpeed();
     public List<Card_Permanent> Equipment => _equipment;
+
+    public bool IsActing => UnitIsActing();
+    public bool CanAct => UnitCanAct();
+    public bool CanMove => UnitCanMove();
+    public bool CanAttack => UnitCanAttack();
     #endregion
 
-    #region - Inherited Methods -
+    #region - Override Methods -
     protected override void SetCardDisplay()
     {
         base.SetCardDisplay();
@@ -55,6 +59,17 @@ public class Card_Unit : Card_Permanent
 
         _currentHealth = NetMaxHealth();
     }
+
+    public override void OnCommanderVictory()
+    {
+        _animator.SetTrigger("victory");
+        StartCoroutine(WaitToRemove());
+    }
+
+    public override void OnCommanderDefeat()
+    {
+        OnPermanentDestroyed();
+    }
     #endregion
 
     #region - Unit Stats -
@@ -78,6 +93,8 @@ public class Card_Unit : Card_Permanent
 
     private int NetRange()
     {
+        if (!CanAttack) return 0;
+
         var unit = CardInfo as UnitSO;
         int value = unit.Range;
         _rangeModifiers.ForEach(x => value += x);
@@ -104,76 +121,134 @@ public class Card_Unit : Card_Permanent
     }
     #endregion
 
+    #region - Unit Conditions -
+    private bool UnitIsActing()
+    {
+        if (_isMoving) return true;
+        if (_isAttacking) return true;
+        return false;
+    }
+    
+    private bool UnitCanAct()
+    {
+        return true;
+    }
+
+    private bool UnitCanMove()
+    {
+        if (!CanAct) return false;
+        if (Speed == 0) return false;
+
+        return true;
+    }
+
+    private bool UnitCanAttack()
+    {
+        if (!CanAct) return false;
+        return true;
+    }
+    #endregion
+
+    #region - Movement -
     public void MoveToNode(GridNode newNode)
     {
-        StartCoroutine(MoveCard(newNode));
-        //abandon first node
+        StartCoroutine(MoveUnit(newNode));
+    }
+    
+    private IEnumerator MoveUnit(GridNode endNode)
+    {
+        _isMoving = true;
+        var nodePath = new List<GridNode>(DuelManager.instance.Battlefield.GetNodePath(OccupiedNode, endNode));
+        var currentNode = OccupiedNode; //the node that the unit is currently located at, changes each time they move
 
-        //run while loop for node
+        float speed = 1; //set whether walking forwards or back
+        if (OccupiedNode.gridZ > endNode.gridZ) speed = -1;
 
-        //occupy new node
+        //ignore the currently occupied node
+        if (nodePath[0] == OccupiedNode) nodePath.RemoveAt(0);
+        OnAbandonNode(); //abandon the currently occupied node
+
+        while(nodePath.Count > 0)
+        {         
+            if (!CanMove)  //movement has been stopped by an effect
+            {
+                OnOccupyNode(currentNode);
+                OnStopMovement();
+                yield break;
+            }
+            else if (_currentHealth <= 0) //unit's health has been reduced to 0, likely a trap
+            {
+                OnStopMovement();
+                yield break;
+            }
+
+            while (Vector3.Distance(transform.position, nodePath[0].transform.position) > 0.1f)
+            {
+                _animator.SetFloat("speed", speed, 0.1f, Time.deltaTime);
+                //timeElaspsed += Time.deltaTime;
+                yield return new WaitForEndOfFrame();
+            }
+
+            transform.position = nodePath[0].transform.position;
+            nodePath[0].OnEnterNode(this);
+            currentNode = nodePath[0];
+            nodePath.RemoveAt(0);
+
+            yield return null;
+        }
+
+        //occupies the new node
+        OnOccupyNode(endNode);
+        OnStopMovement();
     }
 
-    public void TakeDamage(int damage)
+    private void OnStopMovement()
+    {
+        _animator.SetFloat("speed", 0);
+        _isMoving = false;
+    }
+    #endregion
+
+    public void AttackNode(GridNode node)
+    {
+        if (!CanAttack) return; //can't attack, shouldn't have gotten here if this is already false, but worth checking
+
+        //out of range, movement was likely stopped before getting within range
+        if (Mathf.Abs(OccupiedNode.gridZ - node.gridZ) > Range)
+        {
+            Debug.Log("Target out of range");
+            return;
+        }
+
+        _animator.SetTrigger("attack");
+
+        //should include some sort of delay here to trigger the damage when the attack would actually hit, instead of immediately
+
+        node.Occupant.OnTakeDamage(Damage);
+    }
+
+    public override void OnTakeDamage(int damage)
     {
         _animator.SetTrigger("damage");
-
+        damage = Mathf.Clamp(damage - Defense, 0, int.MaxValue);
         _currentHealth -= damage;
-        if (_currentHealth <= 0) OnUnitDestroyed();
+        Debug.Log(CardInfo.name + " takes " + damage + " damage!");
+        if (_currentHealth <= 0) OnPermanentDestroyed();
     }
 
-    public void RegainHealth(int amount)
+    public void OnRegainHealth(int amount)
     {
         _currentHealth += amount;
         if (_currentHealth > MaxHealth) _currentHealth = MaxHealth;
     }
 
-    private void OnUnitDestroyed()
+    protected override void OnPermanentDestroyed()
     {
         Debug.Log("unit has been destroyed");
         _animator.SetTrigger("death");
 
         //start a coroutine to wait until anim is finished playing
         StartCoroutine(WaitToRemove());
-    }
-
-    private IEnumerator MoveCard(GridNode endNode)
-    {
-        isActing = true;
-
-        var nodePath = new List<GridNode>(DuelManager.instance.Battlefield.GetNodePath(OccupiedNode, endNode));
-        var currentNode = OccupiedNode; //the node that the unit is currently located at, changes each time they move
-
-        /*!!! Major Flaw: If the unit moves into a space occupied by an ally, and then the next node has a trap that prevents entrance
-         * Then the units end position would be the same as that of their ally, which is not allowed. 
-         * So final verdict is that you can always move into the space of a trap and occupy it, but they'll often also stop movement!!!*/
-
-        //ignore the currently occupied node
-        if (nodePath[0] == OccupiedNode) nodePath.RemoveAt(0);
-
-        OnAbandonNode(); //abandon the currently occupied node
-
-        while(nodePath.Count > 0)
-        {
-            if (!_canMove)  //movement has been stopped by an effect
-            {
-                endNode = currentNode;
-                yield break;
-            }
-
-            nodePath[0].OnEnterNode(this);
-            transform.position = nodePath[0].transform.position;
-            currentNode = nodePath[0];
-
-            //Remove the current node from the list
-            nodePath.RemoveAt(0);
-            Debug.Log("still moving");
-            yield return new WaitForSeconds(3);
-        }
-
-        //occupies the new node
-        OnOccupyNode(endNode);
-        isActing = false;
     }
 
     private IEnumerator WaitToRemove()
@@ -184,12 +259,12 @@ public class Card_Unit : Card_Permanent
         }
 
         //include a part where the gameObject sinks beneath the battlefield
-
-        Destroy(PermanentObject);
+        cardGFX.SetActive(true); //Re-enable card
+        Destroy(PermanentObject); //Destroy unit
 
         //Invoke an event for the commander to listen to
         Commander.onPermanentDestroyed?.Invoke(this);
     }
 }
 
-public enum UnitStat { Attack, Defense, Speed }
+public enum UnitStat { Health, Attack, Range, Defense, Speed }
