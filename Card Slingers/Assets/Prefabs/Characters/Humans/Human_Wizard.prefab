@@ -286,6 +286,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4144981802724430}
   - component: {fileID: 95942999271586406}
+  - component: {fileID: -1152457996023188799}
   m_Layer: 0
   m_Name: Human_Wizard
   m_TagString: Untagged
@@ -330,6 +331,18 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
+--- !u!114 &-1152457996023188799
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1125088666059422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2bbbcf36adcbbf41ac1f692c2b5f223, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1147484409059578
 GameObject:
   m_ObjectHideFlags: 0

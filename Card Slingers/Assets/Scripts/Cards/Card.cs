@@ -69,7 +69,7 @@ public class Card : MonoBehaviour, IInteractable
     #region - IInteractable -
     public void OnMouseEnter()
     {
-        if (_commander is PlayerCommander && _location == CardLocation.InHand)
+        if (!_commander.isDrawingCards && _commander is PlayerCommander && _location == CardLocation.InHand)
         {
             if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
             lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(true));
@@ -80,7 +80,7 @@ public class Card : MonoBehaviour, IInteractable
     {
         if (_isSelected) return;
 
-        if (_commander is PlayerCommander && _location == CardLocation.InHand)
+        if (!_commander.isDrawingCards && _commander is PlayerCommander && _location == CardLocation.InHand)
         {
             if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
             lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(false));

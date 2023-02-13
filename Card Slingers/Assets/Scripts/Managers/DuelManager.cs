@@ -73,7 +73,7 @@ public class DuelManager : MonoBehaviour
 
     private bool _waitForTargetNode; //waitinf for a node to be selected to perform an action
     private GridNode _nodeToTarget; //the node that will be targeted to move/attack 
-    private List<DeclaredAction> _declaredActions = new List<DeclaredAction>();
+    [SerializeField] private List<DeclaredAction> _declaredActions = new List<DeclaredAction>();
     private Coroutine declareActionCoroutine; //keep available nodes highlighted while a unit is selected to act
 
     #region - Public Variable References -
@@ -456,6 +456,18 @@ public class DuelManager : MonoBehaviour
             if (Mathf.Abs(unit.OccupiedNode.gridZ - laneNodes[i].gridZ) > unit.Speed) break;
             //any node past this point is at least within movement distance of the card
 
+            //Cannot move to the same node that another unit has declared they are moving to
+            bool nodeClaimed = false;
+            for (int d = 0; d < _declaredActions.Count; d++)
+            {
+                if (_declaredActions[d].targetNode == laneNodes[i])
+                {
+                    nodeClaimed = true;
+                    Debug.Log("Node Claimed");
+                }
+            }
+            if (nodeClaimed) continue;
+
             //All other criteria has been check, no enemies, within walking range, not occupied
             walkableNodes.Add(laneNodes[i]);
         }
@@ -484,6 +496,16 @@ public class DuelManager : MonoBehaviour
             else if (enemyFound) continue;
             if (!laneNodes[i].CanBeOccupied(unit)) continue;
             if (Mathf.Abs(unit.OccupiedNode.gridZ - laneNodes[i].gridZ) > unit.Speed) break;
+            bool nodeClaimed = false;
+            for (int d = 0; d < _declaredActions.Count; d++)
+            {
+                if (_declaredActions[d].targetNode == laneNodes[i])
+                {
+                    Debug.Log("Node Claimed");
+                    nodeClaimed = true;
+                }
+            }
+            if (nodeClaimed) continue;
             walkableNodes.Add(laneNodes[i]);
         }
 
@@ -497,15 +519,18 @@ public class DuelManager : MonoBehaviour
         //player is attacking another unit/structure
         else if (attackNodes.Contains(_nodeToTarget))
         {
+            Debug.Log("Attack action confirmed");
             int distanceFromTarget = Mathf.Abs(unit.OccupiedNode.gridZ - _nodeToTarget.gridZ);
 
             if (distanceFromTarget <= unit.Range) AddNewDeclaredAction(unit, _nodeToTarget, ActionType.Attack);
             else //unit needs to move first
             {
+                Debug.Log("Attack target out of range");
                 for (int i = 0; i < walkableNodes.Count; i++)
                 {
                     if (Mathf.Abs(walkableNodes[i].gridZ - _nodeToTarget.gridZ) < distanceFromTarget - unit.Range)
                     {
+                        Debug.Log("Intermediary node found");
                         AddNewDeclaredAction(unit, walkableNodes[i], ActionType.Move);
                         break;
                     }
@@ -596,6 +621,7 @@ public struct ValidNodes
     }
 }
 
+[System.Serializable]
 public struct DeclaredAction
 {
     public Card_Unit unit;

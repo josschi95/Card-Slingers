@@ -18,6 +18,10 @@ public class Card_Unit : Card_Permanent
     private bool _isMoving;
     private bool _isAttacking;
 
+    #region - Animation -
+    private bool _waitingForDeathAnim;
+    #endregion
+
     #region - Public Reference Variables -
     public int MaxHealth => NetMaxHealth();
     public int CurrentHealth => _currentHealth;
@@ -63,7 +67,7 @@ public class Card_Unit : Card_Permanent
     public override void OnCommanderVictory()
     {
         _animator.SetTrigger("victory");
-        StartCoroutine(WaitToRemove());
+        StartCoroutine(WaitForDeathAnim());
     }
 
     public override void OnCommanderDefeat()
@@ -246,15 +250,31 @@ public class Card_Unit : Card_Permanent
     {
         Debug.Log("unit has been destroyed");
         _animator.SetTrigger("death");
-
-        //start a coroutine to wait until anim is finished playing
-        StartCoroutine(WaitToRemove());
+        StartCoroutine(WaitForDeathAnim());
     }
 
-    private IEnumerator WaitToRemove()
+    public void OnDeathAnimCompleted()
     {
-        while (_animator.speed > 0.1) //IDK... 
+        Debug.Log("Death Anim Complete");
+        _waitingForDeathAnim = false;
+    }
+
+    private IEnumerator WaitForDeathAnim()
+    {
+        _waitingForDeathAnim = true;
+        while (_waitingForDeathAnim == true)
         {
+            yield return null;
+        }
+        yield return new WaitForSeconds(1f); //short delay
+
+        float timeElapsed = 0, timeToMove = 1.5f;
+        
+        while (timeElapsed < timeToMove)
+        {
+            timeElapsed += Time.deltaTime;
+            Debug.Log("Sinking");
+            PermanentObject.transform.position = Vector3.Lerp(PermanentObject.transform.position, Vector3.down, timeElapsed / timeToMove);
             yield return null;
         }
 

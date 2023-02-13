@@ -27,8 +27,10 @@ public class CommanderController : MonoBehaviour
     [SerializeField] private List<Card_Permanent> _permanentsOnField;
     public bool isTurn { get; private set; }
     private int _handSize;
+    private bool firstDraw;
 
     #region - Public Variable References -
+    public bool isDrawingCards { get; private set; } //drawing cards, don't trigger raise card
     public CommanderSO CommanderInfo => _commanderInfo;
     public Card_Permanent CommanderCard => _commanderCard;
     public int CurrentMana => _currentMana;
@@ -61,7 +63,8 @@ public class CommanderController : MonoBehaviour
 
         GenerateDeck();
         ShuffleDeck();
-        DrawCards();
+        firstDraw = true;
+        StartCoroutine(DrawCards());
     }
 
     protected virtual void GenerateDeck()
@@ -101,7 +104,7 @@ public class CommanderController : MonoBehaviour
         if (playerTurn && this is not PlayerCommander) return;
         else if (!playerTurn && this is PlayerCommander) return;
 
-        Debug.Log(CommanderInfo.name + " entering " + phase.ToString() + " phase");
+        //Debug.Log(CommanderInfo.name + " entering " + phase.ToString() + " phase");
         currentPhase = phase;
 
         switch (phase)
@@ -129,7 +132,7 @@ public class CommanderController : MonoBehaviour
         isTurn = true;
         _currentMana = 4;
 
-        DrawCards();
+        if (!firstDraw) StartCoroutine(DrawCards());
 
         //For each card on the field, invoke an OnBeginPhase event
         for (int i = 0; i < _permanentsOnField.Count; i++)
@@ -166,25 +169,28 @@ public class CommanderController : MonoBehaviour
     #endregion
 
     #region - Card Movements -
-    private void DrawCards()
+    private IEnumerator DrawCards()
     {
-        int cardsToDraw = _handSize - _cardsInHand.Count;
-        Debug.Log("hand size " + _handSize);
-        Debug.Log("cards in hand: " + _cardsInHand.Count);
-        Debug.Log("Cards to draw: " + cardsToDraw);
-
-        for (int i = 0; i < cardsToDraw; i++)
+        isDrawingCards = true;
+        while (_cardsInHand.Count < _handSize)
         {
             if (_cardsInDeck.Count <= 0)
             {
                 Debug.Log("No Remaining Cards in Deck");
                 ReturnDiscardPileToDeck();
+                yield return new WaitForSeconds(1.5f); //give time for the deck to reshuffle
             }
 
             var cardToDraw = _cardsInDeck[0];
             _cardsInDeck.Remove(cardToDraw);
             PlaceCardInHand(cardToDraw);
+
+            yield return new WaitForSeconds(0.5f);
+
+            yield return null;
         }
+        isDrawingCards = false;
+        firstDraw = false;
     }
 
     private void ShuffleDeck()

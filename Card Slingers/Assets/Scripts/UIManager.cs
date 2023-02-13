@@ -30,6 +30,7 @@ public class UIManager : MonoBehaviour
     private Vector3 bannerShownPos = Vector3.zero;
     private Vector3 bannerHiddenPos = new Vector3(0, 150, 0);
     private Vector2 phaseBannerPos = new Vector2(157.5f, 0);
+    private bool playerTurn;
     #endregion
 
     #region - Card Display -
@@ -105,8 +106,13 @@ public class UIManager : MonoBehaviour
     {
         phaseText.text = phase.ToString() + " Phase";
 
-        phaseBanner.anchoredPosition = phaseBannerPos;
-        if (playerTurn) phaseBanner.anchoredPosition *= Vector2.left;
+        if (playerTurn != this.playerTurn)
+        {
+            this.playerTurn = playerTurn;
+            var endPos = phaseBannerPos;
+            if (playerTurn) endPos *= Vector2.left;
+            StartCoroutine(LerpRectTransform(phaseBanner, endPos));
+        }
     }
 
     private void OnCommanderValuesChanged()

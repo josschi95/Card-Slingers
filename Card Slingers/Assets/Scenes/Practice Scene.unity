@@ -3925,6 +3925,7 @@ MonoBehaviour:
   hostileMat: {fileID: 2100000, guid: 63512698f596e554499b75d1a471328f, type: 2}
   TEST_SUMMON_ENEMY: 0
   _currentPhase: 0
+  _declaredActions: []
 --- !u!4 &1153634835
 Transform:
   m_ObjectHideFlags: 0
