@@ -405,7 +405,12 @@ public class DuelManager : MonoBehaviour
             yield return null;
         }
 
-        if (_nodeToTarget != null) OnActionConfirmed(unit, walkableNodes, attackNodes);
+        if (_nodeToTarget != null)
+        {
+            if (walkableNodes.Contains(_nodeToTarget)) OnMoveActionConfirmed(unit, _nodeToTarget);
+            else OnAttackActionConfirmed(unit, _nodeToTarget, walkableNodes);
+        }
+        _nodeToTarget = null;
 
         unit.OccupiedNode.UnlockDisplay();
         for (int i = 0; i < walkableNodes.Count; i++) walkableNodes[i].UnlockDisplay();
@@ -413,7 +418,8 @@ public class DuelManager : MonoBehaviour
 
     }
 
-    private ValidNodes GetValidNodes(Card_Unit unit, GridNode[] laneNodes)
+    //Not Player dependent
+    public ValidNodes GetValidNodes(Card_Unit unit, GridNode[] laneNodes)
     {
         var walkableNodes = new List<GridNode>(); var attackNodes = new List<GridNode>();
         bool enemyFound = false; //an enemy has been found in the lane, used to prevent adding nodes past that enemy
@@ -463,7 +469,7 @@ public class DuelManager : MonoBehaviour
                 if (_declaredActions[d].targetNode == laneNodes[i])
                 {
                     nodeClaimed = true;
-                    Debug.Log("Node Claimed");
+                    Debug.Log("Node Claimed, Cannot Move Here.");
                 }
             }
             if (nodeClaimed) continue;
@@ -508,26 +514,57 @@ public class DuelManager : MonoBehaviour
         return new ValidNodes(walkableNodes.ToArray(), attackNodes.ToArray());
     }
 
-    private void OnActionConfirmed(Card_Unit unit, List<GridNode> walkableNodes, List<GridNode> attackNodes)
+    public void OnMoveActionConfirmed(Card_Unit unit, GridNode nodeToOccupy)
+    {
+        AddNewDeclaredAction(unit, nodeToOccupy, ActionType.Move);
+    }
+
+    public void OnAttackActionConfirmed(Card_Unit unit, GridNode nodeToAttack, List<GridNode> walkableNodes)
+    {
+        //Debug.Log("Attack action confirmed");
+        int distanceFromTarget = Mathf.Abs(unit.OccupiedNode.gridZ - nodeToAttack.gridZ);
+        if (distanceFromTarget <= unit.Range) AddNewDeclaredAction(unit, nodeToAttack, ActionType.Attack);
+        else
+        {
+            //Need to add movement action first
+            for (int i = 0; i < walkableNodes.Count; i++)
+            {
+                if (Mathf.Abs(walkableNodes[i].gridZ - nodeToAttack.gridZ) <= distanceFromTarget - unit.Range)
+                {
+                    AddNewDeclaredAction(unit, walkableNodes[i], ActionType.Move);
+                    break;
+                }
+                if (i == walkableNodes.Count - 1)
+                {
+                    Debug.Log("Cannot find intermediary node. Cannot attack");
+                    return;
+                }
+            }
+            //Then add attack action
+            AddNewDeclaredAction(unit, nodeToAttack, ActionType.Attack);
+        }
+    }
+
+    public void OnActionConfirmed(Card_Unit unit, GridNode nodeToTarget, List<GridNode> walkableNodes, List<GridNode> attackNodes)
     {
         //player is moving their unit
-        if (walkableNodes.Contains(_nodeToTarget)) AddNewDeclaredAction(unit, _nodeToTarget, ActionType.Move);
+        if (walkableNodes.Contains(nodeToTarget)) AddNewDeclaredAction(unit, nodeToTarget, ActionType.Move);
         //player is attacking another unit/structure
-        else if (attackNodes.Contains(_nodeToTarget))
+        else if (attackNodes.Contains(nodeToTarget))
         {
-            Debug.Log("Attack action confirmed");
-            int distanceFromTarget = Mathf.Abs(unit.OccupiedNode.gridZ - _nodeToTarget.gridZ);
+            //Debug.Log("Attack action confirmed");
+            int distanceFromTarget = Mathf.Abs(unit.OccupiedNode.gridZ - nodeToTarget.gridZ);
 
-            if (distanceFromTarget <= unit.Range) AddNewDeclaredAction(unit, _nodeToTarget, ActionType.Attack);
+            if (distanceFromTarget <= unit.Range) AddNewDeclaredAction(unit, nodeToTarget, ActionType.Attack);
             else //unit needs to move first
             {
                 Debug.Log("Attack target out of range, distance = " + distanceFromTarget);
-                Debug.Log("Range = " + unit.Range);
+                //Debug.Log("Range = " + unit.Range);
                 for (int i = 0; i < walkableNodes.Count; i++)
                 {
-                    Debug.Log("Node at " + walkableNodes[i].gridX + "," + walkableNodes[i].gridZ + " Dist: " + Mathf.Abs(walkableNodes[i].gridZ - _nodeToTarget.gridZ));
+                    //Debug.Log("Node at " + walkableNodes[i].gridX + "," + walkableNodes[i].gridZ + " Dist: " + Mathf.Abs(walkableNodes[i].gridZ - nodeToTarget.gridZ));
 
-                    if (Mathf.Abs(walkableNodes[i].gridZ - _nodeToTarget.gridZ) <= distanceFromTarget - unit.Range)
+                    if (Mathf.Abs(walkableNodes[i].gridZ - nodeToTarget.gridZ) <= distanceFromTarget - unit.Range)
                     {
                         Debug.Log("Intermediary node found");
                         AddNewDeclaredAction(unit, walkableNodes[i], ActionType.Move);
@@ -535,10 +572,9 @@ public class DuelManager : MonoBehaviour
                     }
                 }
 
-                AddNewDeclaredAction(unit, _nodeToTarget, ActionType.Attack);
+                AddNewDeclaredAction(unit, nodeToTarget, ActionType.Attack);
             }
         }
-        _nodeToTarget = null;
     }
 
     //the player has selected a valid node to target

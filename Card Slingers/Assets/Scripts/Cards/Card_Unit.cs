@@ -144,6 +144,7 @@ public class Card_Unit : Card_Permanent
     
     private bool UnitCanAct()
     {
+        //return false if under some sort of effect such as stun... whatever
         return true;
     }
 
@@ -175,7 +176,8 @@ public class Card_Unit : Card_Permanent
         var currentNode = OccupiedNode; //the node that the unit is currently located at, changes each time they move
 
         float speed = 1; //set whether walking forwards or back
-        if (OccupiedNode.gridZ > endNode.gridZ) speed = -1;
+        if (Commander is PlayerCommander && OccupiedNode.gridZ > endNode.gridZ) speed = -1;
+        else if (Commander is OpponentCommander && OccupiedNode.gridZ < endNode.gridZ) speed = -1;
 
         //ignore the currently occupied node
         if (nodePath[0] == OccupiedNode) nodePath.RemoveAt(0);
@@ -245,7 +247,7 @@ public class Card_Unit : Card_Permanent
         _animator.SetTrigger("damage");
         damage = Mathf.Clamp(damage - Defense, 0, int.MaxValue);
         _currentHealth -= damage;
-        Debug.Log(CardInfo.name + " takes " + damage + " damage!");
+        //Debug.Log(CardInfo.name + " takes " + damage + " damage!");
         if (_currentHealth <= 0) OnPermanentDestroyed();
         onValueChanged?.Invoke();
     }
@@ -256,6 +258,7 @@ public class Card_Unit : Card_Permanent
         if (_currentHealth > MaxHealth) _currentHealth = MaxHealth;
     }
 
+    #region - Card Destroyed -
     protected override void OnPermanentDestroyed()
     {
         //Debug.Log("unit has been destroyed");
@@ -293,6 +296,7 @@ public class Card_Unit : Card_Permanent
         //Invoke an event for the commander to listen to
         Commander.onPermanentDestroyed?.Invoke(this);
     }
+    #endregion
 }
 
 public enum UnitStat { Health, Attack, Range, Defense, Speed }

@@ -101,6 +101,7 @@ public class OpponentCommander : CommanderController
     {
         base.OnAttackPhase();
 
+        StartCoroutine(HandleUnitAttacks());
         //if there are spells in the hand, target anyone near their commander
 
         //Do not attack with whatever guard the commander has
@@ -158,7 +159,7 @@ public class OpponentCommander : CommanderController
             //a valid card and node have not been passed, there are no valid summons
             if (combo.card == null || combo.node == null)
             {
-                //Debug.Log("No More Valid Summons.");
+                Debug.Log("No More Valid Summons. Ending Phase");
                 duelManager.OnCurrentPhaseFinished();
                 yield break;
             }
@@ -166,6 +167,7 @@ public class OpponentCommander : CommanderController
             yield return null;
         }
 
+        Debug.Log("No More Mana or Cards In Hand. Ending Phase");
         duelManager.OnCurrentPhaseFinished();
     }
 
@@ -211,7 +213,7 @@ public class OpponentCommander : CommanderController
     private int HighestThreatLane(bool filterInvalidLanes = true)
     {
         //Generate a score for each lane based on the total power level of each player unit on this side
-        int[] laneRating = new int[duelManager.Battlefield.Width - 1];
+        int[] laneRating = new int[duelManager.Battlefield.Width];
 
         foreach (Card_Permanent card in duelManager.PlayerController.CardsOnField)
         {
@@ -297,7 +299,66 @@ public class OpponentCommander : CommanderController
     #endregion
 
     #region - Attack Phase -
+    private IEnumerator HandleUnitAttacks()
+    {
+        Debug.Log("Starting Attack Declaration");
+        var unitsToAct = new List<Card_Unit>();
+        foreach(Card_Unit unit in _permanentsOnField) if (unit.CanAct) unitsToAct.Add(unit);
 
+        while (unitsToAct.Count > 0)
+        {
+            Debug.Log("Remaining Units to Act: " + unitsToAct.Count);
+            yield return new WaitForSeconds(2f);
+
+            //If can attack, attack
+            //GetValidNodes
+            var availableNodes = duelManager.Battlefield.GetAllNodesInLane(unitsToAct[0].OccupiedNode.gridX);
+            var validNodes = duelManager.GetValidNodes(unitsToAct[0], availableNodes);
+
+            if (validNodes.attackNodes.Count > 0)
+            {
+                //don't declare attacks against units with DEF higher than ATK
+                for (int i = 0; i < validNodes.attackNodes.Count; i++)
+                {
+                    //need to make sure that I can get within range to the target
+                    var nodeToMoveTo = duelManager.Battlefield.GetUnoccupiedNodeInRange(unitsToAct[0].OccupiedNode, validNodes.attackNodes[i], unitsToAct[0].Range);
+                    if (nodeToMoveTo != null)
+                    {
+                        duelManager.OnAttackActionConfirmed(unitsToAct[0], validNodes.attackNodes[i], validNodes.nodesToOccupy);
+                        unitsToAct.RemoveAt(0);
+                        continue;
+                    }
+                }
+            }
+            else
+            {
+                //Move to the furthest available node
+                duelManager.OnMoveActionConfirmed(unitsToAct[0], validNodes.nodesToOccupy[validNodes.nodesToOccupy.Count - 1]);
+            }
+
+            unitsToAct.RemoveAt(0);
+            yield return null;
+        }
+
+        Debug.Log("Ending Attack Declaration");
+    }
+
+    private bool CanReachAttackTarget(Card_Unit unit, GridNode endNode)
+    {
+        if (Mathf.Abs(unit.OccupiedNode.gridZ - endNode.gridZ) <= unit.Range) return true;
+
+        //Find all open nodes 
+        if (endNode.gridZ < unit.OccupiedNode.gridZ)
+        {
+
+        }
+        else
+        {
+            Debug.LogError("Handle this half later");
+        }
+
+        return false;
+    }
     #endregion
 
     private Card_Permanent GetCard(CardFocus focus)
@@ -341,7 +402,7 @@ public class OpponentCommander : CommanderController
     //Returns a unit with the highest power rating
     private Card_Permanent GetOffensiveCard()
     {
-        Debug.Log("Getting Offensive Card");
+        //Debug.Log("Getting Offensive Card");
         Card_Permanent card = null;
         int cardPower = 0;
         if (_cardsInHand.Count == 0) return null;

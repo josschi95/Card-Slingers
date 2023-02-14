@@ -353,7 +353,7 @@ public class CommanderController : MonoBehaviour
         if (_currentMana <= 0) //End phase if all AP has been spent
         {
             _currentMana = 0;
-            if (isTurn && currentPhase == Phase.Summoning) duelManager.OnCurrentPhaseFinished();
+            //if (isTurn && currentPhase == Phase.Summoning) duelManager.OnCurrentPhaseFinished();
         }
         onManaChange?.Invoke();
     }

@@ -189,31 +189,64 @@ public class Battlefield : MonoBehaviour
         return tempList;
     }
 
-    public GridNode[] GetLaneNodesInRange(GridNode node, int range)
+    /// <summary>
+    /// Returns an array of nodes 
+    /// </summary>
+    /// <param name="fromNode"></param>
+    /// <param name="toNode"></param>
+    /// <param name="range"></param>
+    /// <returns></returns>
+    public GridNode[] GetLaneNodesInRange(GridNode fromNode, GridNode toNode, int range)
     {
         var tempList = new List<GridNode>();
+        
+        int modifier = 1;
+        if (fromNode.gridZ > toNode.gridZ) modifier = -1;
 
         for (int i = 0; i < Depth; i++)
         {
-            var laneNode = gridArray[node.gridX, i];
-            if (laneNode == node) continue;
+            var laneNode = gridArray[toNode.gridX, i * modifier];
+            if (laneNode == toNode) continue;
 
-            if (Mathf.Abs(node.gridZ - laneNode.gridZ) <= range) tempList.Add(laneNode);
+            if (Mathf.Abs(toNode.gridZ - laneNode.gridZ) <= range) tempList.Add(laneNode);
         }
+        Debug.Log("I've fucked this all up.");
 
         return tempList.ToArray();
     }
 
+    public GridNode GetUnoccupiedNodeInRange(GridNode fromNode, GridNode toNode, int range)
+    {
+        int modifier = 1;
+        if (fromNode.gridZ > toNode.gridZ) modifier = -1;
+        
+        if (fromNode.gridZ > toNode.gridZ)
+        {
+            for (int i = fromNode.gridZ; i >= toNode.gridZ; i--)
+            {
+                var node = GetNode(fromNode.gridX, i);
+                if (node.Occupant != null) continue;
+                if (Mathf.Abs(node.gridZ - toNode.gridZ) > range) continue;
+                return node;
+            }
+        }
+        return null;
+    }
+
     public GridNode[] GetNodePath(GridNode startNode, GridNode endNode)
     {
-        var nodePath = new GridNode[Mathf.Abs(startNode.gridZ - endNode.gridZ) + 1];
+        if (endNode.Occupant != null) return null;
+
+        int length = Mathf.Abs(startNode.gridZ - endNode.gridZ) + 1;
+        var nodePath = new GridNode[length];
         int mod = 1;
         if (startNode.gridZ > endNode.gridZ) mod = -1;
 
         for (int i = 0; i < nodePath.Length; i++)
         {
             //get the node in the same lane, with the gridZ increasing/decreasing based on direction
-            nodePath[i] = GetNode(startNode.gridX, startNode.gridZ + i * mod);   
+            var nextNode = GetNode(startNode.gridX, startNode.gridZ + i * mod);
+            nodePath[i] = nextNode;
         }
 
         return nodePath;
