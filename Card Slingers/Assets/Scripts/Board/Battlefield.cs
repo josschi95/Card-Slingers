@@ -6,9 +6,9 @@ public class Battlefield : MonoBehaviour
     private const float CELL_SIZE = 5f;
     
     private GridNode[,] gridArray;
-
-    [SerializeField] private int _width;
-    [SerializeField] private int _depth;
+    [SerializeField] private int[] _laneBalanceArray;
+    [Space]
+    [SerializeField] private Vector2Int _dimensions;
     [SerializeField] private GameObject node; //Move this to being pooled
     [SerializeField] private GameObject checkerboardWhite, checkerboardGray; //these won't be needed beyond testing
     [Space]
@@ -20,29 +20,31 @@ public class Battlefield : MonoBehaviour
     private Vector3 origin;
 
     #region - Public Variable References -
-    public int Width => _width; //These are currently only being used for early testing
-    public int Depth => _depth;
+    public int Width => _dimensions.x; //These are currently only being used for early testing
+    public int Depth => _dimensions.y;
+    public int[] LaneBalanceArray => _laneBalanceArray;
     #endregion
 
     #region - Grid -
     public void CreateGrid()
     {
-        origin = new Vector3((-_width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f), 0, (-_depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f));
+        origin = new Vector3((-Width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f), 0, (-Depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f));
 
-        var parentDist = _width * CELL_SIZE * 0.5f + 2;
+        var parentDist = Depth * CELL_SIZE * 0.5f + 2;
         _playerCardsParent.position = new Vector3(transform.position.x, transform.position.y + 0.25f, -parentDist);
         _opponentCardsParent.position = new Vector3(transform.position.x, transform.position.y + 0.25f, parentDist);
 
-        float f = _depth;
-        int playerDepth = Mathf.RoundToInt(f * 0.5f);
+        float f = Depth; int playerDepth = Mathf.RoundToInt(f * 0.5f);
 
-        gridArray = new GridNode[_width, _depth];
+        gridArray = new GridNode[Width, Depth];
+        _laneBalanceArray = new int[Width];
+
         for (int x = 0; x < gridArray.GetLength(0); x++)
         {
             for (int z = 0; z < gridArray.GetLength(1); z++)
             {
                 var pos = GetGridPosition(x, z);
-                TESTING_CreateCheckerboard(pos, x, z);
+                TESTING_CREATE_CHECKERBOARD(pos, x, z);
 
                 pos.y += 0.001f;
                 GameObject go = Instantiate(node, pos, Quaternion.identity);
@@ -50,18 +52,32 @@ public class Battlefield : MonoBehaviour
 
                 gridArray[x, z] = go.GetComponentInChildren<GridNode>();
                 gridArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);
+                gridArray[x, z].onNodeValueChanged += OnNodeValueChanged;
             }
         }
 
-        float initZ = 25 + ((_depth - 6) * 2.5f);
-        float aerialY = 5 * _depth - 5;
+        float initZ = 25 + ((Depth - 6) * 2.5f);
+        float aerialY = 5 * Depth - 5;
         var cam = Camera.main.GetComponent<FreeFlyCamera>();
         cam.SetInit(new Vector3(0, 12, -initZ), new Vector3(35, 0, 0));
         cam.SetAerialView(aerialY);
     }
 
+    private void DestroyGrid()
+    {
+        for (int x = 0; x < gridArray.GetLength(0); x++)
+        {
+            for (int z = 0; z < gridArray.GetLength(1); z++)
+            {
+                var node = gridArray[x, z];
+                node.onNodeValueChanged -= OnNodeValueChanged;
+                Destroy(node.gameObject);
+            }
+        }
+    }
+
     //For testing only
-    private void TESTING_CreateCheckerboard(Vector3 pos, int x, int z)
+    private void TESTING_CREATE_CHECKERBOARD(Vector3 pos, int x, int z)
     {
         var go = checkerboardGray;
         pos.y -= 0.01f;
@@ -94,12 +110,21 @@ public class Battlefield : MonoBehaviour
 
     public GridNode GetNode(int x, int z)
     {
-        if (x >= 0 && z >= 0 && x < _width && z < _depth)
+        if (x >= 0 && z >= 0 && x < Width && z < Depth)
         {
             return gridArray[x, z];
         }
 
         throw new System.Exception("parameter " + x + "," + z + " outside bounds of array");
+    }
+
+    public int GetFrontRow(CommanderController commander)
+    {
+        float f = Depth;
+        int playerFront = Mathf.RoundToInt(f * 0.5f);
+
+        if (commander is PlayerCommander) return playerFront;
+        else return playerFront + 1;
     }
 
     public Vector3 GetGridPosition(int x, int z)
@@ -110,7 +135,7 @@ public class Battlefield : MonoBehaviour
 
     public GridNode[] GetAllNodesInLane(int laneX)
     {
-        var tempArray = new GridNode[_depth];
+        var tempArray = new GridNode[Depth];
 
         for (int i = 0; i < tempArray.Length; i++)
         {
@@ -120,11 +145,52 @@ public class Battlefield : MonoBehaviour
         return tempArray;
     }
 
+    public List<GridNode> GetControlledNodesInLane(CommanderController commander, int lane)
+    {
+        var tempList = new List<GridNode>();
+        int halfDepth = Mathf.RoundToInt(Depth * 0.5f);
+
+        if (commander is PlayerCommander)
+        {
+            //check all nodes starting from 0, going to halfway point
+            for (int i = 0; i < halfDepth; i++)
+            {
+                var occupant = gridArray[lane, i].Occupant;
+                if (occupant != null && occupant.Commander != commander) break;
+                else tempList.Add(gridArray[lane, i]);
+            }
+        }
+        else
+        {
+            //check all nodes starting from furthest node going backward to half point
+            for (int i = Depth - 1; i >= halfDepth; i--)
+            {
+                var occupant = gridArray[lane, i].Occupant;
+                if (occupant != null && occupant.Commander != commander) break;
+                else tempList.Add(gridArray[lane, i]);
+            }
+        }
+
+        return tempList;
+    }
+
+    public List<GridNode> GetOpenNodesInLane(CommanderController commander, int lane)
+    {
+        var tempList = GetControlledNodesInLane(commander, lane);
+
+        for (int i = tempList.Count - 1; i >= 0; i--)
+        {
+            if (tempList[i].Occupant != null) tempList.RemoveAt(i);
+        }
+
+        return tempList;
+    }
+
     public GridNode[] GetLaneNodesInRange(GridNode node, int range)
     {
         var tempList = new List<GridNode>();
 
-        for (int i = 0; i < _depth; i++)
+        for (int i = 0; i < Depth; i++)
         {
             var laneNode = gridArray[node.gridX, i];
             if (laneNode == node) continue;
@@ -150,6 +216,18 @@ public class Battlefield : MonoBehaviour
         return nodePath;
     }
 
+    private void OnNodeValueChanged(GridNode node)
+    {
+        int lane = node.gridX;
+        int newLaneValue = 0;
+
+        for (int i = 0; i < gridArray.GetLength(0); i++)
+        {
+            newLaneValue += gridArray[lane, i].occupantPower;
+        }
+        _laneBalanceArray[lane] = newLaneValue;
+    }
+    
     public bool OnValidateNewPosition(GridNode newNode, int width, int height)
     {
         int startX = newNode.gridX;
@@ -157,7 +235,7 @@ public class Battlefield : MonoBehaviour
 
         for (int x = startX; x < startX + width; x++)
         {
-            if (x >= _width)
+            if (x >= Width)
             {
                 //Debug.Log(x + "," + startY + " is out of bounds");
                 return false;
@@ -171,7 +249,7 @@ public class Battlefield : MonoBehaviour
         }
         for (int y = startY; y < startY + height; y++)
         {
-            if (y >= _depth)
+            if (y >= Depth)
             {
                 //Debug.Log(startX + "," + y + " is out of bounds");
                 return false;
@@ -186,24 +264,6 @@ public class Battlefield : MonoBehaviour
 
         return true;
     }
-
-    //used to divide the field into two halves
-    /*public bool NodeBelongsToCommander(GridNode node, CommanderController commander)
-    {
-        float tempDepth = _depth;
-        int halfDepth = Mathf.RoundToInt(tempDepth * 0.5f);
-
-        if (commander is PlayerCommander)
-        {
-            if (node.gridZ < halfDepth) return true;
-            return false;
-        }
-        else
-        {
-            if (node.gridZ >= halfDepth) return true;
-            return false;
-        }
-    }*/
     #endregion
 
     #region - Card Placement Parents - 

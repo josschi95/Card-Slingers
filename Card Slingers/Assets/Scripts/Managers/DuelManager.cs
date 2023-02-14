@@ -48,7 +48,7 @@ public class DuelManager : MonoBehaviour
     {
         if (TEST_SUMMON_ENEMY)
         {
-            _opponentController.OnPermanentPlayed(node, _opponentController.CARDS_IN_HAND[0] as Card_Permanent);
+            _opponentController.OnPermanentPlayed(node, _opponentController.CardsInHand[0] as Card_Permanent);
 
             TEST_SUMMON_ENEMY = false;
         }
@@ -60,8 +60,8 @@ public class DuelManager : MonoBehaviour
 
     [SerializeField] private Phase _currentPhase;
 
-    private CommanderController _playerController;
-    private CommanderController _opponentController;
+    private PlayerCommander _playerController;
+    private OpponentCommander _opponentController;
     private LineRenderer arcLine;
 
     private Card_Permanent _cardToSummon; //Card that the player has selected to summon
@@ -78,8 +78,8 @@ public class DuelManager : MonoBehaviour
 
     #region - Public Variable References -
     public Battlefield Battlefield => _battleField;
-    public CommanderController PlayerController => _playerController;
-    public CommanderController OpponentController => _opponentController;
+    public PlayerCommander PlayerController => _playerController;
+    public OpponentCommander OpponentController => _opponentController;
     public bool WaitingForNodeSelection => _waitForSummonNode;
     #endregion
 
@@ -101,8 +101,8 @@ public class DuelManager : MonoBehaviour
 
     private void BeginTestMatch()
     {
-        var player = Instantiate(playerSO.cardPrefab).GetComponent<CommanderController>();
-        var opponent = Instantiate(opponentSO.cardPrefab).GetComponent<CommanderController>();
+        var player = Instantiate(playerSO.cardPrefab).GetComponent<PlayerCommander>();
+        var opponent = Instantiate(opponentSO.cardPrefab).GetComponent<OpponentCommander>();
 
         player.OnAssignCommander(playerSO);
         opponent.OnAssignCommander(opponentSO);
@@ -111,7 +111,7 @@ public class DuelManager : MonoBehaviour
     }
 
     //Initiate a new match //This will also likely take in the battlefield later
-    private void OnMatchStart(Battlefield battlefield, CommanderController player, CommanderController opponent)
+    private void OnMatchStart(Battlefield battlefield, PlayerCommander player, OpponentCommander opponent)
     {
         _currentPhase = Phase.Begin;
         _battleField = battlefield;
@@ -270,7 +270,7 @@ public class DuelManager : MonoBehaviour
         _cardToSummon = null;
     }
 
-    #region - Node Selection 
+    #region - Node/Card Selection 
     private void OnNodeMouseEnter(GridNode node)
     {
         highlightedNode = node;
@@ -289,7 +289,7 @@ public class DuelManager : MonoBehaviour
         switch (_currentPhase)
         {
             case Phase.Summoning:
-                if (_waitForSummonNode && node.IsPlayerNode)
+                if (_waitForSummonNode && NodeIsValid(node))
                 {
                     PlayerController.OnPermanentPlayed(node, _cardToSummon);
                     OnCancelAction();
@@ -313,34 +313,34 @@ public class DuelManager : MonoBehaviour
         }
     }
 
-    private bool NodeIsValid(GridNode node)
-    {
-        //the node belongs to the player, and it is not occupied
-        return (node.IsPlayerNode && node.Occupant == null);
-    }
-    #endregion
-
-    #region - Card Selection -
     private void OnCardInHandSelected(Card card)
     {
         //Player selects a card to summon
-        if (PlayerCanSummonCard(card))
+        if (card is Card_Permanent permanent && PlayerCanSummonPermanent(permanent))
         {
             _cardToSummon = card as Card_Permanent;
             if (cardPlacementCoroutine != null) StopCoroutine(cardPlacementCoroutine);
             cardPlacementCoroutine = StartCoroutine(WaitForPermanentToBePlayed(card));
         }
     }
+    #endregion
 
-    private bool PlayerCanSummonCard(Card card)
+    #region - Summoning -
+    private bool PlayerCanSummonPermanent(Card_Permanent card)
     {
         if (!_isPlayerTurn) return false; //not their turn
-        if (card is not Card_Permanent) return false; //not summonable
         if (_currentPhase != Phase.Summoning) return false; //not summoning phase
         if (card.Commander is not PlayerCommander) return false; //not their card
         if (!PlayerController.CanPlayCard(card)) return false; //not enough mana
 
         return true;
+    }
+
+    private bool NodeIsValid(GridNode node)
+    {
+        //the node belongs to the player, and it is not occupied or controlled by the enemy
+        if (!_battleField.GetControlledNodesInLane(_playerController, node.gridX).Contains(node)) return false;
+        return (node.IsPlayerNode && node.Occupant == null);
     }
 
     private IEnumerator WaitForPermanentToBePlayed(Card card)

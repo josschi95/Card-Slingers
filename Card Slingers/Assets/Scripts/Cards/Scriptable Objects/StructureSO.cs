@@ -9,6 +9,11 @@ public class StructureSO : CardSO
     }
 
     [Header("Structure Properties")]
-    public int maxHealth;
-    public bool canBeOccupied = true;
+    [SerializeField] private int _maxHealth;
+    [SerializeField] private int _defense = 1;
+    [SerializeField] private bool _canBeOccupied = true;
+
+    public int MaxHealth => _maxHealth;
+    public int Defense => _defense;
+    public bool canBeOccupied => _canBeOccupied;
 }

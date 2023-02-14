@@ -10,6 +10,7 @@ public class Card_Structure : Card_Permanent
     [SerializeField] private Card_Unit _occupant;
 
     public int MaxHealth => _maxHealth;
+    public int Defense => NetDefense();
     public int CurrentHealth => _currentHealth;
     public Card_Permanent Occupant => _occupant;
     public bool CanBeOccupied => StructureCanBeOccupied();
@@ -27,22 +28,32 @@ public class Card_Structure : Card_Permanent
 
     public override void OnSummoned(GridNode node)
     {
-        base.OnSummoned(node);
-
         var info = CardInfo as StructureSO;
-        _maxHealth = info.maxHealth;
+        _maxHealth = info.MaxHealth;
         _currentHealth = _maxHealth;
+
+        base.OnSummoned(node);
+    }
+
+    private int NetDefense()
+    {
+        var unit = CardInfo as StructureSO;
+        int value = unit.Defense;
+        if (value < 0) value = 0;
+        return value;
     }
 
     protected override int GetPowerLevel()
     {
-        return _currentHealth;
+        if (Commander is PlayerCommander) return _currentHealth;
+        else return -_currentHealth;
     }
 
     public override void OnTakeDamage(int damage)
     {
         _currentHealth -= damage;
         if (_currentHealth <= 0) OnPermanentDestroyed();
+        onValueChanged?.Invoke();
     }
 
     protected override void OnPermanentDestroyed()

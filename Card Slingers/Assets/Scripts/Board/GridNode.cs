@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GridNode : MonoBehaviour, IInteractable
 {
-    public delegate void OnGridNodeValueChanged();
+    public delegate void OnGridNodeValueChanged(GridNode node);
     public OnGridNodeValueChanged onNodeValueChanged;
 
     private void TEST_SUMMON_ENEMY()
@@ -19,17 +19,19 @@ public class GridNode : MonoBehaviour, IInteractable
 
     //[SerializeField] 
     private bool _isPlayerNode;
+    private bool _isPlayerControlled;
     [SerializeField] private Card_Permanent _occupant = null;
     [SerializeField] private Card _trap;
     [SerializeField] private Card _terrain;
 
-    public int OccupantPower => CalculateOccupantPower();
+    public int occupantPower { get; private set; }
 
     private bool _lockedForDisplay; //ignore mouse movements to change the color
 
     public int gridX { get; private set; }
     public int gridZ { get; private set; }
     public bool IsPlayerNode => _isPlayerNode;
+    public bool IsPlayerControlled => _isPlayerControlled;
     public Card_Permanent Occupant => _occupant;
     public Card Trap => _trap;
     public Card Terrain => _terrain;
@@ -43,19 +45,30 @@ public class GridNode : MonoBehaviour, IInteractable
 
     public void SetOccupant(Card_Permanent occupant)
     {
+        Debug.Log("Setting Occupant");
         if (_occupant != null) throw new System.Exception("Node " + gridX + "," + gridZ + "is already occupied by " + _occupant.name);
         _occupant = occupant;
+        UpdateOccupantPower();
+        _occupant.onValueChanged += UpdateOccupantPower;
+
+        onNodeValueChanged?.Invoke(this);
     }
 
     public void ClearOccupant()
     {
+        if (_occupant != null) _occupant.onValueChanged -= UpdateOccupantPower;
         _occupant = null;
+        UpdateOccupantPower();
+
+        onNodeValueChanged?.Invoke(this);
     }
 
-    private int CalculateOccupantPower()
+    private void UpdateOccupantPower()
     {
-        if (_occupant == null) return 0;
-        else return _occupant.PowerLevel;
+        if (_occupant == null) occupantPower = 0;
+        else occupantPower = _occupant.PowerLevel;
+
+        onNodeValueChanged?.Invoke(this);
     }
 
     #region - Interactions -

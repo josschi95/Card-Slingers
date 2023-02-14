@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class CommanderController : MonoBehaviour
 {
-    public List<Card> CARDS_IN_HAND => _cardsInHand;
 
     public delegate void OnManaChangeCallback();
     public OnManaChangeCallback onManaChange;
@@ -12,10 +11,10 @@ public class CommanderController : MonoBehaviour
     public delegate void OnPermanentDestroyedCallback(Card_Permanent card);
     public OnPermanentDestroyedCallback onPermanentDestroyed;
 
-    private DuelManager duelManager;
+    protected DuelManager duelManager;
 
     [SerializeField] private CommanderSO _commanderInfo;
-    [SerializeField] private Card_Permanent _commanderCard;
+    [SerializeField] private Card_Commander _commanderCard;
     [SerializeField] private Phase currentPhase;
     [SerializeField] private int _currentMana = 4;
     [Space]
@@ -25,16 +24,18 @@ public class CommanderController : MonoBehaviour
     [SerializeField] private List<Card> _cardsInExile;
     [Space]
     [SerializeField] protected List<Card_Permanent> _permanentsOnField;
-    public bool isTurn { get; private set; }
 
+    public bool isTurn { get; private set; }
     private int _defaultMana = 4;
     private int _handSize = 4;
 
     #region - Public Variable References -
     public bool isDrawingCards { get; private set; } //drawing cards, don't trigger raise card
     public CommanderSO CommanderInfo => _commanderInfo;
-    public Card_Permanent CommanderCard => _commanderCard;
+    public Card_Commander CommanderCard => _commanderCard;
     public int CurrentMana => _currentMana;
+    public List<Card> CardsInHand => _cardsInHand;
+    public List<Card_Permanent> CardsOnField => _permanentsOnField;
     #endregion
 
     #region - Initial Methods -
@@ -288,6 +289,7 @@ public class CommanderController : MonoBehaviour
 
     public void OnPermanentPlayed(GridNode node, Card_Permanent card)
     {
+        Debug.Log("OnPermanentPlayed");
         //Spend Mana cost of card
         OnSpendMana(card.CardInfo.cost);
 

@@ -5,7 +5,6 @@ using UnityEngine;
 public class Card_Unit : Card_Permanent
 {
     [Header("Unit Info")]
-    protected Animator _animator;
     [SerializeField] protected int _currentHealth;
     [SerializeField] private List<Card_Permanent> _equipment;
 
@@ -19,6 +18,7 @@ public class Card_Unit : Card_Permanent
     private bool _isAttacking;
 
     #region - Animation -
+    protected Animator _animator;
     private bool _waitingForDeathAnim;
     #endregion
 
@@ -51,7 +51,12 @@ public class Card_Unit : Card_Permanent
 
     public override void OnSummoned(GridNode node)
     {
+        //set max health before occupying node
+        _currentHealth = NetMaxHealth();
+
         base.OnSummoned(node);
+        
+        //Summon prefab before getting anim
         _animator = PermanentObject.GetComponent<Animator>();
 
         _equipment = new List<Card_Permanent>();
@@ -60,13 +65,12 @@ public class Card_Unit : Card_Permanent
         _rangeModifiers = new List<int>();
         _defenseModifiers = new List<int>();
         _speedModifiers = new List<int>();
-
-        _currentHealth = NetMaxHealth();
     }
 
     protected override int GetPowerLevel()
     {
-        return _currentHealth + Damage + Defense;
+        if (Commander is PlayerCommander) return _currentHealth + Damage + Defense;
+        else return -(_currentHealth + Damage + Defense);
     }
 
     public override void OnCommanderVictory()
@@ -243,6 +247,7 @@ public class Card_Unit : Card_Permanent
         _currentHealth -= damage;
         Debug.Log(CardInfo.name + " takes " + damage + " damage!");
         if (_currentHealth <= 0) OnPermanentDestroyed();
+        onValueChanged?.Invoke();
     }
 
     public void OnRegainHealth(int amount)

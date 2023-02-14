@@ -7,6 +7,10 @@ using UnityEngine;
 /// </summary>
 public class Card_Permanent : Card
 {
+    //Invoke this event when a unit's stats change
+    public delegate void OnPermanentValueChangedCallback();
+    public OnPermanentValueChangedCallback onValueChanged;
+
     [SerializeField] private GridNode _occupiedNode;
     [SerializeField] private GameObject _permanentObject;
 
@@ -21,8 +25,8 @@ public class Card_Permanent : Card
         isRevealed = true;
         //Set as child to the battlefield
         transform.SetParent(DuelManager.instance.Battlefield.transform);
-        //Occupy the given node
-        OnOccupyNode(node);
+
+        OnOccupyNode(node); //Occupy the given node
 
         //Instantiate permanent
         var permanent = CardInfo as PermanentSO;
@@ -33,7 +37,7 @@ public class Card_Permanent : Card
     }
 
     //Set current node and occupy it
-    public void OnOccupyNode(GridNode newNode)
+    protected void OnOccupyNode(GridNode newNode)
     {
         _occupiedNode = newNode;
         _occupiedNode.SetOccupant(this);
