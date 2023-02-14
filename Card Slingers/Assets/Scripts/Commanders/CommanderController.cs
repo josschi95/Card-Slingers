@@ -119,7 +119,7 @@ public class CommanderController : MonoBehaviour
                 OnSummoningPhase();
                 break;
             case Phase.Attack:
-                OnDeclarationPhase();
+                OnAttackPhase();
                 break;
             case Phase.Resolution:
                 OnResolutionPhase();
@@ -153,7 +153,7 @@ public class CommanderController : MonoBehaviour
 
     }
 
-    protected virtual void OnDeclarationPhase()
+    protected virtual void OnAttackPhase()
     {
 
     }
@@ -289,7 +289,6 @@ public class CommanderController : MonoBehaviour
 
     public void OnPermanentPlayed(GridNode node, Card_Permanent card)
     {
-        Debug.Log("OnPermanentPlayed");
         //Spend Mana cost of card
         OnSpendMana(card.CardInfo.cost);
 

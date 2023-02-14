@@ -2,16 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/* NOTE: I'm probably better off just breaking up this script into a state machine
+ That's going to prevent this script from reaching 800+ lines and should hopefully allow for some more modulation*/
+
 public class OpponentCommander : CommanderController
 {
     private PlayerCommander playerCommander;
     private int[] cardTypesInHand = new int[System.Enum.GetNames(typeof(CardType)).Length];
     CardNodeCombo nulledCombo = new CardNodeCombo(null, null);
+    [SerializeField] private bool[] invadesLanes; //true if invaded
 
     public override void OnMatchStart(int startingHandSize = 4, int mana = 4)
     {
         base.OnMatchStart(startingHandSize, mana);
         playerCommander = duelManager.PlayerController;
+        invadesLanes = new bool[duelManager.Battlefield.Width];
     }
     protected override void OnBeginPhase()
     {
@@ -24,7 +29,9 @@ public class OpponentCommander : CommanderController
     {
         base.OnSummoningPhase();
 
-        StartCoroutine(SummonUnits());
+        FindInvadedLanes();
+
+        StartCoroutine(HandleSummonUnits());
 
         for (int i = 0; i < cardTypesInHand.Length; i++) cardTypesInHand[i] = 0; //reset array to recalculate it
         
@@ -90,11 +97,9 @@ public class OpponentCommander : CommanderController
         //Unit - currrentHealth + ATK + DEF 
     }
 
-
-
-    protected override void OnDeclarationPhase()
+    protected override void OnAttackPhase()
     {
-        base.OnDeclarationPhase();
+        base.OnAttackPhase();
 
         //if there are spells in the hand, target anyone near their commander
 
@@ -114,32 +119,46 @@ public class OpponentCommander : CommanderController
     }
 
     #region - Summon Phase 
-    private IEnumerator SummonUnits()
+    /// <summary>
+    /// Updates array to determine which lanes are invaded
+    /// </summary>
+    private void FindInvadedLanes()
+    {
+        //Reset all to false
+        for (int i = 0; i < invadesLanes.Length; i++) invadesLanes[i] = false;
+
+        foreach (Card_Permanent card in duelManager.PlayerController.CardsOnField)
+        {
+            if (card.OccupiedNode.gridZ > (duelManager.Battlefield.Depth - 1) * 0.5f)
+            {
+                invadesLanes[card.OccupiedNode.gridX] = true;
+            }
+        }
+    }
+
+    private IEnumerator HandleSummonUnits()
     {
         //Continue playing cards until out of mana, or no more cards to play
         while (CurrentMana > 0 && _cardsInHand.Count > 0)
         {
-            yield return new WaitForSeconds(2.5f);
+            yield return new WaitForSeconds(1f);
             CardNodeCombo combo = nulledCombo;
 
-            //Debug.Log("Checking to Defend Commander.");
             if (CommanderLaneIsWeak()) combo = GetSummonCombo(CommanderCard.OccupiedNode.gridX, CardFocus.Defense);
             if (OnTryValidateSummon(combo)) continue;
 
-            //Debug.Log("Checking to Defend Territory.");
-            Debug.Log("Pickup from here," +
-                "If there is any unit on this side but the lane is full, it will just keep summoning from the left");
-            if (PlayerUnitsInTerritory()) combo = GetSummonCombo(FindInvadedLane(), CardFocus.Offense);
+            if (CanAndNeedToDefendTerritory()) combo = GetSummonCombo(HighestThreatLane(), CardFocus.Offense);
             if (OnTryValidateSummon(combo)) continue;
 
             //Debug.Log("Checking to Attack Player");
-            if (CanSummonInPlayerCommanderLane()) combo = GetSummonCombo(playerCommander.CommanderCard.OccupiedNode.gridX, CardFocus.Defense);
+            var playerX = playerCommander.CommanderCard.OccupiedNode.gridX;
+            if (OpenNodesInLane(playerX)) combo = GetSummonCombo(playerX, CardFocus.Defense);
             if (OnTryValidateSummon(combo)) continue;
 
             //a valid card and node have not been passed, there are no valid summons
             if (combo.card == null || combo.node == null)
             {
-                Debug.Log("No More Valid Summons.");
+                //Debug.Log("No More Valid Summons.");
                 duelManager.OnCurrentPhaseFinished();
                 yield break;
             }
@@ -166,29 +185,30 @@ public class OpponentCommander : CommanderController
         return commanderLanePower > -CommanderCard.PowerLevel;
     }
 
-    //there are open nodes in the player commander's lane
-    private bool CanSummonInPlayerCommanderLane()
+    /// <summary>
+    /// if true: There are player units in territory and open nodes to summon allies in those lanes.
+    /// </summary>
+    private bool CanAndNeedToDefendTerritory()
     {
-        var availablesNodes = duelManager.Battlefield.GetControlledNodesInLane
-            (this, duelManager.PlayerController.CommanderCard.OccupiedNode.gridX);
-
-        if (availablesNodes.Count > 0) return true;
-        return false;
-    }
-
-    //there are player units on this side of the field
-    private bool PlayerUnitsInTerritory()
-    {
-        foreach(Card_Permanent card in duelManager.PlayerController.CardsOnField)
+        for (int i = 0; i < invadesLanes.Length; i++)
         {
-            if (card.OccupiedNode.gridZ > (duelManager.Battlefield.Depth - 1) * 0.5f) return true;
+            if (invadesLanes[i] == true) break;
+            if (i == invadesLanes.Length - 1) return false;
         }
-        Debug.Log("No Player Units in Territory.");
+
+        //Debug.Log("Invaders in Territory.");
+        for (int i = 0; i < invadesLanes.Length; i++)
+        {
+            if (invadesLanes[i] == true && OpenNodesInLane(i)) return true;
+        }
         return false;
     }
 
-    //Return a lane which is invaded by a player unit, returning the one with the highest threat
-    private int FindInvadedLane(bool filterInvalidLanes = true)
+    /// <summary>
+    /// Returns the highest threat lane which is invaded by a player unit.
+    /// Unit's forward position is taken into account.
+    /// </summary>
+    private int HighestThreatLane(bool filterInvalidLanes = true)
     {
         //Generate a score for each lane based on the total power level of each player unit on this side
         int[] laneRating = new int[duelManager.Battlefield.Width - 1];
@@ -197,7 +217,9 @@ public class OpponentCommander : CommanderController
         {
             if (card.OccupiedNode.gridZ > (duelManager.Battlefield.Depth - 1) * 0.5f)
             {
-                laneRating[card.OccupiedNode.gridX] += card.PowerLevel;
+                float gridZ = card.OccupiedNode.gridZ;
+                int modifiedScore = Mathf.RoundToInt(card.PowerLevel + gridZ * (1 + (gridZ / duelManager.Battlefield.Depth)));
+                laneRating[card.OccupiedNode.gridX] += modifiedScore;
             }
         }
 
@@ -206,12 +228,7 @@ public class OpponentCommander : CommanderController
         {
             for (int i = 0; i < laneRating.Length; i++)
             {
-                var availablesNodes = duelManager.Battlefield.GetOpenNodesInLane(this, i);
-                if (availablesNodes.Count == 0)
-                {
-                    //Debug.Log("No Open Nodes in Lane: " + i);
-                    laneRating[i] = 0;
-                }
+                if (OpenNodesInLane(i) == false) laneRating[i] = 0;
             }
         }
 
@@ -229,6 +246,15 @@ public class OpponentCommander : CommanderController
         return laneToSelect;
     }
     
+    /// <summary>
+    /// if true: there is at least one open node in the given lanel
+    /// </summary>
+    private bool OpenNodesInLane(int lane)
+    {
+        if (duelManager.Battlefield.GetOpenNodesInLane(this, lane).Count > 0) return true;
+        return false;
+    }
+
     //Returns the lane with the highest balance in the player's favor
     private int PreferredLaneToSummon()
     {
@@ -265,9 +291,13 @@ public class OpponentCommander : CommanderController
                 return new CardNodeCombo(GetCard(focus), availablesNodes[i]);
             }
         }
-        Debug.Log("Returning Nulled Combo");
+        //Debug.Log("Returning Nulled Combo");
         return nulledCombo;
     }
+    #endregion
+
+    #region - Attack Phase -
+
     #endregion
 
     private Card_Permanent GetCard(CardFocus focus)
@@ -311,6 +341,7 @@ public class OpponentCommander : CommanderController
     //Returns a unit with the highest power rating
     private Card_Permanent GetOffensiveCard()
     {
+        Debug.Log("Getting Offensive Card");
         Card_Permanent card = null;
         int cardPower = 0;
         if (_cardsInHand.Count == 0) return null;
@@ -335,7 +366,7 @@ public class OpponentCommander : CommanderController
                 }
             }*/
         }
-        if (card == null) Debug.Log("Returning Null");
+        //if (card == null) Debug.Log("Returning Null");
         return card;
     }
 }

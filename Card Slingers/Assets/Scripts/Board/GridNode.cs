@@ -45,7 +45,6 @@ public class GridNode : MonoBehaviour, IInteractable
 
     public void SetOccupant(Card_Permanent occupant)
     {
-        Debug.Log("Setting Occupant");
         if (_occupant != null) throw new System.Exception("Node " + gridX + "," + gridZ + "is already occupied by " + _occupant.name);
         _occupant = occupant;
         UpdateOccupantPower();

@@ -174,6 +174,9 @@ public class Battlefield : MonoBehaviour
         return tempList;
     }
 
+    /// <summary>
+    /// Returns a list of unoccupied lane nodes on the commander's side of the field.
+    /// </summary>
     public List<GridNode> GetOpenNodesInLane(CommanderController commander, int lane)
     {
         var tempList = GetControlledNodesInLane(commander, lane);
