@@ -17,12 +17,10 @@ public class GridNode : MonoBehaviour, IInteractable
     [SerializeField] private Material[] highlightMats;
     [Space]
 
-    //[SerializeField] 
-    private bool _isPlayerNode;
-    private bool _isPlayerControlled;
     [SerializeField] private Card_Permanent _occupant = null;
     [SerializeField] private Card _trap;
     [SerializeField] private Card _terrain;
+    private bool _isPlayerNode; //located on player half of the grid
 
     public int occupantPower { get; private set; }
 
@@ -31,7 +29,6 @@ public class GridNode : MonoBehaviour, IInteractable
     public int gridX { get; private set; }
     public int gridZ { get; private set; }
     public bool IsPlayerNode => _isPlayerNode;
-    public bool IsPlayerControlled => _isPlayerControlled;
     public Card_Permanent Occupant => _occupant;
     public Card Trap => _trap;
     public Card Terrain => _terrain;

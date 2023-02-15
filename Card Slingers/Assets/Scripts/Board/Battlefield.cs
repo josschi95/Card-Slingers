@@ -189,46 +189,19 @@ public class Battlefield : MonoBehaviour
         return tempList;
     }
 
-    /// <summary>
-    /// Returns an array of nodes 
-    /// </summary>
-    /// <param name="fromNode"></param>
-    /// <param name="toNode"></param>
-    /// <param name="range"></param>
-    /// <returns></returns>
-    public GridNode[] GetLaneNodesInRange(GridNode fromNode, GridNode toNode, int range)
-    {
-        var tempList = new List<GridNode>();
-        
-        int modifier = 1;
-        if (fromNode.gridZ > toNode.gridZ) modifier = -1;
-
-        for (int i = 0; i < Depth; i++)
-        {
-            var laneNode = gridArray[toNode.gridX, i * modifier];
-            if (laneNode == toNode) continue;
-
-            if (Mathf.Abs(toNode.gridZ - laneNode.gridZ) <= range) tempList.Add(laneNode);
-        }
-        Debug.Log("I've fucked this all up.");
-
-        return tempList.ToArray();
-    }
-
     public GridNode GetUnoccupiedNodeInRange(GridNode fromNode, GridNode toNode, int range)
     {
-        int modifier = 1;
+        int modifier = 1; //run up or down the lane based on toNode relative position
         if (fromNode.gridZ > toNode.gridZ) modifier = -1;
-        
-        if (fromNode.gridZ > toNode.gridZ)
+
+        for (int i = fromNode.gridZ + modifier; i != toNode.gridZ; i += modifier)
         {
-            for (int i = fromNode.gridZ; i >= toNode.gridZ; i--)
-            {
-                var node = GetNode(fromNode.gridX, i);
-                if (node.Occupant != null) continue;
-                if (Mathf.Abs(node.gridZ - toNode.gridZ) > range) continue;
-                return node;
-            }
+            //Debug.Log("Looking for unoccupied node at gridZ: " + i);
+            var node = GetNode(fromNode.gridX, i);
+            if (node.Occupant != null) continue; //node is occupied
+            if (DuelManager.instance.ClaimedNodes.Contains(node)) continue; //another unit is moving here
+            if (Mathf.Abs(node.gridZ - toNode.gridZ) > range) continue; //node not within range
+            return node;
         }
         return null;
     }
@@ -262,43 +235,6 @@ public class Battlefield : MonoBehaviour
             newLaneValue += gridArray[lane, i].occupantPower;
         }
         _laneBalanceArray[lane] = newLaneValue;
-    }
-    
-    public bool OnValidateNewPosition(GridNode newNode, int width, int height)
-    {
-        int startX = newNode.gridX;
-        int startY = newNode.gridZ;
-
-        for (int x = startX; x < startX + width; x++)
-        {
-            if (x >= Width)
-            {
-                //Debug.Log(x + "," + startY + " is out of bounds");
-                return false;
-            }
-            if (GetNode(x, startY).Occupant != null)
-            {
-                //Debug.Log(x + "," + startY + " is not clear");
-                return false;
-            }
-            //Debug.Log(x + "," + startY + " is clear");
-        }
-        for (int y = startY; y < startY + height; y++)
-        {
-            if (y >= Depth)
-            {
-                //Debug.Log(startX + "," + y + " is out of bounds");
-                return false;
-            }
-            if (GetNode(startX, y).Occupant != null)
-            {
-                //Debug.Log(startX + "," + y + " is not clear");
-                return false;
-            }
-            //Debug.Log(startX + "," + y + " is clear");
-        }
-
-        return true;
     }
     #endregion
 

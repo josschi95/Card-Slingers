@@ -9,9 +9,7 @@ public class Card_Commander : Card_Unit
         _animator.SetTrigger("damage");
         damage = Mathf.Clamp(damage - Defense, 0, int.MaxValue);
         _currentHealth -= damage;
-        Debug.Log(CardInfo.name + " takes " + damage + " damage!");
 
-        //The commander has been defeated, end the match
         if (_currentHealth <= 0)
         {
             _animator.SetTrigger("death");

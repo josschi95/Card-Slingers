@@ -145,7 +145,7 @@ public class CommanderController : MonoBehaviour
         }
 
         //Wait 1 second after drawing before starting the next phase
-        DuelManager.instance.Invoke("OnCurrentPhaseFinished", 1f);
+        DuelManager.instance.OnCurrentPhaseFinished();
     }
 
     protected virtual void OnSummoningPhase()
@@ -165,10 +165,14 @@ public class CommanderController : MonoBehaviour
 
     protected virtual void OnEndPhase()
     {
-        isTurn = false;
+        //isTurn = false;
 
-        //Wait 1 second before starting the next phase
-        DuelManager.instance.Invoke("OnCurrentPhaseFinished", 1f);
+        //DuelManager.instance.OnCurrentPhaseFinished();
+    }
+
+    protected virtual void OnEndTurn()
+    {
+        isTurn = false;
     }
     #endregion
 
@@ -176,6 +180,8 @@ public class CommanderController : MonoBehaviour
     private IEnumerator DrawCards()
     {
         isDrawingCards = true;
+        duelManager.onCardMovementStarted?.Invoke();
+
         while (_cardsInHand.Count < _handSize)
         {
             if (_cardsInDeck.Count <= 0)
@@ -193,6 +199,8 @@ public class CommanderController : MonoBehaviour
 
             yield return null;
         }
+
+        duelManager.onCardMovementEnded?.Invoke();
         isDrawingCards = false;
     }
 
@@ -320,6 +328,7 @@ public class CommanderController : MonoBehaviour
 
         if (this is not PlayerCommander) endRot = Quaternion.Euler(0, 180, 0);
 
+        duelManager.onCardMovementStarted?.Invoke();
         while (timeElapsed < timeToMove)
         {
             timeElapsed += Time.deltaTime;
@@ -329,6 +338,7 @@ public class CommanderController : MonoBehaviour
 
             yield return null;
         }
+        duelManager.onCardMovementEnded?.Invoke();
 
         //card.transform.position = endPos;
         card.transform.rotation = endRot;

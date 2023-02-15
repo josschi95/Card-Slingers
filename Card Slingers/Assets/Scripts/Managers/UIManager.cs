@@ -12,7 +12,8 @@ public class UIManager : MonoBehaviour
         instance = this;
     }
 
-    public Button TEST_SUMMON_BUTTON, TEST_END_PHASE_BUTTON;
+    public RectTransform testPanelRect;
+    public Button TEST_PANEL_BUTTON, TEST_SUMMON_BUTTON, TEST_END_PHASE_BUTTON;
 
     #region - Commander Banner -
     [Header("Commander Banner")]
@@ -58,7 +59,12 @@ public class UIManager : MonoBehaviour
 
         endPhaseButton.onClick.AddListener(OnPlayerEndPhase);
         cancelActionButton.onClick.AddListener(delegate { DuelManager.instance.OnCancelAction(); });
-        
+
+        TEST_PANEL_BUTTON.onClick.AddListener(delegate 
+        {
+            if (testPanelRect.anchoredPosition != Vector2.zero) testPanelRect.anchoredPosition = Vector2.zero;
+            else testPanelRect.anchoredPosition = new Vector2(-testPanelRect.sizeDelta.x, 0);
+        });
         TEST_SUMMON_BUTTON.onClick.AddListener(delegate { DuelManager.instance.TEST_SUMMON_ENEMY = true; });
         TEST_END_PHASE_BUTTON.onClick.AddListener(delegate
         {
@@ -100,7 +106,6 @@ public class UIManager : MonoBehaviour
             DuelManager.instance.OnCurrentPhaseFinished();
         }
     }
-
 
     private void OnPhaseChange(bool playerTurn, Phase phase)
     {

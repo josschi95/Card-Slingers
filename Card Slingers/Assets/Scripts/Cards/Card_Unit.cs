@@ -200,8 +200,7 @@ public class Card_Unit : Card_Permanent
             while (Vector3.Distance(transform.position, nodePath[0].transform.position) > 0.1f)
             {
                 _animator.SetFloat("speed", speed, 0.1f, Time.deltaTime);
-                //timeElaspsed += Time.deltaTime;
-                yield return new WaitForEndOfFrame();
+                yield return null;
             }
 
             transform.position = nodePath[0].transform.position;
@@ -247,7 +246,7 @@ public class Card_Unit : Card_Permanent
         _animator.SetTrigger("damage");
         damage = Mathf.Clamp(damage - Defense, 0, int.MaxValue);
         _currentHealth -= damage;
-        //Debug.Log(CardInfo.name + " takes " + damage + " damage!");
+
         if (_currentHealth <= 0) OnPermanentDestroyed();
         onValueChanged?.Invoke();
     }
@@ -266,22 +265,23 @@ public class Card_Unit : Card_Permanent
         StartCoroutine(WaitForDeathAnim());
     }
 
-    public void OnDeathAnimCompleted()
+    public virtual void OnDeathAnimCompleted()
     {
         //Debug.Log("Death Anim Complete");
         _waitingForDeathAnim = false;
     }
 
-    private IEnumerator WaitForDeathAnim()
+    protected virtual IEnumerator WaitForDeathAnim()
     {
         _waitingForDeathAnim = true;
+        DuelManager.instance.onCardMovementStarted?.Invoke();
+
         while (_waitingForDeathAnim == true)
         {
             yield return null;
         }
 
         float timeElapsed = 0, timeToMove = 2f;
-        
         while (timeElapsed < timeToMove)
         {
             timeElapsed += Time.deltaTime; //slowly sink the unit beneath the playing field before destroying it
@@ -295,6 +295,7 @@ public class Card_Unit : Card_Permanent
         yield return new WaitForSeconds(0.1f);
         //Invoke an event for the commander to listen to
         Commander.onPermanentDestroyed?.Invoke(this);
+        DuelManager.instance.onCardMovementEnded?.Invoke();
     }
     #endregion
 }

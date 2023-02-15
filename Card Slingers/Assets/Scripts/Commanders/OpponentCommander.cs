@@ -56,19 +56,6 @@ public class OpponentCommander : CommanderController
         //this will be 100% of the time, a card in front of their commander, to prevent attacks, 
         //the "vanguard" should be a frontline unit or defensive structure that they play along the front row 
 
-        //I also need to take into account the units which are already on the field
-
-        //1. Ensure the the commander is protected
-
-        //2. Attack the player commander
-
-        //3. Attack invaders
-
-        //4. Invade player
-
-        //5. 
-
-
         //If there is not a unit/structure in commander lane, find the tankiest one in hand and play it as the vanguard
         //mark all structures and units as offensive, defensive, or utility
 
@@ -159,7 +146,7 @@ public class OpponentCommander : CommanderController
             //a valid card and node have not been passed, there are no valid summons
             if (combo.card == null || combo.node == null)
             {
-                Debug.Log("No More Valid Summons. Ending Phase");
+                //Debug.Log("No More Valid Summons. Ending Phase");
                 duelManager.OnCurrentPhaseFinished();
                 yield break;
             }
@@ -167,7 +154,7 @@ public class OpponentCommander : CommanderController
             yield return null;
         }
 
-        Debug.Log("No More Mana or Cards In Hand. Ending Phase");
+        //Debug.Log("No More Mana or Cards In Hand. Ending Phase");
         duelManager.OnCurrentPhaseFinished();
     }
 
@@ -301,66 +288,81 @@ public class OpponentCommander : CommanderController
     #region - Attack Phase -
     private IEnumerator HandleUnitAttacks()
     {
-        Debug.Log("Starting Attack Declaration");
+        //Debug.Log("Starting Attack Declaration");
         var unitsToAct = new List<Card_Unit>();
         foreach(Card_Unit unit in _permanentsOnField) if (unit.CanAct) unitsToAct.Add(unit);
 
         while (unitsToAct.Count > 0)
         {
-            Debug.Log("Remaining Units to Act: " + unitsToAct.Count);
-            yield return new WaitForSeconds(2f);
+            yield return new WaitForSeconds(0.5f);
+            //Debug.Log("Remaining Units to Act: " + unitsToAct.Count);
+            var unit = unitsToAct[0];
+            var availableNodes = duelManager.Battlefield.GetAllNodesInLane(unit.OccupiedNode.gridX);
+            var validNodes = duelManager.GetValidNodes(unit, availableNodes);
 
-            //If can attack, attack
-            //GetValidNodes
-            var availableNodes = duelManager.Battlefield.GetAllNodesInLane(unitsToAct[0].OccupiedNode.gridX);
-            var validNodes = duelManager.GetValidNodes(unitsToAct[0], availableNodes);
 
-            if (validNodes.attackNodes.Count > 0)
+            if (UnitCanAttack(unit, validNodes.attackNodes))
             {
-                //don't declare attacks against units with DEF higher than ATK
-                for (int i = 0; i < validNodes.attackNodes.Count; i++)
-                {
-                    //need to make sure that I can get within range to the target
-                    var nodeToMoveTo = duelManager.Battlefield.GetUnoccupiedNodeInRange(unitsToAct[0].OccupiedNode, validNodes.attackNodes[i], unitsToAct[0].Range);
-                    if (nodeToMoveTo != null)
-                    {
-                        duelManager.OnAttackActionConfirmed(unitsToAct[0], validNodes.attackNodes[i], validNodes.nodesToOccupy);
-                        unitsToAct.RemoveAt(0);
-                        continue;
-                    }
-                }
+                //Do nothing?
             }
-            else
+            else if (UnitCanMove(unit, validNodes.nodesToOccupy))
             {
-                //Move to the furthest available node
-                duelManager.OnMoveActionConfirmed(unitsToAct[0], validNodes.nodesToOccupy[validNodes.nodesToOccupy.Count - 1]);
+                //Also do nothing?
             }
 
-            unitsToAct.RemoveAt(0);
+            unitsToAct.Remove(unit);
             yield return null;
         }
 
-        Debug.Log("Ending Attack Declaration");
+        //Debug.Log("Ending Attack Declaration");
+        duelManager.OnCurrentPhaseFinished();
     }
 
-    private bool CanReachAttackTarget(Card_Unit unit, GridNode endNode)
+    private bool UnitCanAttack(Card_Unit unit, List<GridNode> attackNodes)
     {
-        if (Mathf.Abs(unit.OccupiedNode.gridZ - endNode.gridZ) <= unit.Range) return true;
+        //Debug.Log("Checking if unit can attack");
+        if (attackNodes.Count == 0) return false;
 
-        //Find all open nodes 
-        if (endNode.gridZ < unit.OccupiedNode.gridZ)
+        for (int i = 0; i < attackNodes.Count; i++)
         {
-
+            //Can attack without needing to move
+            if (Mathf.Abs(attackNodes[i].gridZ - unit.OccupiedNode.gridZ) <= unit.Range)
+            {
+                //Debug.Log("Unit located at " + unit.OccupiedNode.gridX + "," + unit.OccupiedNode.gridZ + " Can attack without moving");
+                duelManager.OnAttackActionConfirmed(unit, attackNodes[i]);
+                return true;
+            }
+            //need to make sure that I can get within range to the target
+            else if (duelManager.Battlefield.GetUnoccupiedNodeInRange(unit.OccupiedNode, attackNodes[i], unit.Range) != null)
+            {
+                //Debug.Log("Unit located at " + unit.OccupiedNode.gridX + "," + unit.OccupiedNode.gridZ + " Can attack after moving to valid node");
+                duelManager.OnAttackActionConfirmed(unit, attackNodes[i]);
+                return true;
+            }
+            //else Debug.Log("Unit located at " + unitsToAct[0].OccupiedNode.gridX + "," + unit.OccupiedNode.gridZ + " Cannot get within range to attack");
         }
-        else
-        {
-            Debug.LogError("Handle this half later");
-        }
-
         return false;
     }
+
+    private bool UnitCanMove(Card_Unit unit, List<GridNode> nodesToOccupy, bool moveForward = true)
+    {
+        
+        if (nodesToOccupy.Count == 0) return false;
+        if (moveForward)
+        {
+            for (int i = nodesToOccupy.Count - 1; i >= 0; i--)
+            {
+                if (nodesToOccupy[i].gridZ > unit.OccupiedNode.gridZ) nodesToOccupy.RemoveAt(i);
+            }
+        }
+        if (nodesToOccupy.Count == 0) return false;
+        duelManager.OnMoveActionConfirmed(unit, nodesToOccupy[nodesToOccupy.Count - 1]);
+        return true;
+    }
+
     #endregion
 
+    #region - Card Sorting -
     private Card_Permanent GetCard(CardFocus focus)
     {
         if (focus == CardFocus.Offense) return GetOffensiveCard();
@@ -430,6 +432,7 @@ public class OpponentCommander : CommanderController
         //if (card == null) Debug.Log("Returning Null");
         return card;
     }
+    #endregion
 }
 
 public struct CardNodeCombo

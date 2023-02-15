@@ -103,6 +103,7 @@ public class DeckHolder : MonoBehaviour
         var endRot = Quaternion.Euler(360,360,360);
         if (!card.GetComponent<Card>().isRevealed) endRot = Quaternion.Euler(faceDown);
 
+        DuelManager.instance.onCardMovementStarted?.Invoke();
         while (timeElapsed < timeToMove)
         {
             timeElapsed += Time.deltaTime;
@@ -113,6 +114,7 @@ public class DeckHolder : MonoBehaviour
 
             yield return null;
         }
+        DuelManager.instance.onCardMovementEnded?.Invoke();
 
         card.transform.localPosition = endPos;
         card.transform.localRotation = endRot;
