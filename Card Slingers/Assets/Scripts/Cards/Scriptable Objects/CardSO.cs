@@ -3,7 +3,7 @@ using UnityEngine;
 public class CardSO : ScriptableObject
 {
     new public string name;
-    public GameObject cardPrefab; //this will possibly later change to a string for the objectPooler
+    public Card cardPrefab;
     [Space]
     public int cost;
     public Sprite icon;

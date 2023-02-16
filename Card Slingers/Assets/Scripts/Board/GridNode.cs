@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 public class GridNode : MonoBehaviour, IInteractable
 {
+    private IObjectPool<GridNode> _pool;
+    
     public delegate void OnGridNodeValueChanged(GridNode node);
     public OnGridNodeValueChanged onNodeValueChanged;
 
@@ -29,34 +32,43 @@ public class GridNode : MonoBehaviour, IInteractable
     public int gridX { get; private set; }
     public int gridZ { get; private set; }
     public bool IsPlayerNode => _isPlayerNode;
-    public Card_Permanent Occupant => _occupant;
+    //public Card_Permanent Occupant => _occupant;
     public Card Trap => _trap;
     public Card Terrain => _terrain;
 
+    public void SetPool(IObjectPool<GridNode> pool) => _pool = pool;
+
+    //Return the node to its pool when a match is finished
+    public void ReleaseToPool()
+    {
+        if (_pool != null) _pool.Release(this);
+        else Destroy(gameObject);
+    }
+
     public void OnAssignCoordinates(int x, int z, bool isPlayerNode)
     {
-        gridX = x;
-        gridZ = z;
+        gridX = x; gridZ = z;
         _isPlayerNode = isPlayerNode;
     }
 
-    public void SetOccupant(Card_Permanent occupant)
+    public Card_Permanent Occupant
     {
-        if (_occupant != null) throw new System.Exception("Node " + gridX + "," + gridZ + "is already occupied by " + _occupant.name);
-        _occupant = occupant;
-        UpdateOccupantPower();
-        _occupant.onValueChanged += UpdateOccupantPower;
+        get => _occupant;
+        set
+        {
+            if (_occupant != null)
+            {
+                if (value != null) Debug.LogError("Node " + gridX + "," + gridZ + "is already occupied by " + _occupant.name);
+                _occupant.onValueChanged -= UpdateOccupantPower;
+            }
 
-        onNodeValueChanged?.Invoke(this);
-    }
+            _occupant = value;
+            UpdateOccupantPower();
 
-    public void ClearOccupant()
-    {
-        if (_occupant != null) _occupant.onValueChanged -= UpdateOccupantPower;
-        _occupant = null;
-        UpdateOccupantPower();
+            if (_occupant != null) _occupant.onValueChanged += UpdateOccupantPower;
 
-        onNodeValueChanged?.Invoke(this);
+            onNodeValueChanged?.Invoke(this);
+        }
     }
 
     private void UpdateOccupantPower()
@@ -127,7 +139,7 @@ public class GridNode : MonoBehaviour, IInteractable
     {
         if (_occupant == null) return true; //not occupied at all
         if (_occupant.Commander != card.Commander) return false; //occupied by an enemy unit/structure
-        if (_occupant is Card_Structure structure && structure.CanBeOccupied) return true; //can move into building
+        if (_occupant is Card_Structure structure && structure.CanBeOccupied) return true; //can move into structure
 
         return false; //there is an (allied) occupant here
     }
@@ -147,8 +159,31 @@ public class GridNode : MonoBehaviour, IInteractable
 
             //apply effects of trap
             //could be damage, could be a persistent effect, could be counters, could be StopMovement
-            //don't deal with speed -1 while the unit is already mvoing
+            //trap script will remove itself after triggering
         }
     }
     #endregion
 }
+
+/* Old Methods
+ * 
+    public void SetOccupant(Card_Permanent occupant)
+    {
+        if (_occupant != null) throw new System.Exception("Node " + gridX + "," + gridZ + "is already occupied by " + _occupant.name);
+        _occupant = occupant;
+        UpdateOccupantPower();
+        _occupant.onValueChanged += UpdateOccupantPower;
+
+        onNodeValueChanged?.Invoke(this);
+    }
+
+    public void ClearOccupant()
+    {
+        if (_occupant != null) _occupant.onValueChanged -= UpdateOccupantPower;
+        _occupant = null;
+        UpdateOccupantPower();
+
+        onNodeValueChanged?.Invoke(this);
+    }
+ * 
+ */

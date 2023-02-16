@@ -246,6 +246,7 @@ public class Card_Unit : Card_Permanent
         _animator.SetTrigger("damage");
         damage = Mathf.Clamp(damage - Defense, 0, int.MaxValue);
         _currentHealth -= damage;
+        GameManager.instance.GetBloodParticles(transform.position + Vector3.up);
 
         if (_currentHealth <= 0) OnPermanentDestroyed();
         else

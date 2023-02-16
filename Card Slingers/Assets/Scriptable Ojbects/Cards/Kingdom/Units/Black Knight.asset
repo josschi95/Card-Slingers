@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Black Knight
   m_EditorClassIdentifier: 
   name: Black Knight
-  cardPrefab: {fileID: 3762046901689712160, guid: 325c52135d74aa64bab77db000ae8436, type: 3}
+  cardPrefab: {fileID: 5835411494563231940, guid: 325c52135d74aa64bab77db000ae8436, type: 3}
   cost: 1
   icon: {fileID: 21300000, guid: e2e59673159616c44b546b4a66992a4f, type: 3}
   type: 0

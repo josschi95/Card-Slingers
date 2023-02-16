@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18028331, g: 0.2257133, b: 0.3069217, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -460,7 +460,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _laneBalanceArray: 
   _dimensions: {x: 6, y: 6}
-  node: {fileID: 3777873372622269367, guid: ee29f5833272e544bbd39bb561198829, type: 3}
+  node: {fileID: 3777873372622269370, guid: ee29f5833272e544bbd39bb561198829, type: 3}
   checkerboardWhite: {fileID: 6063408864358170968, guid: 494e1dc97aecda8429378a1ef7827ab0, type: 3}
   checkerboardGray: {fileID: 8361856957321750763, guid: b5222de106068de43beebac15ac77cc0, type: 3}
   _playerCardsParent: {fileID: 1131058498}
@@ -3172,6 +3172,7 @@ GameObject:
   - component: {fileID: 952284053}
   - component: {fileID: 952284056}
   - component: {fileID: 952284055}
+  - component: {fileID: 952284057}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -3191,6 +3192,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09037b6515b173b4e88f10c4e875d0db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _bloodParticlePool: {fileID: 952284057}
 --- !u!4 &952284054
 Transform:
   m_ObjectHideFlags: 0
@@ -3261,6 +3263,22 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &952284057
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 952284052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10dd308abf7153246b1e18474df54b7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  poolType: 0
+  collectionChecks: 1
+  maxPoolSize: 10
+  _particlePrefab: {fileID: 198104090543139058, guid: 4430919f14c50f84085d287cbcb2c30e, type: 3}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0

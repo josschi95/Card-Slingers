@@ -290,7 +290,13 @@ public class OpponentCommander : CommanderController
     {
         //Debug.Log("Starting Attack Declaration");
         var unitsToAct = new List<Card_Unit>();
-        foreach(Card_Unit unit in _permanentsOnField) if (unit.CanAct) unitsToAct.Add(unit);
+
+        for (int i = 0; i < _permanentsOnField.Count; i++)
+        {
+            if (_permanentsOnField[i] is Card_Unit unit && unit.CanAct)
+                unitsToAct.Add(unit);
+        }
+
 
         while (unitsToAct.Count > 0)
         {
@@ -366,7 +372,41 @@ public class OpponentCommander : CommanderController
     private Card_Permanent GetCard(CardFocus focus)
     {
         if (focus == CardFocus.Offense) return GetOffensiveCard();
-        else return GetDefensiveCard();
+        else return GetNewDefensiveCard;
+    }
+
+    private Card_Permanent GetNewDefensiveCard
+    {
+        get
+        {
+            Card_Permanent card = null;
+            int cardPower = 0;
+            if (_cardsInHand.Count == 0) return null;
+
+            for (int i = 0; i < _cardsInHand.Count; i++)
+            {
+                if (_cardsInHand[i] is Card_Unit unit)
+                {
+                    int def = unit.MaxHealth + unit.Defense;
+                    if (def > cardPower)
+                    {
+                        card = unit;
+                        cardPower = def;
+                    }
+                }
+                else if (_cardsInHand[i] is Card_Structure structure)
+                {
+                    int def = structure.MaxHealth + structure.Defense;
+                    if (def > cardPower)
+                    {
+                        card = structure;
+                        cardPower = def;
+                    }
+                }
+            }
+
+            return card;
+        }
     }
 
     //Returns a unit or structure with the highest Defensive rating : Health + Defense

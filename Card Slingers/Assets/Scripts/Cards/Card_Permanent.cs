@@ -40,7 +40,8 @@ public class Card_Permanent : Card
     protected void OnOccupyNode(GridNode newNode)
     {
         _occupiedNode = newNode;
-        _occupiedNode.SetOccupant(this);
+        _occupiedNode.Occupant = this;
+        //_occupiedNode.SetOccupant(this);
 
         transform.position = newNode.transform.position;
     }
@@ -48,7 +49,9 @@ public class Card_Permanent : Card
     //Abandon the currently occupied node
     public void OnAbandonNode()
     {
-        _occupiedNode?.ClearOccupant();
+        //should only be null if occupying a structure
+        if (_occupiedNode != null) _occupiedNode.Occupant = null;
+        //_occupiedNode?.ClearOccupant();
         _occupiedNode = null;
     }
 
@@ -67,11 +70,6 @@ public class Card_Permanent : Card
         OnAbandonNode();
         cardGFX.SetActive(true); //Disable the physical card display
         GetComponent<Collider>().enabled = true; //re-enable collider for card selection
-        //Play death animation <= this will probably be separate and only for units,
-        //because I'll have to wait for the animation to finish
-        //and then I can call OnRemovePermanentFromField(this) 
-
-        //destroy _permanentObject or return to pool
     }
 
     public virtual void OnTargetEngaged(Card_Unit attacker)

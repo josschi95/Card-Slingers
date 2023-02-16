@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: _Player
   m_EditorClassIdentifier: 
   name: Merlinus Beardicus
-  cardPrefab: {fileID: 3762046901689712160, guid: ce928bac281b5944ca19a2d1b05636dc, type: 3}
+  cardPrefab: {fileID: 1569306437134555641, guid: ce928bac281b5944ca19a2d1b05636dc, type: 3}
   cost: 0
   icon: {fileID: 21300000, guid: 1a594cce0076c0240aab3dabdec13eca, type: 3}
   type: 6

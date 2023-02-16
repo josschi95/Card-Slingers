@@ -9,7 +9,7 @@ public class Battlefield : MonoBehaviour
     [SerializeField] private int[] _laneBalanceArray;
     [Space]
     [SerializeField] private Vector2Int _dimensions;
-    [SerializeField] private GameObject node; //Move this to being pooled
+    [SerializeField] private GridNode node; //Move this to being pooled
     [SerializeField] private GameObject checkerboardWhite, checkerboardGray; //these won't be needed beyond testing
     [Space]
     [SerializeField] private Transform _playerCardsParent;
@@ -24,6 +24,8 @@ public class Battlefield : MonoBehaviour
     public int Depth => _dimensions.y;
     public int[] LaneBalanceArray => _laneBalanceArray;
     #endregion
+
+    //Along that same line, I feel that Battlefield should be broken up into two separate scripts since it's handling both grid management and "pathfinding" so BattleFieldManager, and Grid
 
     #region - Grid -
     public void CreateGrid()
@@ -47,10 +49,10 @@ public class Battlefield : MonoBehaviour
                 TESTING_CREATE_CHECKERBOARD(pos, x, z);
 
                 pos.y += 0.001f;
-                GameObject go = Instantiate(node, pos, Quaternion.identity);
+                var go = Instantiate(node, pos, Quaternion.identity);
                 go.transform.SetParent(transform);
 
-                gridArray[x, z] = go.GetComponentInChildren<GridNode>();
+                gridArray[x, z] = go;
                 gridArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);
                 gridArray[x, z].onNodeValueChanged += OnNodeValueChanged;
             }
@@ -71,7 +73,8 @@ public class Battlefield : MonoBehaviour
             {
                 var node = gridArray[x, z];
                 node.onNodeValueChanged -= OnNodeValueChanged;
-                Destroy(node.gameObject);
+                node.ReleaseToPool();
+                //Destroy(node.gameObject);
             }
         }
     }

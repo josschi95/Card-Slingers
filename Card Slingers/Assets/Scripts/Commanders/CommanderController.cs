@@ -76,7 +76,9 @@ public class CommanderController : MonoBehaviour
 
         foreach (CardSO cardSO in _commanderInfo.Deck.cards)
         {
-            Card newCard = Instantiate(cardSO.cardPrefab).GetComponent<Card>();
+
+            //Card newCard = Instantiate(cardSO.cardPrefab).GetComponent<Card>();
+            Card newCard = Instantiate(cardSO.cardPrefab);
             newCard.AssignCard(cardSO, this, this is PlayerCommander);
             PlaceCardInDeck(newCard);
         }

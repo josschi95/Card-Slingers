@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Opponent
   m_EditorClassIdentifier: 
   name: The Rouge Rogue
-  cardPrefab: {fileID: 3762046901689712160, guid: 9de5d73ca39d92b4d81691ac7edc7822, type: 3}
+  cardPrefab: {fileID: 1569306437134555641, guid: 9de5d73ca39d92b4d81691ac7edc7822, type: 3}
   cost: 0
   icon: {fileID: 21300000, guid: 8dbd05199e3ff3840ad70786c90bcc3e, type: 3}
   type: 6
