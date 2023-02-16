@@ -279,15 +279,9 @@ MonoBehaviour:
   _cardInfo: {fileID: 0}
   _occupiedNode: {fileID: 0}
   _permanentObject: {fileID: 0}
-  _animator: {fileID: 0}
   _currentHealth: 0
   _equipment: []
-  _healthModifiers: 
-  _attackModifiers: 
-  _rangeModifiers: 
-  _defenseModifiers: 
-  _speedModifiers: 
-  timeToMoveOneNode: 1.75
+  _statModifiers: 0000000000000000000000000000000000000000
 --- !u!1 &4652214776329499669
 GameObject:
   m_ObjectHideFlags: 0

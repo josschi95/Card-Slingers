@@ -8,16 +8,14 @@ public class Card_Unit : Card_Permanent
     [SerializeField] protected int _currentHealth;
     [SerializeField] private List<Card_Permanent> _equipment;
 
-    [SerializeField] private List<int> _healthModifiers;
-    [SerializeField] private List<int> _attackModifiers;
-    [SerializeField] private List<int> _rangeModifiers;
-    [SerializeField] private List<int> _defenseModifiers;
-    [SerializeField] private List<int> _speedModifiers;
+    [SerializeField] private int[] _statModifiers = new int[System.Enum.GetNames(typeof(UnitStat)).Length];
 
     private bool _isMoving;
     private bool _isAttacking;
+    private Card_Permanent _attackTarget;
+    private bool _canRetaliate;
 
-    #region - Animation -
+    #region - Animation Variables -
     protected Animator _animator;
     private bool _waitingForDeathAnim;
     #endregion
@@ -46,7 +44,7 @@ public class Card_Unit : Card_Permanent
 
         //An indicator for current equipment
 
-        //status effects, if that becomes a thing
+        //stat tokens
     }
 
     public override void OnSummoned(GridNode node)
@@ -60,14 +58,9 @@ public class Card_Unit : Card_Permanent
         _animator = PermanentObject.GetComponent<Animator>();
 
         _equipment = new List<Card_Permanent>();
-        _healthModifiers = new List<int>();
-        _attackModifiers = new List<int>();
-        _rangeModifiers = new List<int>();
-        _defenseModifiers = new List<int>();
-        _speedModifiers = new List<int>();
     }
 
-    protected override int GetPowerLevel()
+    protected override int GetThreatLevel()
     {
         if (Commander is PlayerCommander) return _currentHealth + Damage + Defense;
         else return -(_currentHealth + Damage + Defense);
@@ -90,7 +83,7 @@ public class Card_Unit : Card_Permanent
     {
         var unit = CardInfo as UnitSO;
         int value = unit.MaxHealth;
-        _healthModifiers.ForEach(x => value += x);
+        value += _statModifiers[(int)UnitStat.Health];
         if (value < 0) value = 0;
         return value;
     }
@@ -99,7 +92,7 @@ public class Card_Unit : Card_Permanent
     {
         var unit = CardInfo as UnitSO;
         int value = unit.Attack;
-        _attackModifiers.ForEach(x => value += x);
+        value += _statModifiers[(int)UnitStat.Attack];
         if (value < 0) value = 0;
         return value;
     }
@@ -110,7 +103,7 @@ public class Card_Unit : Card_Permanent
 
         var unit = CardInfo as UnitSO;
         int value = unit.Range;
-        _rangeModifiers.ForEach(x => value += x);
+        value += _statModifiers[(int)UnitStat.Range];
         if (value < 0) value = 0;
         return value;
     }
@@ -119,7 +112,7 @@ public class Card_Unit : Card_Permanent
     {
         var unit = CardInfo as UnitSO;
         int value = unit.Defense;
-        _defenseModifiers.ForEach(x => value += x);
+        value += _statModifiers[(int)UnitStat.Defense];
         if (value < 0) value = 0;
         return value;
     }
@@ -128,7 +121,7 @@ public class Card_Unit : Card_Permanent
     {
         var unit = CardInfo as UnitSO;
         int value = unit.Speed;
-        _speedModifiers.ForEach(x => value += x);
+        value += _statModifiers[(int)UnitStat.Speed];
         if (value < 0) value = 0;
         return value;
     }
@@ -144,6 +137,7 @@ public class Card_Unit : Card_Permanent
     
     private bool UnitCanAct()
     {
+        if (_currentHealth <= 0) return false;
         //return false if under some sort of effect such as stun... whatever
         return true;
     }
@@ -223,7 +217,8 @@ public class Card_Unit : Card_Permanent
     }
     #endregion
 
-    public void AttackNode(GridNode node)
+    //resolve an attack action which has been declared 
+    public void OnAttack(GridNode node)
     {
         if (!CanAttack) return; //can't attack, shouldn't have gotten here if this is already false, but worth checking
 
@@ -234,11 +229,16 @@ public class Card_Unit : Card_Permanent
             return;
         }
 
+        _canRetaliate = false;
+        node.Occupant.OnTargetEngaged(this);
+        
+        _attackTarget = node.Occupant;
         _animator.SetTrigger("attack");
+    }
 
-        //should include some sort of delay here to trigger the damage when the attack would actually hit, instead of immediately
-
-        node.Occupant.OnTakeDamage(Damage);
+    public void OnAttackAnimationTrigger()
+    {
+        _attackTarget.OnTakeDamage(Damage);
     }
 
     public override void OnTakeDamage(int damage)
@@ -248,7 +248,22 @@ public class Card_Unit : Card_Permanent
         _currentHealth -= damage;
 
         if (_currentHealth <= 0) OnPermanentDestroyed();
+        else
+        {
+            if (_canRetaliate && _attackTarget != null)
+            {
+                _animator.SetTrigger("attack");
+                _canRetaliate = false;
+            }
+        }
         onValueChanged?.Invoke();
+    }
+
+    public override void OnTargetEngaged(Card_Unit attacker)
+    {
+        //another unit has engaged this unit
+        _canRetaliate = true;
+        _attackTarget = attacker;
     }
 
     public void OnRegainHealth(int amount)

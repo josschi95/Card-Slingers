@@ -62,7 +62,7 @@ public class GridNode : MonoBehaviour, IInteractable
     private void UpdateOccupantPower()
     {
         if (_occupant == null) occupantPower = 0;
-        else occupantPower = _occupant.PowerLevel;
+        else occupantPower = _occupant.ThreatLevel;
 
         onNodeValueChanged?.Invoke(this);
     }

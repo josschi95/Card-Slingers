@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Unit", menuName = "Scriptable Objects/Cards/Structure")]
-public class StructureSO : CardSO
+public class StructureSO : PermanentSO
 {
     private void Reset()
     {

@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 614a5a7bf186647468151d14b3311506, type: 3}
-  m_Name: Soldier_Normal
+  m_Name: Zealot
   m_EditorClassIdentifier: 
-  name: Soldier
+  name: Zealot
   cardPrefab: {fileID: 3762046901689712160, guid: 325c52135d74aa64bab77db000ae8436, type: 3}
   cost: 1
-  icon: {fileID: 21300000, guid: 58bac37f0d7391f4ca6d341174276884, type: 3}
+  icon: {fileID: 21300000, guid: e2e59673159616c44b546b4a66992a4f, type: 3}
   type: 0
   faction: 1
   description: 'HP:5 ATK:1 DEF: 0 SPD: 2'
-  flavorText: 'A lowly peasant conscript. '
-  _permanentPrefab: {fileID: 1140322766594170, guid: 084d983feb3cc754a8dc6647297cd52f, type: 3}
-  _maxHealth: 5
-  _attack: 1
+  flavorText: A noble knight
+  _permanentPrefab: {fileID: 1552075872333300, guid: f575356c591a52e47a3f6efa6c18f316, type: 3}
+  _maxHealth: 15
+  _attack: 5
   _range: 1
-  _defense: 0
+  _defense: 2
   _speed: 2

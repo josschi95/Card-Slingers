@@ -16,7 +16,7 @@ public class Card_Permanent : Card
 
     public GridNode OccupiedNode => _occupiedNode;
     public GameObject PermanentObject => _permanentObject;
-    public int PowerLevel => GetPowerLevel();
+    public int ThreatLevel => GetThreatLevel();
 
     public virtual void OnSummoned(GridNode node)
     {
@@ -52,12 +52,12 @@ public class Card_Permanent : Card
         _occupiedNode = null;
     }
 
-    protected virtual int GetPowerLevel()
+    protected virtual int GetThreatLevel()
     {
         return 0;
     }
 
-    public void OnBeginPhase()
+    public virtual void OnBeginPhase()
     {
         //Trigger any relevant abilities
     }
@@ -72,6 +72,11 @@ public class Card_Permanent : Card
         //and then I can call OnRemovePermanentFromField(this) 
 
         //destroy _permanentObject or return to pool
+    }
+
+    public virtual void OnTargetEngaged(Card_Unit attacker)
+    {
+        //Meant to be overridden
     }
 
     public virtual void OnTakeDamage(int dmg)

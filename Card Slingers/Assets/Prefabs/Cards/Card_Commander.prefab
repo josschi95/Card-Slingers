@@ -275,6 +275,7 @@ MonoBehaviour:
   _cardsInDiscardPile: []
   _cardsInExile: []
   _permanentsOnField: []
+  invadesLanes: 
 --- !u!114 &1569306437134555641
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -303,11 +304,7 @@ MonoBehaviour:
   _permanentObject: {fileID: 0}
   _currentHealth: 0
   _equipment: []
-  _healthModifiers: 
-  _attackModifiers: 
-  _rangeModifiers: 
-  _defenseModifiers: 
-  _speedModifiers: 
+  _statModifiers: 0000000000000000000000000000000000000000
 --- !u!1 &4652214776329499669
 GameObject:
   m_ObjectHideFlags: 0

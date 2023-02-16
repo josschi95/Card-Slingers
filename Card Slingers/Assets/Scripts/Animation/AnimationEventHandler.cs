@@ -4,20 +4,19 @@ using UnityEngine;
 
 public class AnimationEventHandler : MonoBehaviour
 {
+    private Card_Unit unit;
+    private void Start()
+    {
+        unit = GetComponentInParent<Card_Unit>();
+    }
+
+    public void OnAttackAnimationTrigger()
+    {
+        unit.OnAttackAnimationTrigger();
+    }
+
     public void OnDeathAnimationCompleted()
     {
-        GetComponentInParent<Card_Unit>().OnDeathAnimCompleted();
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        unit.OnDeathAnimCompleted();
     }
 }

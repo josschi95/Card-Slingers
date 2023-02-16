@@ -43,7 +43,7 @@ public class Card_Structure : Card_Permanent
         return value;
     }
 
-    protected override int GetPowerLevel()
+    protected override int GetThreatLevel()
     {
         if (Commander is PlayerCommander) return _currentHealth;
         else return -_currentHealth;

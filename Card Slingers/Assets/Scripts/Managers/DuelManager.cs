@@ -624,7 +624,7 @@ public class DuelManager : MonoBehaviour
             var action = _declaredActions[0];
 
             if (action.action == ActionType.Move) action.unit.MoveToNode(action.targetNode);
-            else if (action.action == ActionType.Attack) action.unit.AttackNode(action.targetNode);
+            else if (action.action == ActionType.Attack) action.unit.OnAttack(action.targetNode);
             else if (action.action == ActionType.Ability) Debug.LogWarning("Not Implemented");
             
             while (action.unit.IsActing) yield return null;

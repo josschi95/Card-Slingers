@@ -171,7 +171,7 @@ public class OpponentCommander : CommanderController
         //the lane balance is greater than the negative value of the commander's power =>
         //there is at least one player unit in this lane with power greater than any allied unit
         int commanderLanePower = DuelManager.instance.Battlefield.LaneBalanceArray[CommanderCard.OccupiedNode.gridX];
-        return commanderLanePower > -CommanderCard.PowerLevel;
+        return commanderLanePower > -CommanderCard.ThreatLevel;
     }
 
     /// <summary>
@@ -207,7 +207,7 @@ public class OpponentCommander : CommanderController
             if (card.OccupiedNode.gridZ > (duelManager.Battlefield.Depth - 1) * 0.5f)
             {
                 float gridZ = card.OccupiedNode.gridZ;
-                int modifiedScore = Mathf.RoundToInt(card.PowerLevel + gridZ * (1 + (gridZ / duelManager.Battlefield.Depth)));
+                int modifiedScore = Mathf.RoundToInt(card.ThreatLevel + gridZ * (1 + (gridZ / duelManager.Battlefield.Depth)));
                 laneRating[card.OccupiedNode.gridX] += modifiedScore;
             }
         }
@@ -413,10 +413,10 @@ public class OpponentCommander : CommanderController
         {
             if (_cardsInHand[i] is Card_Unit unit)
             {
-                if (unit.PowerLevel < cardPower) //returns a negative value. because enemy
+                if (unit.ThreatLevel < cardPower) //returns a negative value. because enemy
                 {
                     card = unit;
-                    cardPower = unit.PowerLevel;
+                    cardPower = unit.ThreatLevel;
                 }
             }
             /*else if (_cardsInHand[i] is Card_Structure structure)
