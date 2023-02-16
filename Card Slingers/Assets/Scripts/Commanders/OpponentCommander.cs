@@ -88,7 +88,8 @@ public class OpponentCommander : CommanderController
     {
         base.OnAttackPhase();
 
-        StartCoroutine(HandleUnitAttacks());
+        if (duelManager.TurnCount == 1) duelManager.OnCurrentPhaseFinished();
+        else StartCoroutine(HandleUnitAttacks());
         //if there are spells in the hand, target anyone near their commander
 
         //Do not attack with whatever guard the commander has

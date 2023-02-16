@@ -53,7 +53,7 @@ public class UIManager : MonoBehaviour
         cardDisplayRect.anchoredPosition = cardDisplayHiddenPos;
 
         hideCardDisplayButton.onClick.AddListener(HideCardDisplay);
-        DuelManager.instance.onNewMatchStarted += OnMatchStart;
+        DuelManager.instance.onMatchStarted += OnMatchStart;
         DuelManager.instance.onMatchEnded += OnMatchEnd;
         DuelManager.instance.onPhaseChange += OnPhaseChange;
 

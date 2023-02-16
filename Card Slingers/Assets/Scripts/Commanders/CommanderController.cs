@@ -48,7 +48,7 @@ public class CommanderController : MonoBehaviour
     public virtual void OnAssignCommander(CommanderSO commanderInfo)
     {
         _commanderInfo = commanderInfo;
-        _commanderCard.AssignCard(commanderInfo, this, true);
+        _commanderCard.AssignCard(commanderInfo, this);
     }
 
     public virtual void OnMatchStart(int startingHandSize = 4, int mana = 4)
@@ -79,7 +79,7 @@ public class CommanderController : MonoBehaviour
 
             //Card newCard = Instantiate(cardSO.cardPrefab).GetComponent<Card>();
             Card newCard = Instantiate(cardSO.cardPrefab);
-            newCard.AssignCard(cardSO, this, this is PlayerCommander);
+            newCard.AssignCard(cardSO, this);
             PlaceCardInDeck(newCard);
         }
     }

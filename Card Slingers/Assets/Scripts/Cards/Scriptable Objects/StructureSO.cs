@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "New Unit", menuName = "Scriptable Objects/Cards/Structure")]
+[CreateAssetMenu(fileName = "New Unit", menuName = "Scriptable Objects/Cards/Permanents/Structure")]
 public class StructureSO : PermanentSO
 {
     private void Reset()

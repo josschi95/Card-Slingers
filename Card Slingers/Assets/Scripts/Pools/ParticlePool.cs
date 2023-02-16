@@ -39,12 +39,13 @@ public class ParticlePool : MonoBehaviour
     {
         var go = Instantiate(_particlePrefab);
         var ps = go.GetComponent<ParticleSystem>();
-        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        
+        //ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
-        //var main = ps.main;
-        //main.duration = 1;
-        //main.startLifetime = 1;
-        //main.loop = false;
+        /*var main = ps.main;
+        main.duration = 100;
+        main.startLifetime = 100;
+        main.loop = false;*/
 
         // This is used to return ParticleSystems to the pool when they have stopped.
         var returnToPool = go.gameObject.AddComponent<ReturnToPool>();
@@ -56,12 +57,14 @@ public class ParticlePool : MonoBehaviour
     // Called when an item is returned to the pool using Release
     private void OnReturnedToPool(ParticleSystem system)
     {
+        //Debug.Log("Returning Particle System.");
         system.gameObject.SetActive(false);
     }
 
     // Called when an item is taken from the pool using Get
     private void OnTakeFromPool(ParticleSystem system)
     {
+        //Debug.Log("Taking from Particle Pool.");
         system.gameObject.SetActive(true);
     }
 
@@ -69,6 +72,7 @@ public class ParticlePool : MonoBehaviour
     // We can control what the destroy behavior does, here we destroy the GameObject.
     private void OnDestroyPoolObject(ParticleSystem system)
     {
+        //Debug.Log("Destroying Particle System.");
         Destroy(system.gameObject);
     }
 

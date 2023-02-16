@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4028fdc9558ad7d4998dbb22d6160c66, type: 3}
+  m_Name: Magic Arrow
+  m_EditorClassIdentifier: 
+  name: Magic Arrow
+  cardPrefab: {fileID: 4352255705957388408, guid: a4f2524b46871c54ba54d961d0439ff9, type: 3}
+  cost: 1
+  icon: {fileID: 21300000, guid: 391f8050dd31bb04994160aa0dd9d395, type: 3}
+  type: 0
+  faction: 0
+  description: 
+  flavorText: 

@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class CardSO : ScriptableObject
 {
+    [Header("Base Card Properties")]
     new public string name;
     public Card cardPrefab;
     [Space]

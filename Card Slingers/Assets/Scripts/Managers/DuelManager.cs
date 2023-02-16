@@ -15,7 +15,7 @@ public class DuelManager : MonoBehaviour
 
     #region - Callbacks -
     public delegate void OnMatchCallback();
-    public OnMatchCallback onNewMatchStarted;
+    public OnMatchCallback onMatchStarted;
     public OnMatchCallback onMatchEnded;
 
     public delegate void OnCardMovementCallback(); //used to prevent phase transitions while cards are moving
@@ -67,10 +67,12 @@ public class DuelManager : MonoBehaviour
     private PlayerCommander _playerController;
     private OpponentCommander _opponentController;
     private LineRenderer arcLine;
+    private bool _inPhaseTransition;
 
     private Card_Permanent _cardToSummon; //Card that the player has selected to summon
     private GridNode highlightedNode; //the node that the mouse is currently over
 
+    private int _turnCount;
     private bool _isPlayerTurn;
     private bool _waitForSummonNode; //waiting for a node to be selected to summon a card
     private Coroutine cardPlacementCoroutine;
@@ -78,17 +80,20 @@ public class DuelManager : MonoBehaviour
     private Coroutine phaseDelayCoroutine;
     [SerializeField] private int _cardsInMovement;
 
+    #region - Action Declaration Variables -
     private bool _waitForTargetNode; //waitinf for a node to be selected to perform an action
     private GridNode _nodeToTarget; //the node that will be targeted to move/attack 
     [SerializeField] private List<DeclaredAction> _declaredActions = new List<DeclaredAction>();
     private List<GridNode> _claimedNodes = new List<GridNode>(); //nodes that have been claimed for movement by declared action
     private Coroutine declareActionCoroutine; //keep available nodes highlighted while a unit is selected to act
+    #endregion
 
     #region - Public Variable References -
     public Battlefield Battlefield => _battleField;
     public PlayerCommander PlayerController => _playerController;
     public OpponentCommander OpponentController => _opponentController;
     public List<GridNode> ClaimedNodes => _claimedNodes;
+    public int TurnCount => _turnCount;
     #endregion
 
     #region - Initial Methods -
@@ -124,6 +129,7 @@ public class DuelManager : MonoBehaviour
     //Initiate a new match //This will also likely take in the battlefield later
     private void OnMatchStart(Battlefield battlefield, PlayerCommander player, OpponentCommander opponent)
     {
+        _turnCount = 1;
         _currentPhase = Phase.Begin;
         _battleField = battlefield;
         _playerController = player;
@@ -137,13 +143,13 @@ public class DuelManager : MonoBehaviour
         {
             _isPlayerTurn = true;
             onPhaseChange?.Invoke(_isPlayerTurn, _currentPhase);
-            onNewMatchStarted?.Invoke();
+            onMatchStarted?.Invoke();
             return;
         }
 
         _isPlayerTurn = Random.value >= 0.5f;
         onPhaseChange?.Invoke(_isPlayerTurn, _currentPhase);
-        onNewMatchStarted?.Invoke();
+        onMatchStarted?.Invoke();
     }
 
     private void PlaceCommanders()
@@ -176,21 +182,20 @@ public class DuelManager : MonoBehaviour
     #region - Phase Control -
     public void OnCurrentPhaseFinished()
     {
+        if (_inPhaseTransition) return; //Don't allow the accidental skipping of a phase
+
         if (phaseDelayCoroutine != null) StopCoroutine(phaseDelayCoroutine);
         phaseDelayCoroutine = StartCoroutine(PhaseTransitionDelay());
     }
 
-    public void OnTurnFinished()
-    {
-
-    }
-
     private IEnumerator PhaseTransitionDelay()
     {
+        _inPhaseTransition = true;
         //wait until all cards have moved to their final destination
         while(_cardsInMovement > 0) yield return null;
         //one more short delay to be sure
         yield return new WaitForSeconds(0.5f);
+        _inPhaseTransition = false;
 
         //start next commander's turn
         if (_currentPhase == Phase.End) SetPhase(Phase.Begin);
@@ -225,7 +230,7 @@ public class DuelManager : MonoBehaviour
     private void OnBeginPhase()
     {
         _isPlayerTurn = !_isPlayerTurn;
-
+        _turnCount++;
     }
 
     private void OnSummoningPhase()
@@ -235,7 +240,12 @@ public class DuelManager : MonoBehaviour
 
     private void OnAttackPhase()
     {
-
+        //Cannot declare actions on the first turn of the first round
+        if (_turnCount == 1)
+        {
+            Debug.Log("Skipping phase");
+            OnCurrentPhaseFinished();
+        }
     }
 
     private void OnResolutionPhase()
@@ -247,6 +257,16 @@ public class DuelManager : MonoBehaviour
     private void OnEndPhase()
     {
 
+    }
+
+    private int RoundCount
+    {
+        get
+        {
+            float f = _turnCount;
+            int turns = Mathf.CeilToInt(f * 0.5f);
+            return turns;
+        }
     }
     #endregion
 

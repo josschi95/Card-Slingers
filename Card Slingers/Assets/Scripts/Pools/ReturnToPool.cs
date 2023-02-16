@@ -1,11 +1,13 @@
 using UnityEngine;
 using UnityEngine.Pool;
 
-//Returns the particle system to the pool when the OnParticleSystemStopped event is received
+/// <summary>
+/// Returns the particle system to the pool when the OnParticleSystemStopped event is received
+/// </summary>
 [RequireComponent(typeof(ParticleSystem))]
 public class ReturnToPool : MonoBehaviour
 {
-    public ParticleSystem system;
+    private ParticleSystem system;
     public IObjectPool<ParticleSystem> pool;
 
     private void Start()

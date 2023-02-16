@@ -20,7 +20,7 @@ public class Card : MonoBehaviour, IInteractable
     private Coroutine lerpCardUpCoroutine;
 
     #region - Public Variables -
-    public bool isRevealed { get; protected set; } //If the player is able to see the card
+    public bool isRevealed { get; protected set;}//If the player is able to see the card
     public CommanderController Commander => _commander;
     public CardSO CardInfo => _cardInfo; //Scriptable object to hold the card stats 
     public CardLocation Location => _location;
@@ -29,14 +29,12 @@ public class Card : MonoBehaviour, IInteractable
     #endregion
 
     //Assign the card its information and its owner
-    public void AssignCard(CardSO card, CommanderController commander, bool isRevealed = false)
+    public void AssignCard(CardSO card, CommanderController commander)
     {
         _cardInfo = card;
         _commander = commander;
 
         SetCardDisplay();
-
-        if (isRevealed) OnRevealCard();
     }
 
     //Update the display for the assigned card
@@ -58,12 +56,25 @@ public class Card : MonoBehaviour, IInteractable
     public void SetCardLocation(CardLocation location)
     {
         _location = location;
-    }
 
-    //Reveal the card so the player is able to see it
-    public void OnRevealCard()
-    {
-        isRevealed = true;
+        switch (_location)
+        {
+            case CardLocation.InHand:
+                isRevealed = _commander is PlayerCommander;
+                break;
+            case CardLocation.InDeck:
+                isRevealed = false;
+                break;
+            case CardLocation.InDiscard:
+                isRevealed = true;
+                break;
+            case CardLocation.OnField:
+                isRevealed = true;
+                break;
+            case CardLocation.InExile:
+                isRevealed = true;
+                break;
+        }
     }
 
     #region - IInteractable -
