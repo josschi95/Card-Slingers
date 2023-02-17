@@ -10,6 +10,9 @@ public class GridNode : MonoBehaviour, IInteractable
     public delegate void OnGridNodeValueChanged(GridNode node);
     public OnGridNodeValueChanged onNodeValueChanged;
 
+    public delegate void OnGridNodeEnteredCallback(Card_Unit unit);
+    public OnGridNodeEnteredCallback onNodeEntered;
+
     private void TEST_SUMMON_ENEMY()
     {
         DuelManager.instance.SummonTestEnemy(this);
@@ -21,7 +24,7 @@ public class GridNode : MonoBehaviour, IInteractable
     [Space]
 
     [SerializeField] private Card_Permanent _occupant = null;
-    [SerializeField] private Card _trap;
+    [SerializeField] private Card_Trap _trap;
     [SerializeField] private Card _terrain;
     private bool _isPlayerNode; //located on player half of the grid
 
@@ -32,8 +35,6 @@ public class GridNode : MonoBehaviour, IInteractable
     public int gridX { get; private set; }
     public int gridZ { get; private set; }
     public bool IsPlayerNode => _isPlayerNode;
-    //public Card_Permanent Occupant => _occupant;
-    public Card Trap => _trap;
     public Card Terrain => _terrain;
 
     public void SetPool(IObjectPool<GridNode> pool) => _pool = pool;
@@ -68,6 +69,17 @@ public class GridNode : MonoBehaviour, IInteractable
             if (_occupant != null) _occupant.onValueChanged += UpdateOccupantPower;
 
             onNodeValueChanged?.Invoke(this);
+        }
+    }
+
+    public Card_Trap Trap
+    {
+        get => _trap;
+        set
+        {
+            if (_trap != null && value != null) return;
+
+            _trap = value;
         }
     }
 
@@ -149,18 +161,6 @@ public class GridNode : MonoBehaviour, IInteractable
         if (_occupant == null) return false; //nothing to attack
         if (_occupant.Commander == attacker.Commander) return false; //same team
         return true; //occupied by enemy
-    }
-
-    public void OnEnterNode(Card_Unit unit)
-    {
-        if (_trap != null && _trap.Commander != unit.Commander)
-        {
-            Debug.Log("Trap has been activated!");
-
-            //apply effects of trap
-            //could be damage, could be a persistent effect, could be counters, could be StopMovement
-            //trap script will remove itself after triggering
-        }
     }
     #endregion
 }

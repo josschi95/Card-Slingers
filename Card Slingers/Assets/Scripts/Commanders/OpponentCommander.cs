@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 /* NOTE: I'm probably better off just breaking up this script into a state machine
  That's going to prevent this script from reaching 800+ lines and should hopefully allow for some more modulation*/
@@ -10,11 +11,14 @@ public class OpponentCommander : CommanderController
     private PlayerCommander playerCommander;
     private int[] cardTypesInHand = new int[System.Enum.GetNames(typeof(CardType)).Length];
     CardNodeCombo nulledCombo = new CardNodeCombo(null, null);
-    [SerializeField] private bool[] invadesLanes; //true if invaded
+    //[SerializeField] 
+    private bool[] invadesLanes; //true if invaded
 
-    public override void OnMatchStart(int startingHandSize = 4, int mana = 4)
+    [SerializeField] private List<Card_Permanent> threats = new List<Card_Permanent>();
+
+    public override void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
     {
-        base.OnMatchStart(startingHandSize, mana);
+        base.OnMatchStart(holder, startingHandSize, mana);
         playerCommander = duelManager.PlayerController;
         invadesLanes = new bool[duelManager.Battlefield.Width];
     }
@@ -30,6 +34,8 @@ public class OpponentCommander : CommanderController
         base.OnSummoningPhase();
 
         FindInvadedLanes();
+
+        SortThreats();
 
         StartCoroutine(HandleSummonUnits());
 
@@ -84,6 +90,55 @@ public class OpponentCommander : CommanderController
         //Unit - currrentHealth + ATK + DEF 
     }
 
+    /// <summary>
+    /// Updates array to determine which lanes are invaded
+    /// </summary>
+    private void FindInvadedLanes()
+    {
+        //Reset all to false
+        for (int i = 0; i < invadesLanes.Length; i++) invadesLanes[i] = false;
+
+        foreach (Card_Permanent card in duelManager.PlayerController.CardsOnField)
+        {
+            if (card.Node.gridZ > (duelManager.Battlefield.Depth - 1) * 0.5f)
+            {
+                invadesLanes[card.Node.gridX] = true;
+            }
+        }
+    }
+
+    private void SortThreats()
+    {
+        threats.Clear();
+
+        foreach (Card_Permanent card in duelManager.PlayerController.CardsOnField)
+        {
+            if (card is Card_Trap) continue; //The opponent should not be aware of player traps
+            Debug.Log(card.CardInfo.name);
+
+            float gridZ = card.Node.gridZ;
+            float modifiedScore = Mathf.RoundToInt(card.ThreatLevel + gridZ * (1 + (gridZ / duelManager.Battlefield.Depth)));
+            
+            //Defensive structures are not considered major threats,
+            if (card is Card_Structure structure && structure.Focus == CardFocus.Defense) modifiedScore -= 10;
+            //Place a higher priority on cards that are in the same lane as the commander
+            else if (card.Node.gridX == CommanderCard.Node.gridX) modifiedScore += 5;
+            
+            card.ModifiedThreatLevel = modifiedScore;
+
+            threats.Add(card);
+            for (int i = 0; i < threats.Count; i++)
+            {
+                if (card.ModifiedThreatLevel > threats[i].ModifiedThreatLevel)
+                {
+                    threats.Remove(card);
+                    threats.Insert(i, card);
+                    break;
+                }
+            }
+        }
+    }
+
     protected override void OnAttackPhase()
     {
         base.OnAttackPhase();
@@ -108,22 +163,7 @@ public class OpponentCommander : CommanderController
     }
 
     #region - Summon Phase 
-    /// <summary>
-    /// Updates array to determine which lanes are invaded
-    /// </summary>
-    private void FindInvadedLanes()
-    {
-        //Reset all to false
-        for (int i = 0; i < invadesLanes.Length; i++) invadesLanes[i] = false;
 
-        foreach (Card_Permanent card in duelManager.PlayerController.CardsOnField)
-        {
-            if (card.OccupiedNode.gridZ > (duelManager.Battlefield.Depth - 1) * 0.5f)
-            {
-                invadesLanes[card.OccupiedNode.gridX] = true;
-            }
-        }
-    }
 
     private IEnumerator HandleSummonUnits()
     {
@@ -133,14 +173,14 @@ public class OpponentCommander : CommanderController
             yield return new WaitForSeconds(1f);
             CardNodeCombo combo = nulledCombo;
 
-            if (CommanderLaneIsWeak()) combo = GetSummonCombo(CommanderCard.OccupiedNode.gridX, CardFocus.Defense);
+            if (CommanderLaneIsWeak()) combo = GetSummonCombo(CommanderCard.Node.gridX, CardFocus.Defense);
             if (OnTryValidateSummon(combo)) continue;
 
             if (CanAndNeedToDefendTerritory()) combo = GetSummonCombo(HighestThreatLane(), CardFocus.Offense);
             if (OnTryValidateSummon(combo)) continue;
 
             //Debug.Log("Checking to Attack Player");
-            var playerX = playerCommander.CommanderCard.OccupiedNode.gridX;
+            var playerX = playerCommander.CommanderCard.Node.gridX;
             if (OpenNodesInLane(playerX)) combo = GetSummonCombo(playerX, CardFocus.Defense);
             if (OnTryValidateSummon(combo)) continue;
 
@@ -171,7 +211,7 @@ public class OpponentCommander : CommanderController
     {
         //the lane balance is greater than the negative value of the commander's power =>
         //there is at least one player unit in this lane with power greater than any allied unit
-        int commanderLanePower = DuelManager.instance.Battlefield.LaneBalanceArray[CommanderCard.OccupiedNode.gridX];
+        int commanderLanePower = DuelManager.instance.Battlefield.LaneThreatArray[CommanderCard.Node.gridX];
         return commanderLanePower > -CommanderCard.ThreatLevel;
     }
 
@@ -205,11 +245,11 @@ public class OpponentCommander : CommanderController
 
         foreach (Card_Permanent card in duelManager.PlayerController.CardsOnField)
         {
-            if (card.OccupiedNode.gridZ > (duelManager.Battlefield.Depth - 1) * 0.5f)
+            if (card.Node.gridZ > (duelManager.Battlefield.Depth - 1) * 0.5f)
             {
-                float gridZ = card.OccupiedNode.gridZ;
+                float gridZ = card.Node.gridZ;
                 int modifiedScore = Mathf.RoundToInt(card.ThreatLevel + gridZ * (1 + (gridZ / duelManager.Battlefield.Depth)));
-                laneRating[card.OccupiedNode.gridX] += modifiedScore;
+                laneRating[card.Node.gridX] += modifiedScore;
             }
         }
 
@@ -251,10 +291,10 @@ public class OpponentCommander : CommanderController
         int lane = 0;
         int laneDisadvantage = 0;
 
-        int[] laneBalance = duelManager.Battlefield.LaneBalanceArray;
+        int[] laneBalance = duelManager.Battlefield.LaneThreatArray;
         for (int i = 0; i < laneBalance.Length; i++)
         {
-            if (i == CommanderCard.OccupiedNode.gridX) laneBalance[i] += 3;
+            if (i == CommanderCard.Node.gridX) laneBalance[i] += 3;
 
             if (laneBalance[i] > laneDisadvantage)
             {
@@ -304,7 +344,7 @@ public class OpponentCommander : CommanderController
             yield return new WaitForSeconds(0.5f);
             //Debug.Log("Remaining Units to Act: " + unitsToAct.Count);
             var unit = unitsToAct[0];
-            var availableNodes = duelManager.Battlefield.GetAllNodesInLane(unit.OccupiedNode.gridX);
+            var availableNodes = duelManager.Battlefield.GetAllNodesInLane(unit.Node.gridX);
             var validNodes = duelManager.GetValidNodes(unit, availableNodes);
 
 
@@ -333,14 +373,14 @@ public class OpponentCommander : CommanderController
         for (int i = 0; i < attackNodes.Count; i++)
         {
             //Can attack without needing to move
-            if (Mathf.Abs(attackNodes[i].gridZ - unit.OccupiedNode.gridZ) <= unit.Range)
+            if (Mathf.Abs(attackNodes[i].gridZ - unit.Node.gridZ) <= unit.Range)
             {
                 //Debug.Log("Unit located at " + unit.OccupiedNode.gridX + "," + unit.OccupiedNode.gridZ + " Can attack without moving");
                 duelManager.OnAttackActionConfirmed(unit, attackNodes[i]);
                 return true;
             }
             //need to make sure that I can get within range to the target
-            else if (duelManager.Battlefield.GetUnoccupiedNodeInRange(unit.OccupiedNode, attackNodes[i], unit.Range) != null)
+            else if (duelManager.Battlefield.GetUnoccupiedNodeInRange(unit.Node, attackNodes[i], unit.Range) != null)
             {
                 //Debug.Log("Unit located at " + unit.OccupiedNode.gridX + "," + unit.OccupiedNode.gridZ + " Can attack after moving to valid node");
                 duelManager.OnAttackActionConfirmed(unit, attackNodes[i]);
@@ -359,7 +399,7 @@ public class OpponentCommander : CommanderController
         {
             for (int i = nodesToOccupy.Count - 1; i >= 0; i--)
             {
-                if (nodesToOccupy[i].gridZ > unit.OccupiedNode.gridZ) nodesToOccupy.RemoveAt(i);
+                if (nodesToOccupy[i].gridZ > unit.Node.gridZ) nodesToOccupy.RemoveAt(i);
             }
         }
         if (nodesToOccupy.Count == 0) return false;
@@ -373,41 +413,7 @@ public class OpponentCommander : CommanderController
     private Card_Permanent GetCard(CardFocus focus)
     {
         if (focus == CardFocus.Offense) return GetOffensiveCard();
-        else return GetNewDefensiveCard;
-    }
-
-    private Card_Permanent GetNewDefensiveCard
-    {
-        get
-        {
-            Card_Permanent card = null;
-            int cardPower = 0;
-            if (_cardsInHand.Count == 0) return null;
-
-            for (int i = 0; i < _cardsInHand.Count; i++)
-            {
-                if (_cardsInHand[i] is Card_Unit unit)
-                {
-                    int def = unit.MaxHealth + unit.Defense;
-                    if (def > cardPower)
-                    {
-                        card = unit;
-                        cardPower = def;
-                    }
-                }
-                else if (_cardsInHand[i] is Card_Structure structure)
-                {
-                    int def = structure.MaxHealth + structure.Defense;
-                    if (def > cardPower)
-                    {
-                        card = structure;
-                        cardPower = def;
-                    }
-                }
-            }
-
-            return card;
-        }
+        else return GetDefensiveCard();
     }
 
     //Returns a unit or structure with the highest Defensive rating : Health + Defense
@@ -431,6 +437,7 @@ public class OpponentCommander : CommanderController
             else if (_cardsInHand[i] is Card_Structure structure)
             {
                 int def = structure.MaxHealth + structure.Defense;
+                if (structure.Focus == CardFocus.Defense) def += 10;
                 if (def > cardPower)
                 {
                     card = structure;

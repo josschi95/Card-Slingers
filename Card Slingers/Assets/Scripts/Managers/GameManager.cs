@@ -13,8 +13,13 @@ public class GameManager : MonoBehaviour
     }
     #endregion
 
+    [SerializeField] private EffectManager effectManager;
     [SerializeField] private ParticlePool _bloodParticlePool;
-    IObjectPool<ReturnToPool> _pool;
+
+    public static void OnApplyEffect(Card_Permanent card, Effects effect, int magnitude = 1, UnitStat stat = UnitStat.Health)
+    {
+        instance.effectManager.OnApplyEffect(card, effect, magnitude, stat);
+    }
 
     public void GetBloodParticles(Vector3 pos)
     {

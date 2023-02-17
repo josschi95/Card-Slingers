@@ -44,6 +44,7 @@ public class DuelManager : MonoBehaviour
     public bool IS_TESTING = true;
     [SerializeField] private CommanderSO playerSO, opponentSO;
     [SerializeField] private Battlefield _battleField;
+    [SerializeField] private CardHolder _cardHolderPrefab;
     [SerializeField] private GameObject lineIndicator, hostileLineIndicator;
     [SerializeField] private Material neutralMat, hostileMat;
     public bool TEST_SUMMON_ENEMY;
@@ -66,19 +67,22 @@ public class DuelManager : MonoBehaviour
 
     private PlayerCommander _playerController;
     private OpponentCommander _opponentController;
+
     private LineRenderer arcLine;
     private bool _inPhaseTransition;
 
     private Card_Permanent _cardToSummon; //Card that the player has selected to summon
+    private Card_Spell _instantToCast; //Card that the player has selected to cast: Spell/Terrain
     private GridNode highlightedNode; //the node that the mouse is currently over
 
     private int _turnCount;
     private bool _isPlayerTurn;
     private bool _waitForSummonNode; //waiting for a node to be selected to summon a card
+    private bool _waitForInstantNode; //waiting for a node to be selected to cast an instant
     private Coroutine cardPlacementCoroutine;
 
     private Coroutine phaseDelayCoroutine;
-    [SerializeField] private int _cardsInMovement;
+    private int _cardsInMovement;
 
     #region - Action Declaration Variables -
     private bool _waitForTargetNode; //waitinf for a node to be selected to perform an action
@@ -174,8 +178,19 @@ public class DuelManager : MonoBehaviour
             //But there shouldn't be any need to instantiate them (aside from when the player enters the room, no reason to keep idle enemies standing there
         }
 
-        PlayerController.OnMatchStart();
-        OpponentController.OnMatchStart();
+        var playerCards = Instantiate(_cardHolderPrefab);
+        var opponentCards = Instantiate(_cardHolderPrefab);
+
+        var dist = _battleField.Depth * _battleField.CellSize * 0.5f + 4.5f;
+
+        playerCards.transform.position = new Vector3(_battleField.transform.position.x, _battleField.transform.position.y, -dist);
+        opponentCards.transform.position = new Vector3(_battleField.transform.position.x, _battleField.transform.position.y, dist);
+
+        playerCards.transform.rotation = _battleField.transform.rotation;
+        opponentCards.transform.eulerAngles = new Vector3(0, _battleField.transform.rotation.y + 180, 0);
+
+        PlayerController.OnMatchStart(playerCards);
+        OpponentController.OnMatchStart(opponentCards);
     }
     #endregion
 
@@ -224,6 +239,7 @@ public class DuelManager : MonoBehaviour
                 OnEndPhase();
                 break;
         }
+
         onPhaseChange?.Invoke(_isPlayerTurn, _currentPhase);
     }
 
@@ -241,11 +257,7 @@ public class DuelManager : MonoBehaviour
     private void OnAttackPhase()
     {
         //Cannot declare actions on the first turn of the first round
-        if (_turnCount == 1)
-        {
-            Debug.Log("Skipping phase");
-            OnCurrentPhaseFinished();
-        }
+        if (_turnCount == 1) OnCurrentPhaseFinished();
     }
 
     private void OnResolutionPhase()
@@ -309,19 +321,22 @@ public class DuelManager : MonoBehaviour
     }
     #endregion
 
-    //The player cancels their previously chosen action
-    public void OnCancelAction()
+    //The player cancels an action or completes it
+    public void OnClearAction()
     {
         _waitForSummonNode = false; //stop coroutine
+        _waitForInstantNode = false;
         _waitForTargetNode = false; //stop coroutine
         _cardToSummon = null;
+        _instantToCast = null;
     }
 
     #region - Node/Card Selection 
     private void OnNodeMouseEnter(GridNode node)
     {
         highlightedNode = node;
-        if (_waitForSummonNode && NodeIsValid(node)) DisplayLineArc(_cardToSummon.transform.position, node.transform.position);
+        if (_waitForSummonNode && SummonNodeIsValid(node)) DisplayLineArc(_cardToSummon.transform.position, node.transform.position);
+        else if (_waitForInstantNode && InstantNodeIsValid(node)) DisplayLineArc(_instantToCast.transform.position, node.transform.position);
     }
 
     private void OnNodeMouseExit(GridNode node)
@@ -335,10 +350,15 @@ public class DuelManager : MonoBehaviour
         switch (_currentPhase)
         {
             case Phase.Summoning:
-                if (_waitForSummonNode && NodeIsValid(node))
+                if (_waitForSummonNode && SummonNodeIsValid(node))
                 {
                     PlayerController.OnPermanentPlayed(node, _cardToSummon);
-                    OnCancelAction();
+                    OnClearAction();
+                }
+                else if (_waitForInstantNode && InstantNodeIsValid(node)) //probably need some other checks in here based on the spell
+                {
+                    PlayerController.OnInstantPlayed(node, _instantToCast);
+                    OnClearAction();
                 }
                 break;
             case Phase.Attack:
@@ -357,10 +377,10 @@ public class DuelManager : MonoBehaviour
                 }
                 break;
             case Phase.End:
-                if (_waitForSummonNode && NodeIsValid(node))
+                if (_waitForSummonNode && SummonNodeIsValid(node))
                 {
                     PlayerController.OnPermanentPlayed(node, _cardToSummon);
-                    OnCancelAction();
+                    OnClearAction();
                 }
                 break;
         }
@@ -371,14 +391,22 @@ public class DuelManager : MonoBehaviour
         //Player selects a card to summon
         if (card is Card_Permanent permanent && PlayerCanSummonPermanent(permanent))
         {
-            _cardToSummon = card as Card_Permanent;
+            _cardToSummon = permanent;
+            _waitForSummonNode = true;
             if (cardPlacementCoroutine != null) StopCoroutine(cardPlacementCoroutine);
-            cardPlacementCoroutine = StartCoroutine(WaitForPermanentToBePlayed(card));
+            cardPlacementCoroutine = StartCoroutine(WaitForCardToBePlayed(card));
+        }
+        else if (card is Card_Spell spell && PlayerCanCastInstant(spell))
+        {
+            _instantToCast = spell;
+            _waitForInstantNode = true;
+            if (cardPlacementCoroutine != null) StopCoroutine(cardPlacementCoroutine);
+            cardPlacementCoroutine = StartCoroutine(WaitForCardToBePlayed(card));
         }
     }
     #endregion
 
-    #region - Summoning -
+    #region - Summoning/Casting -
     private bool PlayerCanSummonPermanent(Card_Permanent card)
     {
         if (!_isPlayerTurn) return false; //not their turn
@@ -388,23 +416,40 @@ public class DuelManager : MonoBehaviour
         else if (_currentPhase == Phase.End) return true; //can also summon in end phase
         return false;
     }
+    
+    private bool PlayerCanCastInstant(Card_Spell spell)
+    {
+        if (!_isPlayerTurn) return false; //not their turn
+        if (spell.Commander is not PlayerCommander) return false; //not their card
+        if (!PlayerController.CanPlayCard(spell)) return false; //not enough mana
+        if (_currentPhase == Phase.Begin || _currentPhase == Phase.Resolution) return false;
+        return true; //Can play instants during Summon/Attack/End Phases
+    }
 
-    private bool NodeIsValid(GridNode node)
+    private bool SummonNodeIsValid(GridNode node)
     {
         //the node belongs to the player, and it is not occupied or controlled by the enemy
         if (!_battleField.GetControlledNodesInLane(_playerController, node.gridX).Contains(node)) return false;
         return (node.IsPlayerNode && node.Occupant == null);
     }
 
-    private IEnumerator WaitForPermanentToBePlayed(Card card)
+    private bool InstantNodeIsValid(GridNode node)
     {
-        _waitForSummonNode = true;
+        return true;
+    }
 
-        while (_waitForSummonNode == true)
+    private IEnumerator WaitForCardToBePlayed(Card card)
+    {
+        while (_waitForSummonNode || _waitForInstantNode)
         {
             //only display if node is valid 
             //if (highlightedNode == null || !NodeIsValid(highlightedNode)) ClearLineArc();
             //else DisplayLineArc(card.transform.position, highlightedNode.transform.position);
+
+            if (_waitForInstantNode)
+            {
+                Debug.Log("Highlight all nodes within range of the commander");
+            }
 
             yield return null;
         }
@@ -436,13 +481,13 @@ public class DuelManager : MonoBehaviour
     private IEnumerator DisplayAvailableNodes(Card_Unit unit)
     {
         _waitForTargetNode = true;
-        var availableNodes = _battleField.GetAllNodesInLane(unit.OccupiedNode.gridX);
+        var availableNodes = _battleField.GetAllNodesInLane(unit.Node.gridX);
         var validNodes = GetValidNodes(unit, availableNodes);
         var walkableNodes = validNodes.nodesToOccupy;
         var attackNodes = validNodes.attackNodes;
 
         //set the highlight colors of the nodes to their appropriate color
-        unit.OccupiedNode.SetLockedDisplay(GridNode.MaterialType.Yellow);
+        unit.Node.SetLockedDisplay(GridNode.MaterialType.Yellow);
         for (int i = 0; i < walkableNodes.Count; i++) walkableNodes[i].SetLockedDisplay(GridNode.MaterialType.Blue);
         for (int i = 0; i < attackNodes.Count; i++) attackNodes[i].SetLockedDisplay(GridNode.MaterialType.Red);
 
@@ -451,8 +496,8 @@ public class DuelManager : MonoBehaviour
             if (highlightedNode == null) ClearLineArc();
             else
             {
-                if (walkableNodes.Contains(highlightedNode)) DisplayLineArc(unit.OccupiedNode.transform.position, highlightedNode.transform.position);
-                else if (attackNodes.Contains(highlightedNode)) DisplayLineArc(unit.OccupiedNode.transform.position, highlightedNode.transform.position);
+                if (walkableNodes.Contains(highlightedNode)) DisplayLineArc(unit.Node.transform.position, highlightedNode.transform.position);
+                else if (attackNodes.Contains(highlightedNode)) DisplayLineArc(unit.Node.transform.position, highlightedNode.transform.position);
                 else ClearLineArc();
             }
             yield return null;
@@ -465,7 +510,7 @@ public class DuelManager : MonoBehaviour
         }
         _nodeToTarget = null;
 
-        unit.OccupiedNode.UnlockDisplay();
+        unit.Node.UnlockDisplay();
         for (int i = 0; i < walkableNodes.Count; i++) walkableNodes[i].UnlockDisplay();
         for (int i = 0; i < attackNodes.Count; i++) attackNodes[i].UnlockDisplay();
 
@@ -478,10 +523,10 @@ public class DuelManager : MonoBehaviour
         bool enemyFound = false; //an enemy has been found in the lane, used to prevent adding nodes past that enemy
 
         //Check all nodes below the card, iterating backwards starting from the occupied node
-        for (int i = unit.OccupiedNode.gridZ - 1; i >= 0; i--)
+        for (int i = unit.Node.gridZ - 1; i >= 0; i--)
         {
             //node is further than the unit can walk + their attack range, exit loop
-            if (Mathf.Abs(unit.OccupiedNode.gridZ - laneNodes[i].gridZ) > unit.Speed + unit.Range) break;
+            if (Mathf.Abs(unit.Node.gridZ - laneNodes[i].gridZ) > unit.Speed + unit.Range) break;
             //any node past this point is at least within the max attack range of the card
 
             //the node contains an enemy unit/structure, can attack it but cannot move there
@@ -512,7 +557,7 @@ public class DuelManager : MonoBehaviour
             if (!laneNodes[i].CanBeOccupied(unit)) continue;
 
             //the node is further than the unit can move, exit loop
-            if (Mathf.Abs(unit.OccupiedNode.gridZ - laneNodes[i].gridZ) > unit.Speed) break;
+            if (Mathf.Abs(unit.Node.gridZ - laneNodes[i].gridZ) > unit.Speed) break;
             //any node past this point is at least within movement distance of the card
 
             //Cannot move to the same node that another unit has declared they are moving to
@@ -535,9 +580,9 @@ public class DuelManager : MonoBehaviour
         enemyFound = false; //reset bool for use again
 
         //Check all nodes above the card, all code here is copy and past as above but the loop is ran in the opposite direction
-        for (int i = unit.OccupiedNode.gridZ + 1; i < laneNodes.Length; i++)
+        for (int i = unit.Node.gridZ + 1; i < laneNodes.Length; i++)
         {
-            if (Mathf.Abs(unit.OccupiedNode.gridZ - laneNodes[i].gridZ) > unit.Speed + unit.Range) break;
+            if (Mathf.Abs(unit.Node.gridZ - laneNodes[i].gridZ) > unit.Speed + unit.Range) break;
             if (laneNodes[i].CanBeAttacked(unit))
             {
                 if (!enemyFound)
@@ -555,7 +600,7 @@ public class DuelManager : MonoBehaviour
             }
             else if (enemyFound) continue;
             if (!laneNodes[i].CanBeOccupied(unit)) continue;
-            if (Mathf.Abs(unit.OccupiedNode.gridZ - laneNodes[i].gridZ) > unit.Speed) break;
+            if (Mathf.Abs(unit.Node.gridZ - laneNodes[i].gridZ) > unit.Speed) break;
             if (_claimedNodes.Contains(laneNodes[i])) continue;
             /*bool nodeClaimed = false;
             for (int d = 0; d < _declaredActions.Count; d++)
@@ -577,12 +622,12 @@ public class DuelManager : MonoBehaviour
     public void OnAttackActionConfirmed(Card_Unit unit, GridNode nodeToAttack)
     {
         //Debug.Log("Attack action confirmed");
-        int distanceFromTarget = Mathf.Abs(unit.OccupiedNode.gridZ - nodeToAttack.gridZ);
+        int distanceFromTarget = Mathf.Abs(unit.Node.gridZ - nodeToAttack.gridZ);
         if (distanceFromTarget <= unit.Range) AddNewDeclaredAction(unit, nodeToAttack, ActionType.Attack);
         else
         {
             //Need to add movement action first
-            var intermediaryNode = _battleField.GetUnoccupiedNodeInRange(unit.OccupiedNode, nodeToAttack, unit.Range);
+            var intermediaryNode = _battleField.GetUnoccupiedNodeInRange(unit.Node, nodeToAttack, unit.Range);
             if (intermediaryNode != null)
             {
                 AddNewDeclaredAction(unit, intermediaryNode, ActionType.Move);

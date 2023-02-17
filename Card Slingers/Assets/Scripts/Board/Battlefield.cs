@@ -6,40 +6,31 @@ public class Battlefield : MonoBehaviour
     private const float CELL_SIZE = 5f;
     
     private GridNode[,] gridArray;
-    [SerializeField] private int[] _laneBalanceArray;
+    [SerializeField] private int[] _laneThreatArray;
     [Space]
     [SerializeField] private Vector2Int _dimensions;
+    [SerializeField] private Transform _nodeParent;
     [SerializeField] private GridNode node; //Move this to being pooled
+    [SerializeField] private Transform _checkerBoardParent;
     [SerializeField] private GameObject checkerboardWhite, checkerboardGray; //these won't be needed beyond testing
-    [Space]
-    [SerializeField] private Transform _playerCardsParent;
-    [SerializeField] private Transform  _playerHand, _playerDeck, _playerDiscard, _playerExile;
-    [Space]
-    [SerializeField] private Transform _opponentCardsParent;
-    [SerializeField] private Transform _opponentHand, _opponentDeck, _opponentDiscard, _opponentExile;
     private Vector3 origin;
 
     #region - Public Variable References -
     public int Width => _dimensions.x; //These are currently only being used for early testing
     public int Depth => _dimensions.y;
-    public int[] LaneBalanceArray => _laneBalanceArray;
+    public float CellSize => CELL_SIZE;
+    public int[] LaneThreatArray => _laneThreatArray;
     #endregion
-
-    //Along that same line, I feel that Battlefield should be broken up into two separate scripts since it's handling both grid management and "pathfinding" so BattleFieldManager, and Grid
 
     #region - Grid -
     public void CreateGrid()
     {
         origin = new Vector3((-Width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f), 0, (-Depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f));
 
-        var parentDist = Depth * CELL_SIZE * 0.5f + 2;
-        _playerCardsParent.position = new Vector3(transform.position.x, transform.position.y + 0.25f, -parentDist);
-        _opponentCardsParent.position = new Vector3(transform.position.x, transform.position.y + 0.25f, parentDist);
-
         float f = Depth; int playerDepth = Mathf.RoundToInt(f * 0.5f);
 
         gridArray = new GridNode[Width, Depth];
-        _laneBalanceArray = new int[Width];
+        _laneThreatArray = new int[Width];
 
         for (int x = 0; x < gridArray.GetLength(0); x++)
         {
@@ -50,7 +41,7 @@ public class Battlefield : MonoBehaviour
 
                 pos.y += 0.001f;
                 var go = Instantiate(node, pos, Quaternion.identity);
-                go.transform.SetParent(transform);
+                go.transform.SetParent(_nodeParent);
 
                 gridArray[x, z] = go;
                 gridArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);
@@ -58,7 +49,7 @@ public class Battlefield : MonoBehaviour
             }
         }
 
-        float initZ = 25 + ((Depth - 6) * 2.5f);
+        float initZ = 27 + ((Depth - 6) * 2.5f);
         float aerialY = 5 * Depth - 5;
         var cam = Camera.main.GetComponent<FreeFlyCamera>();
         cam.SetInit(new Vector3(0, 12, -initZ), new Vector3(35, 0, 0));
@@ -108,7 +99,7 @@ public class Battlefield : MonoBehaviour
         }
 
         var newgo = Instantiate(go, pos, Quaternion.identity);
-        newgo.transform.SetParent(transform);
+        newgo.transform.SetParent(_checkerBoardParent);
     }
 
     public GridNode GetNode(int x, int z)
@@ -237,36 +228,7 @@ public class Battlefield : MonoBehaviour
         {
             newLaneValue += gridArray[lane, i].occupantPower;
         }
-        _laneBalanceArray[lane] = newLaneValue;
-    }
-    #endregion
-
-    #region - Card Placement Parents - 
-
-    //I'm likely going to end up moving these into a pooled object or just have a single one that I use for each dungeon,
-    //and have them held by a dungeon manager instead of every single battlefield having their own
-    public Transform GetHandParent(CommanderController commander)
-    {
-        if (commander is PlayerCommander) return _playerHand;
-        return _opponentHand;
-    }
-
-    public Transform GetDeckParent(CommanderController commander)
-    {
-        if (commander is PlayerCommander) return _playerDeck;
-        return _opponentDeck;
-    }
-
-    public Transform GetDiscardParent(CommanderController commander)
-    {
-        if (commander is PlayerCommander) return _playerDiscard;
-        return _opponentDiscard;
-    }
-
-    public Transform GetExileParent(CommanderController commander)
-    {
-        if (commander is PlayerCommander) return _playerExile;
-        return _opponentExile;
+        _laneThreatArray[lane] = newLaneValue;
     }
     #endregion
 }

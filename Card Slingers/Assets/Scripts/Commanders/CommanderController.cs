@@ -12,6 +12,7 @@ public class CommanderController : MonoBehaviour
     public OnPermanentDestroyedCallback onPermanentDestroyed;
 
     protected DuelManager duelManager;
+    private CardHolder _cardHolder;
 
     [SerializeField] private CommanderSO _commanderInfo;
     [SerializeField] private Card_Commander _commanderCard;
@@ -51,11 +52,12 @@ public class CommanderController : MonoBehaviour
         _commanderCard.AssignCard(commanderInfo, this);
     }
 
-    public virtual void OnMatchStart(int startingHandSize = 4, int mana = 4)
+    public virtual void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
     {
         //Should only need this here for testing
         duelManager = DuelManager.instance;
         duelManager.onPhaseChange += SetPhase;
+        _cardHolder = holder;
 
         _defaultMana = mana;
         _handSize = startingHandSize;
@@ -64,6 +66,7 @@ public class CommanderController : MonoBehaviour
         _cardsInDiscardPile = new List<Card>();
         _cardsInHand = new List<Card>();
         _permanentsOnField = new List<Card_Permanent>();
+        _permanentsOnField.Add(CommanderCard);
 
         GenerateDeck();
         ShuffleDeck();
@@ -228,35 +231,33 @@ public class CommanderController : MonoBehaviour
         ShuffleDeck();
     }
 
-    //
     private void PlaceCardInHand(Card card)
     {
         _cardsInHand.Add(card);
         card.SetCardLocation(CardLocation.InHand);
-        card.transform.SetParent(duelManager.Battlefield.GetHandParent(this));
+        card.transform.SetParent(_cardHolder.Hand);
     }
 
     private void PlaceCardInDeck(Card card)
     {
         _cardsInDeck.Add(card);
         card.SetCardLocation(CardLocation.InDeck);
-        card.transform.SetParent(duelManager.Battlefield.GetDeckParent(this));
+        card.transform.SetParent(_cardHolder.Deck);
     }
 
     private void PlaceCardInDiscard(Card card)
     {
         _cardsInDiscardPile.Add(card);
         card.SetCardLocation(CardLocation.InDiscard);
-        card.transform.SetParent(duelManager.Battlefield.GetDiscardParent(this));
+        card.transform.SetParent(_cardHolder.Discard);
     }
 
     private void PlaceCardInExile(Card card)
     {
         _cardsInExile.Add(card);
         card.SetCardLocation(CardLocation.InExile);
-        card.transform.SetParent(duelManager.Battlefield.GetExileParent(this));
+        card.transform.SetParent(_cardHolder.Exile);
     }
-    //
 
     private void DiscardCardFromHand(Card cardToDiscard)
     {
@@ -286,7 +287,7 @@ public class CommanderController : MonoBehaviour
         return true;
     }
 
-    public void OnInstantPlayed(Card card)
+    public void OnInstantPlayed(GridNode node, Card card)
     {
         OnSpendMana(card.CardInfo.cost);
 
@@ -305,15 +306,28 @@ public class CommanderController : MonoBehaviour
         // !!MUST CHANGE LOCATION BEFORE DESELECTING!!
         card.SetCardLocation(CardLocation.OnField);
 
-        //Display path line for visual cues
-        duelManager.DisplayLineArc(card.transform.position, node.transform.position);
-
         //Remove from hand
         _cardsInHand.Remove(card);
         _permanentsOnField.Add(card);
 
+        if (card is Card_Trap trap)
+        {
+            OnTrapPlayed(node, trap);
+            return;
+        }
+
+        //Display path line for visual cues
+        duelManager.DisplayLineArc(card.transform.position, node.transform.position);
+
         //Move the card to its new position
         StartCoroutine(MoveCardToField(card, node));
+    }
+
+    private void OnTrapPlayed(GridNode node, Card_Trap trap)
+    {
+        trap.transform.SetParent(_cardHolder.Traps);
+
+        trap.OnSummoned(node);
     }
 
     private IEnumerator MoveCardToField(Card_Permanent card, GridNode node)

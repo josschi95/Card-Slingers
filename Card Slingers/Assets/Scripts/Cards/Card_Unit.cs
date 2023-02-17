@@ -79,6 +79,11 @@ public class Card_Unit : Card_Permanent
     #endregion
 
     #region - Unit Stats -
+    public void AddModifier(UnitStat stat, int modifier = 1)
+    {
+        _statModifiers[(int)stat] += modifier;
+    }
+
     private int NetMaxHealth()
     {
         var unit = CardInfo as UnitSO;
@@ -166,15 +171,15 @@ public class Card_Unit : Card_Permanent
     private IEnumerator MoveUnit(GridNode endNode)
     {
         _isMoving = true;
-        var nodePath = new List<GridNode>(DuelManager.instance.Battlefield.GetNodePath(OccupiedNode, endNode));
-        var currentNode = OccupiedNode; //the node that the unit is currently located at, changes each time they move
+        var nodePath = new List<GridNode>(DuelManager.instance.Battlefield.GetNodePath(Node, endNode));
+        var currentNode = Node; //the node that the unit is currently located at, changes each time they move
 
         float speed = 1; //set whether walking forwards or back
-        if (Commander is PlayerCommander && OccupiedNode.gridZ > endNode.gridZ) speed = -1;
-        else if (Commander is OpponentCommander && OccupiedNode.gridZ < endNode.gridZ) speed = -1;
+        if (Commander is PlayerCommander && Node.gridZ > endNode.gridZ) speed = -1;
+        else if (Commander is OpponentCommander && Node.gridZ < endNode.gridZ) speed = -1;
 
         //ignore the currently occupied node
-        if (nodePath[0] == OccupiedNode) nodePath.RemoveAt(0);
+        if (nodePath[0] == Node) nodePath.RemoveAt(0);
         OnAbandonNode(); //abandon the currently occupied node
 
         while(nodePath.Count > 0)
@@ -198,7 +203,7 @@ public class Card_Unit : Card_Permanent
             }
 
             transform.position = nodePath[0].transform.position;
-            nodePath[0].OnEnterNode(this);
+            nodePath[0].onNodeEntered?.Invoke(this);
             currentNode = nodePath[0];
             nodePath.RemoveAt(0);
 
@@ -223,7 +228,7 @@ public class Card_Unit : Card_Permanent
         if (!CanAttack) return; //can't attack, shouldn't have gotten here if this is already false, but worth checking
 
         //out of range, movement was likely stopped before getting within range
-        if (Mathf.Abs(OccupiedNode.gridZ - node.gridZ) > Range)
+        if (Mathf.Abs(Node.gridZ - node.gridZ) > Range)
         {
             Debug.Log("Target out of range");
             return;

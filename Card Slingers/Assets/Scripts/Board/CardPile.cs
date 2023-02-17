@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DeckHolder : MonoBehaviour
+public class CardPile : MonoBehaviour
 {
     private const float MAX_HAND_WIDTH = 20f;
     private const float CARD_WIDTH = 2f;
@@ -12,7 +12,8 @@ public class DeckHolder : MonoBehaviour
     [SerializeField] private HolderType pileType;
     [SerializeField] private Transform[] objectsToIgnore;
     [SerializeField] private float cardSpacing = 0.01f;
-    [SerializeField] private bool isPlayer;
+    //[SerializeField] 
+    public bool isPlayer;
     private Vector3 faceDown = new Vector3(0, 0, 180);
     private int _cardsInHand;
     private int _cardsInDiscard;

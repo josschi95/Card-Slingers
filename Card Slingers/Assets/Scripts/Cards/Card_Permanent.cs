@@ -11,18 +11,29 @@ public class Card_Permanent : Card
     public delegate void OnPermanentValueChangedCallback();
     public OnPermanentValueChangedCallback onValueChanged;
 
-    [SerializeField] private GridNode _occupiedNode;
-    [SerializeField] private GameObject _permanentObject;
+    [SerializeField] protected GridNode _occupiedNode;
+    [SerializeField] protected GameObject _permanentObject;
 
-    public GridNode OccupiedNode => _occupiedNode;
+    public GridNode Node => _occupiedNode;
     public GameObject PermanentObject => _permanentObject;
     public int ThreatLevel => GetThreatLevel();
+    //For ordering player cards based on their perceived threat based on power and position
+    [SerializeField] private float _modifiedThreatLevel;
+    public float ModifiedThreatLevel
+    {
+        get => _modifiedThreatLevel;
+        set
+        {
+            _modifiedThreatLevel = Mathf.Clamp(value, 0, int.MaxValue);
+        }
+    }
 
     public virtual void OnSummoned(GridNode node)
     {
         //Sets the card location as on the battlefield
-        SetCardLocation(CardLocation.OnField);
-        isRevealed = true;
+        //SetCardLocation(CardLocation.OnField); //I'm already setting this in OnPermanentPlayed, so this seems redundant
+        //isRevealed = true; //and I'm setting this to true in SetCardLocation
+        
         //Set as child to the battlefield
         transform.SetParent(DuelManager.instance.Battlefield.transform);
 
@@ -37,7 +48,7 @@ public class Card_Permanent : Card
     }
 
     //Set current node and occupy it
-    protected void OnOccupyNode(GridNode newNode)
+    protected virtual void OnOccupyNode(GridNode newNode)
     {
         _occupiedNode = newNode;
         _occupiedNode.Occupant = this;
@@ -47,7 +58,7 @@ public class Card_Permanent : Card
     }
 
     //Abandon the currently occupied node
-    public void OnAbandonNode()
+    public virtual void OnAbandonNode()
     {
         //should only be null if occupying a structure
         if (_occupiedNode != null) _occupiedNode.Occupant = null;
@@ -65,9 +76,10 @@ public class Card_Permanent : Card
         //Trigger any relevant abilities
     }
 
+    //This method is called by the Commander when removing the card from the field, to place it in another pile
     public void OnRemoveFromField() //Maybe change this to a method in the base Card class for OnEnterDiscard which will also set location
     {
-        OnAbandonNode();
+        OnAbandonNode(); //I think I'm just going to move this stuff into OnPermanentDestroyed
         cardGFX.SetActive(true); //Disable the physical card display
         GetComponent<Collider>().enabled = true; //re-enable collider for card selection
     }

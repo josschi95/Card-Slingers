@@ -5,10 +5,11 @@ using UnityEngine;
 public class Card_Structure : Card_Permanent
 {
     [Header("Structure Info")]
+    [SerializeField] private Card_Unit _occupant;
     [SerializeField] private int _maxHealth;
     [SerializeField] private int _currentHealth;
-    [SerializeField] private Card_Unit _occupant;
 
+    public CardFocus Focus => StructurePurpose();
     public int MaxHealth => _maxHealth;
     public int Defense => NetDefense();
     public int CurrentHealth => _currentHealth;
@@ -66,6 +67,13 @@ public class Card_Structure : Card_Permanent
         StartCoroutine(WaitToRemove());
     }
     #endregion
+    
+    private CardFocus StructurePurpose()
+    {
+        var card = CardInfo as StructureSO;
+        return card.Focus;
+    }
+
     private bool StructureCanBeOccupied()
     {
         var info = CardInfo as StructureSO;
@@ -75,8 +83,6 @@ public class Card_Structure : Card_Permanent
 
         return true;
     }
-
-
 
     private IEnumerator WaitToRemove()
     {

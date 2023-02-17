@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1346e510e6caa3a4897e2586b6fa0dd8, type: 3}
-  m_Name: Fortified Wall
+  m_Name: Stone Wall
   m_EditorClassIdentifier: 
-  name: Fortified Wall
+  name: Stone Wall
   cardPrefab: {fileID: -8053979940324616043, guid: a346c97535e376e4788afffe3aa08f48, type: 3}
   cost: 1
   icon: {fileID: 21300000, guid: 4c8b2cb05eb5f9040976bc1985afc3fb, type: 3}
@@ -21,6 +21,7 @@ MonoBehaviour:
   description: 
   flavorText: 'A standard stone wall. Enough to keep out the riff-raff. '
   _permanentPrefab: {fileID: 5147492800665528707, guid: 92ee924fdb810094ca6fa302c63fea7d, type: 3}
+  _focus: 1
   _maxHealth: 10
   _defense: 1
   _canBeOccupied: 0

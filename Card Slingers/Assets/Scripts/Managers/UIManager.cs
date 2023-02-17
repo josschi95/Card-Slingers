@@ -58,7 +58,7 @@ public class UIManager : MonoBehaviour
         DuelManager.instance.onPhaseChange += OnPhaseChange;
 
         endPhaseButton.onClick.AddListener(OnPlayerEndPhase);
-        cancelActionButton.onClick.AddListener(delegate { DuelManager.instance.OnCancelAction(); });
+        cancelActionButton.onClick.AddListener(delegate { DuelManager.instance.OnClearAction(); });
 
         TEST_PANEL_BUTTON.onClick.AddListener(delegate 
         {
