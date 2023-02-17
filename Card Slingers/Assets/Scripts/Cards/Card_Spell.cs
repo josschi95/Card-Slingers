@@ -21,4 +21,22 @@ public class Card_Spell : Card
             return info.SpellEffects;
         }
     }
+
+    public ParticleSystem FX
+    {
+        get
+        {
+            var info = CardInfo as SpellSO;
+            return info.SpellFX;
+        }
+    }
+
+    public Vector3 StartPos
+    {
+        get
+        {
+            var info = CardInfo as SpellSO;
+            return info.StartPos;
+        }
+    }
 }

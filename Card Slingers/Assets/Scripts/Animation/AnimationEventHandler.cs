@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class AnimationEventHandler : MonoBehaviour
 {
+
     private Card_Unit unit;
     private void Start()
     {
@@ -12,11 +13,16 @@ public class AnimationEventHandler : MonoBehaviour
 
     public void OnAttackAnimationTrigger()
     {
-        unit.OnAttackAnimationTrigger();
+        unit.onAttackAnimation?.Invoke();
+    }
+
+    public void OnAbilityAnimationTrigger()
+    {
+        unit.onAbilityAnimation?.Invoke();
     }
 
     public void OnDeathAnimationCompleted()
     {
-        unit.OnDeathAnimCompleted();
+        unit.onDeathAnimation?.Invoke();
     }
 }

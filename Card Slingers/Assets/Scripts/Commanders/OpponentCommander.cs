@@ -22,12 +22,6 @@ public class OpponentCommander : CommanderController
         playerCommander = duelManager.PlayerController;
         invadesLanes = new bool[duelManager.Battlefield.Width];
     }
-    protected override void OnBeginPhase()
-    {
-        //I don't think anything should change in the Begin phase for the enemy, this should all be the same
-        //regain mana, draw cards, next phase
-        base.OnBeginPhase();
-    }
 
     protected override void OnSummoningPhase()
     {
@@ -159,6 +153,7 @@ public class OpponentCommander : CommanderController
     {
         //Same, nothing to add for opponents
         base.OnEndPhase();
+        if (_cardsInHand.Count == 0 || CurrentMana == 0) duelManager.OnCurrentPhaseFinished();
     }
 
     #region - Summon Phase 

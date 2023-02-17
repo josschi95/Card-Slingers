@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class Card_Unit : Card_Permanent
 {
+    public delegate void OnAnimatorEventCallback();
+    public OnAnimatorEventCallback onAttackAnimation;
+    public OnAnimatorEventCallback onAbilityAnimation;
+    public OnAnimatorEventCallback onDeathAnimation;
+    protected Animator _animator;
+
     [Header("Unit Info")]
     [SerializeField] protected int _currentHealth;
     [SerializeField] private List<Card_Permanent> _equipment;
@@ -14,11 +20,6 @@ public class Card_Unit : Card_Permanent
     private bool _isAttacking;
     private Card_Permanent _attackTarget;
     private bool _canRetaliate;
-
-    #region - Animation Variables -
-    protected Animator _animator;
-    private bool _waitingForDeathAnim;
-    #endregion
 
     #region - Public Reference Variables -
     public int MaxHealth => NetMaxHealth();
@@ -58,6 +59,9 @@ public class Card_Unit : Card_Permanent
         _animator = PermanentObject.GetComponent<Animator>();
 
         _equipment = new List<Card_Permanent>();
+
+        onAttackAnimation += OnAttackAnimationTrigger;
+        onDeathAnimation += OnUnitDeath;
     }
 
     protected override int GetThreatLevel()
@@ -69,7 +73,7 @@ public class Card_Unit : Card_Permanent
     public override void OnCommanderVictory()
     {
         _animator.SetTrigger("victory");
-        StartCoroutine(WaitForDeathAnim());
+        StartCoroutine(OnRemoveUnit());
     }
 
     public override void OnCommanderDefeat()
@@ -160,6 +164,15 @@ public class Card_Unit : Card_Permanent
         if (!CanAct) return false;
         return true;
     }
+
+    private bool UnitCanRetaliate()
+    {
+        if (!CanAttack) return false;
+        if (!_canRetaliate) return false;
+        if (_attackTarget == null) return false;
+        if (Mathf.Abs(Node.gridZ - _attackTarget.Node.gridZ) > Range) return false;
+        return true;
+    }
     #endregion
 
     #region - Movement -
@@ -241,14 +254,13 @@ public class Card_Unit : Card_Permanent
         _animator.SetTrigger("attack");
     }
 
-    public void OnAttackAnimationTrigger()
+    private void OnAttackAnimationTrigger()
     {
         _attackTarget.OnTakeDamage(Damage);
     }
 
     public override void OnTakeDamage(int damage)
     {
-        _animator.SetTrigger("damage");
         damage = Mathf.Clamp(damage - Defense, 0, int.MaxValue);
         _currentHealth -= damage;
 
@@ -257,7 +269,8 @@ public class Card_Unit : Card_Permanent
         if (_currentHealth <= 0) OnPermanentDestroyed();
         else
         {
-            if (_canRetaliate && _attackTarget != null)
+            _animator.SetTrigger("damage");
+            if (UnitCanRetaliate())
             {
                 _animator.SetTrigger("attack");
                 _canRetaliate = false;
@@ -285,24 +298,16 @@ public class Card_Unit : Card_Permanent
     {
         //Debug.Log("unit has been destroyed");
         _animator.SetTrigger("death");
-        StartCoroutine(WaitForDeathAnim());
     }
 
-    public virtual void OnDeathAnimCompleted()
+    private void OnUnitDeath()
     {
-        //Debug.Log("Death Anim Complete");
-        _waitingForDeathAnim = false;
+        StartCoroutine(OnRemoveUnit());
     }
 
-    protected virtual IEnumerator WaitForDeathAnim()
+    protected virtual IEnumerator OnRemoveUnit()
     {
-        _waitingForDeathAnim = true;
         DuelManager.instance.onCardMovementStarted?.Invoke();
-
-        while (_waitingForDeathAnim == true)
-        {
-            yield return null;
-        }
 
         float timeElapsed = 0, timeToMove = 2f;
         while (timeElapsed < timeToMove)

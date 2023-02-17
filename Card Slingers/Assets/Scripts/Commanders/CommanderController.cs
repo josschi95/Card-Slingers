@@ -293,8 +293,26 @@ public class CommanderController : MonoBehaviour
 
         //Commander play casting animation
         _commanderCard.PermanentObject.GetComponent<Animator>().SetTrigger("ability");
-        
+        _commanderCard.onAbilityAnimation += delegate { OnInstantResolved(node, spell); };
+
         //This works for now but I should have the card go to a sort of limbo position
+
+        //Trigger whatever effect the instant has
+        /*if (node.Occupant != null)
+        {
+            for (int i = 0; i < spell.Effects.Length; i++)
+            {
+                GameManager.OnApplyEffect(node.Occupant, spell.Effects[i]);
+            }
+        }
+
+        //Send to discard pile
+        PlaceCardInDiscard(spell);*/
+    }
+
+    public void OnInstantResolved(GridNode node, Card_Spell spell)
+    {
+        Instantiate(spell.FX, node.transform.position + spell.StartPos, Quaternion.identity);
 
         if (node.Occupant != null)
         {
@@ -303,16 +321,8 @@ public class CommanderController : MonoBehaviour
                 GameManager.OnApplyEffect(node.Occupant, spell.Effects[i]);
             }
         }
-        //If a target is needed, wait for a target to be selected
-        //Trigger whatever effect the instant has
 
-        //Send to discard pile
-        PlaceCardInDiscard(spell);
-    }
-
-    public void OnInstantResolved(Card_Spell spell)
-    {
-
+        _commanderCard.onAbilityAnimation -= delegate { OnInstantResolved(node, spell); };
 
         //Send to discard pile
         PlaceCardInDiscard(spell);
