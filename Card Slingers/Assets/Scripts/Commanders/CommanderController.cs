@@ -287,15 +287,35 @@ public class CommanderController : MonoBehaviour
         return true;
     }
 
-    public void OnInstantPlayed(GridNode node, Card card)
+    public void OnInstantPlayed(GridNode node, Card_Spell spell)
     {
-        OnSpendMana(card.CardInfo.cost);
+        OnSpendMana(spell.CardInfo.cost);
 
+        //Commander play casting animation
+        _commanderCard.PermanentObject.GetComponent<Animator>().SetTrigger("ability");
+        
+        //This works for now but I should have the card go to a sort of limbo position
+
+        if (node.Occupant != null)
+        {
+            for (int i = 0; i < spell.Effects.Length; i++)
+            {
+                GameManager.OnApplyEffect(node.Occupant, spell.Effects[i]);
+            }
+        }
         //If a target is needed, wait for a target to be selected
         //Trigger whatever effect the instant has
 
         //Send to discard pile
-        PlaceCardInDiscard(card);
+        PlaceCardInDiscard(spell);
+    }
+
+    public void OnInstantResolved(Card_Spell spell)
+    {
+
+
+        //Send to discard pile
+        PlaceCardInDiscard(spell);
     }
 
     public void OnPermanentPlayed(GridNode node, Card_Permanent card)

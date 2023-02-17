@@ -460,7 +460,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ffc893a64859654683f7a062ab4055c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _laneBalanceArray: 
+  _laneThreatArray: 
   _dimensions: {x: 6, y: 6}
   _nodeParent: {fileID: 297752908}
   node: {fileID: 3777873372622269370, guid: ee29f5833272e544bbd39bb561198829, type: 3}

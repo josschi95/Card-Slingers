@@ -119,6 +119,7 @@ public class Card : MonoBehaviour, IInteractable
             case CardLocation.InHand:
                 _isSelected = true;
                 DuelManager.instance.onCardInHandSelected?.Invoke(this);
+                //I need to set some check to make sure that the card CAN be selected
                 break;
             case CardLocation.OnField: //cards on the field wiill never be selected, the nodes they are occupying will be selected
                 _isSelected = true;

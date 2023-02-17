@@ -79,6 +79,7 @@ public class DuelManager : MonoBehaviour
     private bool _isPlayerTurn;
     private bool _waitForSummonNode; //waiting for a node to be selected to summon a card
     private bool _waitForInstantNode; //waiting for a node to be selected to cast an instant
+    private List<GridNode> _validInstantNodes = new List<GridNode>();
     private Coroutine cardPlacementCoroutine;
 
     private Coroutine phaseDelayCoroutine;
@@ -257,7 +258,7 @@ public class DuelManager : MonoBehaviour
     private void OnAttackPhase()
     {
         //Cannot declare actions on the first turn of the first round
-        if (_turnCount == 1) OnCurrentPhaseFinished();
+        if (_turnCount == 1) SetPhase(Phase.End);
     }
 
     private void OnResolutionPhase()
@@ -329,6 +330,9 @@ public class DuelManager : MonoBehaviour
         _waitForTargetNode = false; //stop coroutine
         _cardToSummon = null;
         _instantToCast = null;
+
+        for (int i = 0; i < _validInstantNodes.Count; i++) _validInstantNodes[i].UnlockDisplay();
+        _validInstantNodes.Clear();
     }
 
     #region - Node/Card Selection 
@@ -355,7 +359,8 @@ public class DuelManager : MonoBehaviour
                     PlayerController.OnPermanentPlayed(node, _cardToSummon);
                     OnClearAction();
                 }
-                else if (_waitForInstantNode && InstantNodeIsValid(node)) //probably need some other checks in here based on the spell
+                //probably need some other checks in here based on the spell's intended target
+                else if (_waitForInstantNode && InstantNodeIsValid(node)) 
                 {
                     PlayerController.OnInstantPlayed(node, _instantToCast);
                     OnClearAction();
@@ -403,6 +408,7 @@ public class DuelManager : MonoBehaviour
             if (cardPlacementCoroutine != null) StopCoroutine(cardPlacementCoroutine);
             cardPlacementCoroutine = StartCoroutine(WaitForCardToBePlayed(card));
         }
+        else card.OnDeSelectCard();
     }
     #endregion
 
@@ -435,22 +441,25 @@ public class DuelManager : MonoBehaviour
 
     private bool InstantNodeIsValid(GridNode node)
     {
-        return true;
+        if (_validInstantNodes.Contains(node)) return true;
+        return false;
     }
 
     private IEnumerator WaitForCardToBePlayed(Card card)
     {
+        if (card is Card_Spell spell)
+        {
+            _validInstantNodes.AddRange(_battleField.GetAllNodesInArea(_playerController.CommanderCard.Node, spell.Range));
+
+            for (int i = 0; i < _validInstantNodes.Count; i++)
+                _validInstantNodes[i].SetLockedDisplay(GridNode.MaterialType.Blue);
+        }
+
         while (_waitForSummonNode || _waitForInstantNode)
         {
             //only display if node is valid 
             //if (highlightedNode == null || !NodeIsValid(highlightedNode)) ClearLineArc();
             //else DisplayLineArc(card.transform.position, highlightedNode.transform.position);
-
-            if (_waitForInstantNode)
-            {
-                Debug.Log("Highlight all nodes within range of the commander");
-            }
-
             yield return null;
         }
 

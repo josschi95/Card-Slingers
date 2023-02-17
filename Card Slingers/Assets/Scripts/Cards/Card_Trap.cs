@@ -26,7 +26,7 @@ public class Card_Trap : Card_Permanent
         //apply effects of trap
         for (int i = 0; i < _trapInfo.Effects.Length; i++)
         {
-            GameManager.OnApplyEffect(unit, _trapInfo.Effects[i].effect, _trapInfo.Effects[i].magnitude, _trapInfo.Effects[i].modifiedStat);
+            GameManager.OnApplyEffect(unit, _trapInfo.Effects[i]);
         }
 
         //Will likely have some animations in here, in that event, I'll add an OnAnimationComplete method similar to units

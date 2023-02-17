@@ -114,7 +114,6 @@ public class OpponentCommander : CommanderController
         foreach (Card_Permanent card in duelManager.PlayerController.CardsOnField)
         {
             if (card is Card_Trap) continue; //The opponent should not be aware of player traps
-            Debug.Log(card.CardInfo.name);
 
             float gridZ = card.Node.gridZ;
             float modifiedScore = Mathf.RoundToInt(card.ThreatLevel + gridZ * (1 + (gridZ / duelManager.Battlefield.Depth)));

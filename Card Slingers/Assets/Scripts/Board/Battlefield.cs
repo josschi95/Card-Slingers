@@ -13,7 +13,7 @@ public class Battlefield : MonoBehaviour
     [SerializeField] private GridNode node; //Move this to being pooled
     [SerializeField] private Transform _checkerBoardParent;
     [SerializeField] private GameObject checkerboardWhite, checkerboardGray; //these won't be needed beyond testing
-    private Vector3 origin;
+    private Vector3 _origin;
 
     #region - Public Variable References -
     public int Width => _dimensions.x; //These are currently only being used for early testing
@@ -25,7 +25,7 @@ public class Battlefield : MonoBehaviour
     #region - Grid -
     public void CreateGrid()
     {
-        origin = new Vector3((-Width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f), 0, (-Depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f));
+        _origin = new Vector3((-Width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f), 0, (-Depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f));
 
         float f = Depth; int playerDepth = Mathf.RoundToInt(f * 0.5f);
 
@@ -123,8 +123,7 @@ public class Battlefield : MonoBehaviour
 
     public Vector3 GetGridPosition(int x, int z)
     {
-        return origin + new Vector3(x * CELL_SIZE, 0, z * CELL_SIZE);
-        //return _origin.transform.position + new Vector3(x * CELL_SIZE, 0, z * CELL_SIZE);
+        return _origin + new Vector3(x * CELL_SIZE, 0, z * CELL_SIZE);
     }
 
     public GridNode[] GetAllNodesInLane(int laneX)
@@ -137,6 +136,22 @@ public class Battlefield : MonoBehaviour
         }
 
         return tempArray;
+    }
+
+    public List<GridNode> GetAllNodesInArea(GridNode originNode, int range)
+    {
+        var nodeList = new List<GridNode>();
+
+        for (int x = 0; x < gridArray.GetLength(0); x++)
+        {
+            for (int z = 0; z < gridArray.GetLength(1); z++)
+            {
+                var vertical = Mathf.Abs(originNode.gridZ - z);
+                var horizontal = Mathf.Abs(originNode.gridX - x);
+                if (vertical + horizontal <= range) nodeList.Add(gridArray[x, z]);
+            }
+        }
+        return nodeList;
     }
 
     public List<GridNode> GetControlledNodesInLane(CommanderController commander, int lane)

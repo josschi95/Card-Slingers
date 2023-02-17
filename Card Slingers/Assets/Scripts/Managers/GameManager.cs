@@ -21,6 +21,11 @@ public class GameManager : MonoBehaviour
         instance.effectManager.OnApplyEffect(card, effect, magnitude, stat);
     }
 
+    public static void OnApplyEffect(Card_Permanent card, EffectHolder effect)
+    {
+        instance.effectManager.OnApplyEffect(card, effect.effect, effect.magnitude, effect.modifiedStat);
+    }
+
     public void GetBloodParticles(Vector3 pos)
     {
         _bloodParticlePool.Pool.Get().transform.position = pos;

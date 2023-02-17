@@ -31,12 +31,14 @@ public class EffectHolder
 {
     public Effects effect;
     public int magnitude;
+    [Space]
     public UnitStat modifiedStat;
 
     public EffectHolder(Effects effect, int m = 1, UnitStat stat = UnitStat.Health)
     {
         this.effect = effect;
         magnitude = m;
+
         modifiedStat = stat;
     }
 }
