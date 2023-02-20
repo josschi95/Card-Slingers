@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class CommanderController : MonoBehaviour
 {
+    public delegate void OnCommanderPhaseChangeCallback(Phase phase);
+    public OnCommanderPhaseChangeCallback onNewPhase;
 
     public delegate void OnManaChangeCallback();
     public OnManaChangeCallback onManaChange;
@@ -13,10 +15,11 @@ public class CommanderController : MonoBehaviour
 
     protected DuelManager duelManager;
     private CardHolder _cardHolder;
+    [HideInInspector] public Animator animator;
 
     [SerializeField] private CommanderSO _commanderInfo;
     [SerializeField] private Card_Commander _commanderCard;
-    [SerializeField] private Phase currentPhase;
+    [SerializeField] protected Phase currentPhase;
     [SerializeField] private int _currentMana = 4;
     [Space]
     [SerializeField] protected List<Card> _cardsInHand;
@@ -25,8 +28,9 @@ public class CommanderController : MonoBehaviour
     [SerializeField] private List<Card> _cardsInExile;
     [Space]
     [SerializeField] protected List<Card_Permanent> _permanentsOnField;
+    protected HealthDisplay healthDisplay;
 
-    public bool isTurn { get; private set; }
+    public bool isTurn { get; protected set; }
     private int _defaultMana = 4;
     private int _handSize = 4;
 
@@ -39,13 +43,16 @@ public class CommanderController : MonoBehaviour
     public List<Card_Permanent> CardsOnField => _permanentsOnField;
     #endregion
 
-    #region - Initial Methods -
-    private void Start()
+    protected virtual void Start()
     {
         duelManager = DuelManager.instance;
         onPermanentDestroyed += SendPermanentToDiscard;
+        healthDisplay = GetComponentInChildren<HealthDisplay>();
+        healthDisplay.gameObject.SetActive(false);
+
     }
 
+    #region - Initial Methods -
     public virtual void OnAssignCommander(CommanderSO commanderInfo)
     {
         _commanderInfo = commanderInfo;
@@ -57,7 +64,10 @@ public class CommanderController : MonoBehaviour
         //Should only need this here for testing
         duelManager = DuelManager.instance;
         duelManager.onPhaseChange += SetPhase;
+        duelManager.onNewTurn += delegate { isTurn = !isTurn; };
         _cardHolder = holder;
+
+        healthDisplay.gameObject.SetActive(true);
 
         _defaultMana = mana;
         _handSize = startingHandSize;
@@ -88,31 +98,10 @@ public class CommanderController : MonoBehaviour
     }
     #endregion
 
-    public void OnVictory()
-    {
-        duelManager.onPhaseChange -= SetPhase; //unsubscribe
-        for (int i = 0; i < _permanentsOnField.Count; i++)
-        {
-            _permanentsOnField[i].OnCommanderVictory();
-        }
-    }
-
-    public void OnDefeat()
-    {
-        duelManager.onPhaseChange -= SetPhase; //unsubscribe
-        for (int i = 0; i < _permanentsOnField.Count; i++)
-        {
-            _permanentsOnField[i].OnCommanderDefeat();
-        }
-    }
-
     #region - Phases -
-    private void SetPhase(bool playerTurn, Phase phase)
+    private void SetPhase(Phase phase)
     {
-        if (playerTurn && this is not PlayerCommander) return;
-        else if (!playerTurn && this is PlayerCommander) return;
-
-        //Debug.Log(CommanderInfo.name + " entering " + phase.ToString() + " phase");
+        if (!isTurn) return;
         currentPhase = phase;
 
         switch (phase)
@@ -126,9 +115,6 @@ public class CommanderController : MonoBehaviour
             case Phase.Attack:
                 OnAttackPhase();
                 break;
-            case Phase.Resolution:
-                OnResolutionPhase();
-                break;
             case Phase.End:
                 OnEndPhase();
                 break;
@@ -137,20 +123,15 @@ public class CommanderController : MonoBehaviour
 
     protected virtual void OnBeginPhase()
     {
-        isTurn = true;
         RefillMana();
 
         //isDrawingCards should only stop this at the start of the match
         if (!isDrawingCards) StartCoroutine(DrawCards());
 
         //For each card on the field, invoke an OnBeginPhase event
-        for (int i = 0; i < _permanentsOnField.Count; i++)
-        {
-            _permanentsOnField[i].OnBeginPhase();
-        }
+        onNewPhase?.Invoke(Phase.Begin);
 
-        //Wait 1 second after drawing before starting the next phase
-        DuelManager.instance.OnCurrentPhaseFinished();
+        duelManager.OnCurrentPhaseFinished();
     }
 
     protected virtual void OnSummoningPhase()
@@ -163,21 +144,9 @@ public class CommanderController : MonoBehaviour
 
     }
 
-    protected virtual void OnResolutionPhase()
-    {
-
-    }
-
     protected virtual void OnEndPhase()
     {
-        //isTurn = false;
-
-        //DuelManager.instance.OnCurrentPhaseFinished();
-    }
-
-    protected virtual void OnEndTurn()
-    {
-        isTurn = false;
+        
     }
     #endregion
 
@@ -266,7 +235,7 @@ public class CommanderController : MonoBehaviour
         PlaceCardInDiscard(cardToDiscard);
     }
 
-    public void SendPermanentToDiscard(Card_Permanent permanent)
+    private void SendPermanentToDiscard(Card_Permanent permanent)
     {
         //Trigger any exit effects
         permanent.OnRemoveFromField();
@@ -296,18 +265,6 @@ public class CommanderController : MonoBehaviour
         _commanderCard.onAbilityAnimation += delegate { OnInstantResolved(node, spell); };
 
         //This works for now but I should have the card go to a sort of limbo position
-
-        //Trigger whatever effect the instant has
-        /*if (node.Occupant != null)
-        {
-            for (int i = 0; i < spell.Effects.Length; i++)
-            {
-                GameManager.OnApplyEffect(node.Occupant, spell.Effects[i]);
-            }
-        }
-
-        //Send to discard pile
-        PlaceCardInDiscard(spell);*/
     }
 
     public void OnInstantResolved(GridNode node, Card_Spell spell)
@@ -406,11 +363,8 @@ public class CommanderController : MonoBehaviour
     public void OnSpendMana(int points)
     {
         _currentMana -= points;
-        if (_currentMana <= 0) //End phase if all AP has been spent
-        {
-            _currentMana = 0;
-            //if (isTurn && currentPhase == Phase.Summoning) duelManager.OnCurrentPhaseFinished();
-        }
+        if (_currentMana <= 0) _currentMana = 0; //End phase if all AP has been spent
+        //if (isTurn && currentPhase == Phase.Summoning) duelManager.OnCurrentPhaseFinished();
         onManaChange?.Invoke();
     }
 
@@ -420,19 +374,77 @@ public class CommanderController : MonoBehaviour
         onManaChange?.Invoke();
     }
     #endregion
-}
 
-/*
- * So during the declaration phase, the player is able to select their units and order them to move, attack, or use abilities
- * moving occurs first (you cannot move after you attack or use an ability)
- * then attacks and abilities
- * 
- * So what do I need to store for the resolution phase....
- * the units which are taking actions
- * each unit that is taking an action will also need to store what its actions will be
- * I can store this in the card itself!
- * 
- * So then I only need a list of cards that will be taking actions
- * 
- * 
-*/
+    #region - Off-Grid Movement -
+    public bool isMoving { get; private set; }
+    
+    public void SetStartingNode(GridNode node, Vector3 front)
+    {
+        StartCoroutine(MoveToPosition(node, front));
+    }
+
+    private IEnumerator MoveToPosition(GridNode node, Vector3 front)
+    {
+        isMoving = true;
+
+        while (Vector3.Distance(transform.position, node.transform.position) > 0.1f)
+        {
+            animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
+            FaceTarget(node.transform.position);
+            yield return null;
+        }
+
+        transform.position = node.transform.position;
+        animator.SetFloat("speed", 0);
+
+        _commanderCard.SetStartingNode(node);
+        isMoving = false;
+
+        StartCoroutine(TurnToFaceTarget(front));
+    }
+
+    private IEnumerator TurnToFaceTarget(Vector3 pos)
+    {
+        float t = 0, timeToMove = 0.5f;
+        while (t < timeToMove)
+        {
+            FaceTarget(pos);
+            t += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    private void FaceTarget(Vector3 pos) //update this to accept a Transform transform?
+    {
+        Vector3 direction = (pos - transform.position).normalized;
+        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 25f);
+    }
+    #endregion
+
+    public void OnVictory()
+    {
+        for (int i = 0; i < _permanentsOnField.Count; i++)
+        {
+            _permanentsOnField[i].OnCommanderVictory();
+        }
+
+        OnMatchEnd();
+    }
+
+    public void OnDefeat()
+    {
+        for (int i = 0; i < _permanentsOnField.Count; i++)
+        {
+            _permanentsOnField[i].OnCommanderDefeat();
+        }
+
+        OnMatchEnd();
+    }
+
+    public virtual void OnMatchEnd()
+    {
+        duelManager.onPhaseChange -= SetPhase;
+        duelManager.onNewTurn -= delegate { isTurn = !isTurn; };
+    }
+}

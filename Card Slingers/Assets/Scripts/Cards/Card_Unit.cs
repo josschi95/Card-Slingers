@@ -20,6 +20,7 @@ public class Card_Unit : Card_Permanent
     private bool _isAttacking;
     private Card_Permanent _attackTarget;
     private bool _canRetaliate;
+    private bool _actedThisTurn;
 
     #region - Public Reference Variables -
     public int MaxHealth => NetMaxHealth();
@@ -88,7 +89,7 @@ public class Card_Unit : Card_Permanent
         _statModifiers[(int)stat] += modifier;
     }
 
-    private int NetMaxHealth()
+    protected int NetMaxHealth()
     {
         var unit = CardInfo as UnitSO;
         int value = unit.MaxHealth;
@@ -178,40 +179,38 @@ public class Card_Unit : Card_Permanent
     #region - Movement -
     public void MoveToNode(GridNode newNode)
     {
-        StartCoroutine(MoveUnit(newNode));
+        var nodePath = new List<GridNode>(DuelManager.instance.Battlefield.FindNodePath(this, newNode));
+        StartCoroutine(MoveUnit(nodePath));
+    }
+
+    public void MoveAlongNodePath(List<GridNode> nodePath)
+    {
+        StartCoroutine(MoveUnit(nodePath));
     }
     
-    private IEnumerator MoveUnit(GridNode endNode)
+    private IEnumerator MoveUnit(List<GridNode> nodePath)
     {
         _isMoving = true;
-        var nodePath = new List<GridNode>(DuelManager.instance.Battlefield.GetNodePath(Node, endNode));
         var currentNode = Node; //the node that the unit is currently located at, changes each time they move
-
-        float speed = 1; //set whether walking forwards or back
-        if (Commander is PlayerCommander && Node.gridZ > endNode.gridZ) speed = -1;
-        else if (Commander is OpponentCommander && Node.gridZ < endNode.gridZ) speed = -1;
+        var endNode = nodePath[nodePath.Count - 1];
 
         //ignore the currently occupied node
         if (nodePath[0] == Node) nodePath.RemoveAt(0);
         OnAbandonNode(); //abandon the currently occupied node
 
-        while(nodePath.Count > 0)
-        {         
-            if (!CanMove)  //movement has been stopped by an effect
+        while (nodePath.Count > 0)
+        {
+            if (!CanMove || _currentHealth <= 0)  //movement has been stopped by an effect, or unit's health was reduced to 0
             {
-                OnOccupyNode(currentNode);
-                OnStopMovement();
-                yield break;
-            }
-            else if (_currentHealth <= 0) //unit's health has been reduced to 0, likely a trap
-            {
+                if (_currentHealth > 0) OnOccupyNode(currentNode);
                 OnStopMovement();
                 yield break;
             }
 
             while (Vector3.Distance(transform.position, nodePath[0].transform.position) > 0.1f)
             {
-                _animator.SetFloat("speed", speed, 0.1f, Time.deltaTime);
+                _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
+                FaceTarget(nodePath[0].transform.position);
                 yield return null;
             }
 
@@ -228,6 +227,24 @@ public class Card_Unit : Card_Permanent
         OnStopMovement();
     }
 
+    private IEnumerator TurnToFaceTarget(Vector3 pos)
+    {
+        float t = 0, timeToMove = 0.5f;
+        while (t < timeToMove)
+        {
+            FaceTarget(pos);
+            t += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    private void FaceTarget(Vector3 pos) //update this to accept a Transform transform?
+    {
+        Vector3 direction = (pos - transform.position).normalized;
+        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 25f);
+    }
+
     private void OnStopMovement()
     {
         _animator.SetFloat("speed", 0);
@@ -235,19 +252,37 @@ public class Card_Unit : Card_Permanent
     }
     #endregion
 
+    protected override void OnBeginPhase()
+    {
+        base.OnBeginPhase();
+        _actedThisTurn = false;
+    }
+
+    public bool HasActed
+    {
+        get => _actedThisTurn;
+        set
+        {
+            _actedThisTurn = value;
+        }
+    }
+
     //resolve an attack action which has been declared 
     public void OnAttack(GridNode node)
     {
-        if (!CanAttack) return; //can't attack, shouldn't have gotten here if this is already false, but worth checking
+        if (!CanAttack) return; //shouldn't have gotten here if this is already false, but worth checking
 
         //out of range, movement was likely stopped before getting within range
-        if (Mathf.Abs(Node.gridZ - node.gridZ) > Range)
+        //if (Mathf.Abs(Node.gridZ - node.gridZ) > Range)
+        if (DuelManager.instance.Battlefield.GetDistanceInNodes(Node, node) > Range)
         {
-            Debug.Log("Target out of range");
+            Debug.Log("Target located at " + node.gridX + "," + node.gridZ + " is further than " 
+                + Range + " units from " + Node.gridX + "," + Node.gridZ);
             return;
         }
 
         _canRetaliate = false;
+        StartCoroutine(TurnToFaceTarget(node.transform.position));
         node.Occupant.OnTargetEngaged(this);
         
         _attackTarget = node.Occupant;
@@ -272,6 +307,7 @@ public class Card_Unit : Card_Permanent
             _animator.SetTrigger("damage");
             if (UnitCanRetaliate())
             {
+                StartCoroutine(TurnToFaceTarget(_attackTarget.transform.position));
                 _animator.SetTrigger("attack");
                 _canRetaliate = false;
             }
@@ -298,6 +334,7 @@ public class Card_Unit : Card_Permanent
     {
         //Debug.Log("unit has been destroyed");
         _animator.SetTrigger("death");
+        DuelManager.instance.onCardMovementStarted?.Invoke();
     }
 
     private void OnUnitDeath()
@@ -307,9 +344,7 @@ public class Card_Unit : Card_Permanent
 
     protected virtual IEnumerator OnRemoveUnit()
     {
-        DuelManager.instance.onCardMovementStarted?.Invoke();
-
-        float timeElapsed = 0, timeToMove = 2f;
+        float timeElapsed = 0, timeToMove = 1.5f;
         while (timeElapsed < timeToMove)
         {
             timeElapsed += Time.deltaTime; //slowly sink the unit beneath the playing field before destroying it
@@ -320,7 +355,6 @@ public class Card_Unit : Card_Permanent
         cardGFX.SetActive(true); //Re-enable card
         Destroy(PermanentObject); //Destroy unit
 
-        yield return new WaitForSeconds(0.1f);
         //Invoke an event for the commander to listen to
         Commander.onPermanentDestroyed?.Invoke(this);
         DuelManager.instance.onCardMovementEnded?.Invoke();

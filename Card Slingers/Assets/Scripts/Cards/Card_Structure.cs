@@ -16,6 +16,7 @@ public class Card_Structure : Card_Permanent
     public Card_Permanent Occupant => _occupant;
     public bool CanBeOccupied => StructureCanBeOccupied();
     public bool IsOccupied => _occupant != null;
+    public bool canBeTraversed => CanBeTraversed();
 
     #region - Override Methods -
     protected override void SetCardDisplay()
@@ -82,6 +83,12 @@ public class Card_Structure : Card_Permanent
         if (IsOccupied) return false;
 
         return true;
+    }
+
+    private bool CanBeTraversed()
+    {
+        var card = CardInfo as StructureSO;
+        return card.CanBeTraversed;
     }
 
     private IEnumerator WaitToRemove()

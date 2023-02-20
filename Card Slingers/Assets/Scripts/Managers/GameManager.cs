@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 
 public class GameManager : MonoBehaviour
 {
@@ -32,6 +31,10 @@ public class GameManager : MonoBehaviour
     }
 
 }
-public enum Phase { Begin, Summoning, Attack, Resolution, End } 
+public enum Phase { Begin, Summoning, Attack, End }
+public enum CardFocus { Offense, Defense, Utility }
+public enum ActionType { Move, Attack, Ability }
 public enum CardType { Unit, Structure, Trap, Equipment, Terrain, Spell, Commander }
 public enum Faction { Arcane, Kingdom, Goblins, Coven, Undead, Demons}
+
+public enum Effects { Damage, Halt, StatModifier }

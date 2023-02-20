@@ -6,52 +6,27 @@ using UnityEngine.Pool;
 public class GridNode : MonoBehaviour, IInteractable
 {
     private IObjectPool<GridNode> _pool;
-    
+
+    #region - Callbacks -
     public delegate void OnGridNodeValueChanged(GridNode node);
     public OnGridNodeValueChanged onNodeValueChanged;
 
     public delegate void OnGridNodeEnteredCallback(Card_Unit unit);
     public OnGridNodeEnteredCallback onNodeEntered;
+    #endregion
 
-    private void TEST_SUMMON_ENEMY()
-    {
-        DuelManager.instance.SummonTestEnemy(this);
-    }
-
+    #region - Display -
     public enum MaterialType { Normal, Blue, Red, Yellow };
     [SerializeField] private MeshRenderer meshRenderer;
     [SerializeField] private Material[] highlightMats;
+    private bool _lockedForDisplay; //ignore mouse movements to change the color
     [Space]
+    #endregion
 
+    #region - Node Contents -
     [SerializeField] private Card_Permanent _occupant = null;
     [SerializeField] private Card_Trap _trap;
     [SerializeField] private Card _terrain;
-    private bool _isPlayerNode; //located on player half of the grid
-
-    public int occupantPower { get; private set; }
-
-    private bool _lockedForDisplay; //ignore mouse movements to change the color
-
-    public int gridX { get; private set; }
-    public int gridZ { get; private set; }
-    public bool IsPlayerNode => _isPlayerNode;
-    public Card Terrain => _terrain;
-
-    public void SetPool(IObjectPool<GridNode> pool) => _pool = pool;
-
-    //Return the node to its pool when a match is finished
-    public void ReleaseToPool()
-    {
-        if (_pool != null) _pool.Release(this);
-        else Destroy(gameObject);
-    }
-
-    public void OnAssignCoordinates(int x, int z, bool isPlayerNode)
-    {
-        gridX = x; gridZ = z;
-        _isPlayerNode = isPlayerNode;
-    }
-
     public Card_Permanent Occupant
     {
         get => _occupant;
@@ -71,7 +46,6 @@ public class GridNode : MonoBehaviour, IInteractable
             onNodeValueChanged?.Invoke(this);
         }
     }
-
     public Card_Trap Trap
     {
         get => _trap;
@@ -81,6 +55,44 @@ public class GridNode : MonoBehaviour, IInteractable
 
             _trap = value;
         }
+    }
+    public Card Terrain => _terrain;
+    public int occupantPower { get; private set; }
+    #endregion
+
+    #region - Pathfinding Variables -
+    public int gridX { get; private set; }
+    public int gridZ { get; private set; }
+    public bool isPlayerNode { get; private set; } //located on player half of the grid
+
+    public int gCost; //the movement cost to move from the start node to this node, following the existing path
+    public int hCost; //the estimated movement cost to move from this node to the end node
+    public int fCost; //the current best guess as to the cost of the path
+    public GridNode cameFromNode;
+    #endregion
+
+    //-----------------------//
+
+    #region - Pooling -
+    public void SetPool(IObjectPool<GridNode> pool) => _pool = pool;
+
+    //Return the node to its pool when a match is finished
+    public void ReleaseToPool()
+    {
+        if (_pool != null) _pool.Release(this);
+        else Destroy(gameObject);
+    }
+    #endregion
+
+    public void OnAssignCoordinates(int x, int z, bool isPlayerNode)
+    {
+        gridX = x; gridZ = z;
+        this.isPlayerNode = isPlayerNode;
+    }
+
+    public void CalculateFCost()
+    {
+        fCost = gCost + hCost;
     }
 
     private void UpdateOccupantPower()
@@ -98,14 +110,11 @@ public class GridNode : MonoBehaviour, IInteractable
         //else Debug.Log(gridX + "," + gridZ);
 
         DuelManager.instance.onNodeSelected?.Invoke(this);
-
     }
 
     public void OnRightClick()
     {
         if (Occupant != null) UIManager.instance.ShowCardDisplay(_occupant.CardInfo);
-
-        TEST_SUMMON_ENEMY();
     }
 
     public void OnMouseEnter()
@@ -161,6 +170,14 @@ public class GridNode : MonoBehaviour, IInteractable
         if (_occupant == null) return false; //nothing to attack
         if (_occupant.Commander == attacker.Commander) return false; //same team
         return true; //occupied by enemy
+    }
+
+    public bool CanBeTraversed(Card_Unit unit)
+    {
+        if (_occupant == null) return true; //not occupied at all
+        if (_occupant.Commander != unit.Commander) return false; //cannot walk through enemy space
+        if (_occupant is Card_Structure structure && !structure.canBeTraversed) return false; //no unit can enter this space
+        return true;
     }
     #endregion
 }

@@ -76,7 +76,7 @@ public class ParticlePool : MonoBehaviour
         Destroy(system.gameObject);
     }
 
-    private void OnGUI()
+    /*private void OnGUI()
     {
         GUILayout.Label("Pool size: " + Pool.CountInactive);
         if (GUILayout.Button("Create Particles"))
@@ -89,5 +89,5 @@ public class ParticlePool : MonoBehaviour
                 ps.Play();
             }
         }
-    }
+    }*/
 }

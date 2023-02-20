@@ -29,11 +29,7 @@ public class Card_Permanent : Card
     }
 
     public virtual void OnSummoned(GridNode node)
-    {
-        //Sets the card location as on the battlefield
-        //SetCardLocation(CardLocation.OnField); //I'm already setting this in OnPermanentPlayed, so this seems redundant
-        //isRevealed = true; //and I'm setting this to true in SetCardLocation
-        
+    {       
         //Set as child to the battlefield
         transform.SetParent(DuelManager.instance.Battlefield.transform);
 
@@ -45,6 +41,21 @@ public class Card_Permanent : Card
         _permanentObject.transform.SetParent(transform);
         cardGFX.SetActive(false); //Disable the physical card display
         GetComponent<Collider>().enabled = false; //Disable collider to not interfere with node selection
+
+        if (_commander != null)
+        {
+            _commander.onNewPhase += OnPhaseChange;
+        }
+    }
+
+    public virtual void OnPhaseChange(Phase phase)
+    {
+        switch (phase)
+        {
+            case Phase.Begin:
+                OnBeginPhase();
+                break;
+        }
     }
 
     //Set current node and occupy it
@@ -71,7 +82,7 @@ public class Card_Permanent : Card
         return 0;
     }
 
-    public virtual void OnBeginPhase()
+    protected virtual void OnBeginPhase()
     {
         //Trigger any relevant abilities
     }

@@ -12,10 +12,14 @@ public class StructureSO : PermanentSO
     [SerializeField] private CardFocus _focus;
     [SerializeField] private int _maxHealth;
     [SerializeField] private int _defense = 1;
+    [Tooltip("if true: an allied unit is able to move into an occupy the structure")]
     [SerializeField] private bool _canBeOccupied = true;
+    [Tooltip("if true: an allied unit is able to move through the space of this structure")]
+    [SerializeField] private bool _canBeTraversed = true;
 
     public CardFocus Focus => _focus;
     public int MaxHealth => _maxHealth;
     public int Defense => _defense;
     public bool canBeOccupied => _canBeOccupied;
+    public bool CanBeTraversed => _canBeTraversed;
 }

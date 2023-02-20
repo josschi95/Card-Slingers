@@ -24,8 +24,6 @@ public class EffectManager : ScriptableObject
     }
 }
 
-public enum Effects { Damage, Halt, StatModifier }
-
 [System.Serializable]
 public class EffectHolder
 {

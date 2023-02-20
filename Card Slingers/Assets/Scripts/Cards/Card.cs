@@ -150,7 +150,6 @@ public class Card : MonoBehaviour, IInteractable
                 lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(false));
                 break;
             case CardLocation.OnField:
-
                 break;
         }
 
