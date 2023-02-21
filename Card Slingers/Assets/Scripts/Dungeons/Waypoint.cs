@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Waypoint : MonoBehaviour, IInteractable
 {
-    [SerializeField] private Waypoint _neighborWaypoint;
+    [SerializeField] protected Waypoint _neighborNode;
     [SerializeField] private DungeonRoom _room;
 
     public void SetRoom(DungeonRoom room)
@@ -14,7 +14,9 @@ public class Waypoint : MonoBehaviour, IInteractable
 
     public void SetConnectedWaypoint(Waypoint point)
     {
-        _neighborWaypoint = point;
+        _neighborNode = point;
+        Debug.DrawLine(transform.position, _neighborNode.transform.position, Color.green, int.MaxValue);
+
     }
 
     public void OnLeftClick()
@@ -27,15 +29,15 @@ public class Waypoint : MonoBehaviour, IInteractable
         //Do nothing
     }
 
-    public void OnWaypointReached(Waypoint fromWaypoint)
+    public virtual void OnWaypointReached(Waypoint fromWaypoint)
     {
-        if (fromWaypoint == _neighborWaypoint)
+        if (fromWaypoint == _neighborNode)
         {
             _room.OnRoomEntered();
         }
         else
         {
-            PlayerController.SetWaypoint(_neighborWaypoint);
+            PlayerController.SetWaypoint(_neighborNode);
         }
     }
 }

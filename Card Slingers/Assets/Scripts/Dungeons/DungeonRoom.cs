@@ -4,12 +4,17 @@ using UnityEngine;
 
 public class DungeonRoom : MonoBehaviour
 {
+    public bool TESTING_NO_ENCOUNTER = true;
+
     [SerializeField] private Vector2 _fullDimensions;
     [SerializeField] private Vector2Int _boardDimensions;
 
     [SerializeField] private DungeonRoom[] connectedRooms = new DungeonRoom[4]; // up/down/left/right
     [SerializeField] private Transform[] connectionNodes = new Transform[4];
     [SerializeField] private Waypoint[] connectedWaypoints;
+    [Space]
+    [SerializeField] private GameObject[] _entranceParents;
+    [SerializeField] private GameObject[] _closedEntranceParents;
     [SerializeField] private CombatEncounter encounter;
 
     public Vector2Int BoardDimensions => _boardDimensions;
@@ -26,15 +31,29 @@ public class DungeonRoom : MonoBehaviour
         }
     }
 
-    public void SetConnectedRoom(DungeonRoom room, Direction direction, Direction fromDirection)
+    public void SetConnectedRoom(DungeonRoom room, Direction fromDirection, Direction toDirection)
     {
-        connectedWaypoints[(int)direction].SetConnectedWaypoint(room.connectedWaypoints[(int)fromDirection]);
+        connectedWaypoints[(int)fromDirection].SetConnectedWaypoint(room.connectedWaypoints[(int)toDirection]);
+    }
+
+    public void OnConfirmLayout()
+    {
+        //Disable all unconnected nodes
+        //Enable walls in place of the unconnected Nodes
+        for (int i = 0; i < connectedRooms.Length; i++)
+        {
+            _entranceParents[i].SetActive(connectedRooms[i] != null);
+            _closedEntranceParents[i].SetActive(connectedRooms[i] == null);
+        }
     }
 
     public void OnRoomEntered()
     {
-        PlayerController.SetDestination(transform.position);
-        return;
+        if (TESTING_NO_ENCOUNTER)
+        {
+            PlayerController.SetDestination(transform.position);
+            return;
+        }
 
         if (encounter != null) encounter.TriggerCombat();
         else

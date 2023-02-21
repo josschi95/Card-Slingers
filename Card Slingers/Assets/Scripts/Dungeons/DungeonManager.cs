@@ -4,15 +4,18 @@ using UnityEngine;
 
 public class DungeonManager : MonoBehaviour
 {
+    [SerializeField] private DungeonGenerator _generator;
     [SerializeField] private Waypoint _startingWaypoint;
 
     [SerializeField] private List<CombatEncounter> encounters = new List<CombatEncounter>();
 
     private void Start()
     {
-        DuelManager.instance.onMatchStarted += WatchMatch;
+        //_generator.GenerateDungeon();
 
-        GameObject.Find("PlayerController").GetComponent<PlayerController>().SetStartingWaypoint(_startingWaypoint);
+        //GameObject.Find("PlayerController").GetComponent<PlayerController>().SetStartingWaypoint(_startingWaypoint);
+        //Player position should always be Vector3.zero at the start
+        DuelManager.instance.onMatchStarted += WatchMatch;
     }
 
     private void WatchMatch(CombatEncounter encounter)
