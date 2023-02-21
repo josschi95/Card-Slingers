@@ -29,7 +29,7 @@ public class Card : MonoBehaviour, IInteractable
     #endregion
 
     //Assign the card its information and its owner
-    public void AssignCard(CardSO card, CommanderController commander)
+    public virtual void AssignCard(CardSO card, CommanderController commander)
     {
         _cardInfo = card;
         _commander = commander;

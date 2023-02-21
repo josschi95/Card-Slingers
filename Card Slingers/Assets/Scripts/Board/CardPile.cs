@@ -104,7 +104,9 @@ public class CardPile : MonoBehaviour
         var endRot = Quaternion.Euler(360,360,360);
         if (!card.GetComponent<Card>().isRevealed) endRot = Quaternion.Euler(faceDown);
 
-        DuelManager.instance.onCardMovementStarted?.Invoke();
+        //if (pileType == HolderType.Discard) Debug.Log("Starting order discard");
+
+        DuelManager.instance.onCardMovementStarted?.Invoke(card.GetComponent<Card>());
         while (timeElapsed < timeToMove)
         {
             timeElapsed += Time.deltaTime;
@@ -115,7 +117,10 @@ public class CardPile : MonoBehaviour
 
             yield return null;
         }
-        DuelManager.instance.onCardMovementEnded?.Invoke();
+        DuelManager.instance.onCardMovementEnded?.Invoke(card.GetComponent<Card>());
+        
+        //if (pileType == HolderType.Discard) Debug.Log("End order discard");
+
 
         card.transform.localPosition = endPos;
         card.transform.localRotation = endRot;

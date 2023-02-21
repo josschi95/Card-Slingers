@@ -15,8 +15,8 @@ public class MonsterManager : OpponentCommander
 
     protected override void Start()
     {
-        duelManager = DuelManager.instance;
         onPermanentDestroyed += OnPermanentDestroyed;
+        SubscribeToMatchEvents();
     }
 
     public override void OnAssignCommander(CommanderSO commanderInfo)
@@ -27,6 +27,8 @@ public class MonsterManager : OpponentCommander
     public override void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
     {
         _permanentsOnField = new List<Card_Permanent>();
+
+
         Debug.Log("Need to find some way to add all existing mosnters on the field into this list");
     }
 
@@ -66,6 +68,6 @@ public class MonsterManager : OpponentCommander
         _permanentsOnField.Remove(permanent);
 
         //All monsters on the field have been defeated, player victory
-        if (_permanentsOnField.Count == 0) OnDefeat();
+        if (_permanentsOnField.Count == 0) DuelManager.instance.onPlayerVictory?.Invoke();
     }
 }

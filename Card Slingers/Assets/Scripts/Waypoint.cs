@@ -4,7 +4,13 @@ using UnityEngine;
 
 public class Waypoint : MonoBehaviour, IInteractable
 {
-    [SerializeField] private CombatEncounter encounter;
+    [SerializeField] private Waypoint _neighborWaypoint;
+    [SerializeField] private DungeonRoom _neighborRoom;
+
+    public void SetRoom(DungeonRoom room)
+    {
+        _neighborRoom = room;
+    }
 
     public void OnLeftClick()
     {
@@ -16,9 +22,15 @@ public class Waypoint : MonoBehaviour, IInteractable
         //Do nothing
     }
 
-    public void OnWaypointReached()
+    public void OnWaypointReached(Waypoint fromWaypoint)
     {
-        if (encounter != null) encounter.TriggerCombat();
-
+        if (fromWaypoint == _neighborWaypoint)
+        {
+            _neighborRoom.OnRoomEntered();
+        }
+        else
+        {
+            PlayerController.SetWaypoint(_neighborWaypoint);
+        }
     }
 }

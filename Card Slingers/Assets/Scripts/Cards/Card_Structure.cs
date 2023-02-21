@@ -102,13 +102,15 @@ public class Card_Structure : Card_Permanent
         Commander.onPermanentDestroyed?.Invoke(this);
     }
 
-    public override void OnCommanderVictory()
+    protected override void OnCommanderVictory()
     {
+        if (_location != CardLocation.OnField) return;
         StartCoroutine(WaitToRemove());
     }
 
-    public override void OnCommanderDefeat()
+    protected override void OnCommanderDefeat()
     {
+        if (_location != CardLocation.OnField) return;
         OnPermanentDestroyed();
     }
 }

@@ -18,8 +18,8 @@ public class Card_Unit : Card_Permanent
 
     private bool _isMoving;
     private bool _isAttacking;
-    private Card_Permanent _attackTarget;
-    private bool _canRetaliate;
+    protected Card_Permanent _attackTarget;
+    protected bool _canRetaliate;
     private bool _actedThisTurn;
 
     #region - Public Reference Variables -
@@ -31,7 +31,7 @@ public class Card_Unit : Card_Permanent
     public int Speed => NetSpeed();
     public List<Card_Permanent> Equipment => _equipment;
 
-    public bool IsActing => UnitIsActing();
+    public bool IsActing => _isAttacking || _isMoving;
     public bool CanAct => UnitCanAct();
     public bool CanMove => UnitCanMove();
     public bool CanAttack => UnitCanAttack();
@@ -62,7 +62,7 @@ public class Card_Unit : Card_Permanent
         _equipment = new List<Card_Permanent>();
 
         onAttackAnimation += OnAttackAnimationTrigger;
-        onDeathAnimation += OnUnitDeath;
+        onDeathAnimation += OnUnitDeathAnimationComplete;
     }
 
     protected override int GetThreatLevel()
@@ -71,14 +71,16 @@ public class Card_Unit : Card_Permanent
         else return -(_currentHealth + Damage + Defense);
     }
 
-    public override void OnCommanderVictory()
+    protected override void OnCommanderVictory()
     {
+        if (_location != CardLocation.OnField) return;
         _animator.SetTrigger("victory");
-        StartCoroutine(OnRemoveUnit());
+        StartCoroutine(OnRemoveUnit(false));
     }
 
-    public override void OnCommanderDefeat()
+    protected override void OnCommanderDefeat()
     {
+        if (_location != CardLocation.OnField) return;
         OnPermanentDestroyed();
     }
     #endregion
@@ -137,14 +139,7 @@ public class Card_Unit : Card_Permanent
     }
     #endregion
 
-    #region - Unit Conditions -
-    private bool UnitIsActing()
-    {
-        if (_isMoving) return true;
-        if (_isAttacking) return true;
-        return false;
-    }
-    
+    #region - Unit Conditions -   
     private bool UnitCanAct()
     {
         if (_currentHealth <= 0) return false;
@@ -166,12 +161,12 @@ public class Card_Unit : Card_Permanent
         return true;
     }
 
-    private bool UnitCanRetaliate()
+    protected bool UnitCanRetaliate()
     {
         if (!CanAttack) return false;
         if (!_canRetaliate) return false;
         if (_attackTarget == null) return false;
-        if (Mathf.Abs(Node.gridZ - _attackTarget.Node.gridZ) > Range) return false;
+        if (DuelManager.instance.Battlefield.GetDistanceInNodes(Node, _attackTarget.Node) > Range) return false;
         return true;
     }
     #endregion
@@ -191,6 +186,7 @@ public class Card_Unit : Card_Permanent
     private IEnumerator MoveUnit(List<GridNode> nodePath)
     {
         _isMoving = true;
+        DuelManager.instance.onCardBeginAction?.Invoke(this);
         var currentNode = Node; //the node that the unit is currently located at, changes each time they move
         var endNode = nodePath[nodePath.Count - 1];
 
@@ -227,7 +223,7 @@ public class Card_Unit : Card_Permanent
         OnStopMovement();
     }
 
-    private IEnumerator TurnToFaceTarget(Vector3 pos)
+    protected IEnumerator TurnToFaceTarget(Vector3 pos)
     {
         float t = 0, timeToMove = 0.5f;
         while (t < timeToMove)
@@ -249,6 +245,7 @@ public class Card_Unit : Card_Permanent
     {
         _animator.SetFloat("speed", 0);
         _isMoving = false;
+        DuelManager.instance.onCardEndAction?.Invoke(this);
     }
     #endregion
 
@@ -267,6 +264,7 @@ public class Card_Unit : Card_Permanent
         }
     }
 
+    #region - Combat -
     //resolve an attack action which has been declared 
     public void OnAttack(GridNode node)
     {
@@ -281,7 +279,9 @@ public class Card_Unit : Card_Permanent
             return;
         }
 
+        _isAttacking = true;
         _canRetaliate = false;
+        DuelManager.instance.onCardBeginAction?.Invoke(this);
         StartCoroutine(TurnToFaceTarget(node.transform.position));
         node.Occupant.OnTargetEngaged(this);
         
@@ -289,9 +289,11 @@ public class Card_Unit : Card_Permanent
         _animator.SetTrigger("attack");
     }
 
-    private void OnAttackAnimationTrigger()
+    protected void OnAttackAnimationTrigger()
     {
         _attackTarget.OnTakeDamage(Damage);
+        _isAttacking = false;
+        DuelManager.instance.onCardEndAction?.Invoke(this);
     }
 
     public override void OnTakeDamage(int damage)
@@ -307,6 +309,8 @@ public class Card_Unit : Card_Permanent
             _animator.SetTrigger("damage");
             if (UnitCanRetaliate())
             {
+                Debug.Log("Unit can retaliate");
+                DuelManager.instance.onCardBeginAction?.Invoke(this);
                 StartCoroutine(TurnToFaceTarget(_attackTarget.transform.position));
                 _animator.SetTrigger("attack");
                 _canRetaliate = false;
@@ -328,36 +332,38 @@ public class Card_Unit : Card_Permanent
         _currentHealth += amount;
         if (_currentHealth > MaxHealth) _currentHealth = MaxHealth;
     }
+    #endregion
 
     #region - Card Destroyed -
     protected override void OnPermanentDestroyed()
     {
         //Debug.Log("unit has been destroyed");
         _animator.SetTrigger("death");
-        DuelManager.instance.onCardMovementStarted?.Invoke();
+        DuelManager.instance.onCardMovementStarted?.Invoke(this);
     }
 
-    private void OnUnitDeath()
+    protected virtual void OnUnitDeathAnimationComplete()
     {
         StartCoroutine(OnRemoveUnit());
     }
 
-    protected virtual IEnumerator OnRemoveUnit()
+    protected virtual IEnumerator OnRemoveUnit(bool sinkUnit = true)
     {
         float timeElapsed = 0, timeToMove = 1.5f;
+        if (!sinkUnit) timeToMove = 2f;
         while (timeElapsed < timeToMove)
         {
             timeElapsed += Time.deltaTime; //slowly sink the unit beneath the playing field before destroying it
-            PermanentObject.transform.localPosition = Vector3.Lerp(PermanentObject.transform.localPosition, Vector3.down, timeElapsed / timeToMove);
+            if (sinkUnit) PermanentObject.transform.localPosition = Vector3.Lerp(PermanentObject.transform.localPosition, Vector3.down, timeElapsed / timeToMove);
             yield return null;
         }
 
-        cardGFX.SetActive(true); //Re-enable card
+        cardGFX.SetActive(true); //Re-enable card GFX
         Destroy(PermanentObject); //Destroy unit
 
         //Invoke an event for the commander to listen to
         Commander.onPermanentDestroyed?.Invoke(this);
-        DuelManager.instance.onCardMovementEnded?.Invoke();
+        DuelManager.instance.onCardMovementEnded?.Invoke(this);
     }
     #endregion
 }

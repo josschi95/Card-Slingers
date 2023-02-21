@@ -5,14 +5,13 @@ using UnityEngine;
 public class CombatEncounter : MonoBehaviour
 {
     //Probably make this a subclass of CombatEncounter later, CommanderCombatEncounter
-    [SerializeField] private Battlefield battlefield;
     [SerializeField] private CommanderSO enemyCommander;
+    [SerializeField] private Vector2Int battlefieldDimensions;
     private OpponentCommander commander;
+    private bool _hasBeenTriggered;
 
-    private void Start()
-    {
-        if (enemyCommander != null) OnCommanderCombatEncounter();
-    }
+    public OpponentCommander Commander => commander;
+    public Vector2Int Dimensions => battlefieldDimensions;
 
     private void OnCommanderCombatEncounter()
     {
@@ -26,6 +25,11 @@ public class CombatEncounter : MonoBehaviour
 
     public void TriggerCombat()
     {
-        DuelManager.instance.OnNewMatchStart(battlefield, commander);
+        if (_hasBeenTriggered) return;
+
+        if (enemyCommander != null) OnCommanderCombatEncounter();
+        DuelManager.instance.onMatchStarted?.Invoke(this);
+
+        _hasBeenTriggered = true;
     }
 }

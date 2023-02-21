@@ -6,14 +6,30 @@ using TMPro;
 
 public class UIManager : MonoBehaviour
 {
+    #region - TESTING -
+    public RectTransform testPanelRect;
+    public Button TEST_PANEL_BUTTON, TEST_END_PHASE_BUTTON;
+
+    private void Test()
+    {
+        TEST_PANEL_BUTTON.onClick.AddListener(delegate
+        {
+            if (testPanelRect.anchoredPosition != Vector2.zero) testPanelRect.anchoredPosition = Vector2.zero;
+            else testPanelRect.anchoredPosition = new Vector2(-testPanelRect.sizeDelta.x, 0);
+        });
+        TEST_END_PHASE_BUTTON.onClick.AddListener(delegate
+        {
+            Debug.Log("TEST END PHASE");
+            DuelManager.instance.OnCurrentPhaseFinished();
+        });
+    }
+    #endregion
+
     public static UIManager instance;
     private void Awake()
     {
         instance = this;
     }
-
-    public RectTransform testPanelRect;
-    public Button TEST_PANEL_BUTTON, TEST_END_PHASE_BUTTON;
 
     #region - Commander Banner -
     [Header("Commander Banner")]
@@ -47,41 +63,52 @@ public class UIManager : MonoBehaviour
     private Vector3 cardDisplayHiddenPos = new Vector3(500, 0, 0);
     #endregion
 
+    private Vector2 closeOutPanelPos = new Vector2(0, -1000);
+
+    [Header("Victory")]
+    [SerializeField] private RectTransform victoryPanel;
+    [SerializeField] private Button continueButton;
+
+    [Header("Game Over")]
+    [SerializeField] private RectTransform gameOverPanel;
+    [SerializeField] private Button retreatButton;
+
     private void Start()
     {
+        Test();
+        
         bannerParent.anchoredPosition = bannerHiddenPos;
         cardDisplayRect.anchoredPosition = cardDisplayHiddenPos;
+        victoryPanel.anchoredPosition = closeOutPanelPos;
+        gameOverPanel.anchoredPosition = closeOutPanelPos;
 
         hideCardDisplayButton.onClick.AddListener(HideCardDisplay);
         DuelManager.instance.onMatchStarted += OnMatchStart;
-        DuelManager.instance.onPlayerVictory += OnMatchEnd;
-        DuelManager.instance.onPlayerDefeat += OnMatchEnd;
+        DuelManager.instance.onPlayerVictory += delegate { OnPlayerVictory(); };
+        DuelManager.instance.onPlayerDefeat += delegate { OnPlayerDefeat(); };
 
         DuelManager.instance.onPhaseChange += OnPhaseChange;
-        DuelManager.instance.onNewTurn += OnNewTurn;
+        DuelManager.instance.onNewTurn += delegate { OnNewTurn(); };
 
         endPhaseButton.onClick.AddListener(OnPlayerEndPhase);
         cancelActionButton.onClick.AddListener(delegate { DuelManager.instance.OnClearAction(); });
 
-        TEST_PANEL_BUTTON.onClick.AddListener(delegate 
+        retreatButton.onClick.AddListener(delegate { GameManager.OnLoadScene("Town"); });
+        continueButton.onClick.AddListener(delegate
         {
-            if (testPanelRect.anchoredPosition != Vector2.zero) testPanelRect.anchoredPosition = Vector2.zero;
-            else testPanelRect.anchoredPosition = new Vector2(-testPanelRect.sizeDelta.x, 0);
-        });
-        TEST_END_PHASE_BUTTON.onClick.AddListener(delegate
-        {
-            Debug.Log("TEST END PHASE");
-            DuelManager.instance.OnCurrentPhaseFinished(); 
+            StartCoroutine(LerpRectTransform(victoryPanel, closeOutPanelPos, 2f));
+            DuelManager.instance.CloseOutMatch();
         });
     }
 
-    private void OnMatchStart()
+    private void OnMatchStart(CombatEncounter encounter)
     {
         playerTurn = true;
         //Subscribe to events
         DuelManager.instance.Player_Commander.onManaChange += OnCommanderValuesChanged;
 
         playerCommanderName.text = DuelManager.instance.Player_Commander.CommanderInfo.name;
+        if (encounter.Commander != null) SetEnemyCommander(encounter.Commander);
 
         OnCommanderValuesChanged();
 
@@ -90,7 +117,7 @@ public class UIManager : MonoBehaviour
         lerpBannerCoroutine = StartCoroutine(LerpRectTransform(bannerParent, bannerShownPos));
     }
 
-    public void SetEnemyCommander(OpponentCommander enemy)
+    private void SetEnemyCommander(OpponentCommander enemy)
     {
         enemyCommander = enemy;
         opponentCommanderName.text = enemyCommander.CommanderInfo.name;
@@ -102,13 +129,23 @@ public class UIManager : MonoBehaviour
         //Unsubscribe to events
         DuelManager.instance.Player_Commander.onManaChange -= OnCommanderValuesChanged;
 
-        if (enemyCommander != null)
-        {
-            enemyCommander.onManaChange -= OnCommanderValuesChanged;
-        }
+        if (enemyCommander != null) enemyCommander.onManaChange -= OnCommanderValuesChanged;
+        enemyCommander = null;
 
         if (lerpBannerCoroutine != null) StopCoroutine(lerpBannerCoroutine);
         lerpBannerCoroutine = StartCoroutine(LerpRectTransform(bannerParent, bannerHiddenPos));
+    }
+
+    private void OnPlayerVictory()
+    {
+        OnMatchEnd();
+        StartCoroutine(LerpRectTransform(victoryPanel, Vector2.zero, 2f));
+    }
+
+    private void OnPlayerDefeat()
+    {
+        OnMatchEnd();
+        StartCoroutine(LerpRectTransform(gameOverPanel, Vector2.zero, 2f));
     }
 
     //Player has selected to end their current phase

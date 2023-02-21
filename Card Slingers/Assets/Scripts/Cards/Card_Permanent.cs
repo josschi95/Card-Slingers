@@ -28,6 +28,36 @@ public class Card_Permanent : Card
         }
     }
 
+    public override void AssignCard(CardSO card, CommanderController commander)
+    {
+        base.AssignCard(card, commander);
+
+        if (commander is PlayerCommander)
+        {
+            DuelManager.instance.onPlayerVictory += OnCommanderVictory;
+            DuelManager.instance.onPlayerDefeat += OnCommanderDefeat;
+        }
+        else
+        {
+            DuelManager.instance.onPlayerVictory += OnCommanderDefeat;
+            DuelManager.instance.onPlayerDefeat += OnCommanderVictory;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (_commander is PlayerCommander)
+        {
+            DuelManager.instance.onPlayerVictory -= OnCommanderVictory;
+            DuelManager.instance.onPlayerDefeat -= OnCommanderDefeat;
+        }
+        else
+        {
+            DuelManager.instance.onPlayerVictory -= OnCommanderDefeat;
+            DuelManager.instance.onPlayerDefeat -= OnCommanderVictory;
+        }
+    }
+
     public virtual void OnSummoned(GridNode node)
     {       
         //Set as child to the battlefield
@@ -110,13 +140,15 @@ public class Card_Permanent : Card
         //Meant to be overridden
     }
 
-    public virtual void OnCommanderVictory()
+    protected virtual void OnCommanderVictory()
     {
+        if (_location != CardLocation.OnField) return;
         //Meant to be overridden
     }
 
-    public virtual void OnCommanderDefeat()
+    protected virtual void OnCommanderDefeat()
     {
+        if (_location != CardLocation.OnField) return;
         //Meant to be overridden
     }
 }

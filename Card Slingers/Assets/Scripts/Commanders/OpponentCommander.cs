@@ -26,6 +26,17 @@ public class OpponentCommander : CommanderController
         invadesLanes = new bool[duelManager.Battlefield.Width];
     }
 
+    protected override void OnPlayerVictory()
+    {
+        base.OnPlayerVictory();
+        Destroy(gameObject, 5f); //later also include a method for sinking beneath the groudn
+    }
+
+    protected override void OnPlayerDefeat()
+    {
+        base.OnPlayerDefeat();
+    }
+
     protected override void OnSummoningPhase()
     {
         base.OnSummoningPhase();
@@ -204,7 +215,7 @@ public class OpponentCommander : CommanderController
     private bool OnTryValidateSummon(CardNodeCombo combo)
     {
         if (combo.card == null || combo.node == null) return false;
-        OnPermanentPlayed(combo.node, combo.card);
+        OnCardPlayed(combo.card, combo.node);
         return true;
     }
 

@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 3777873372622269367}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.0001, z: 0}
-  m_LocalScale: {x: 0.5, y: 1, z: 0.5}
+  m_LocalScale: {x: 0.475, y: 1, z: 0.475}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -116,7 +116,10 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 9ee2ed2ca4d8ad943a156a00fad944c2, type: 2}
   - {fileID: 2100000, guid: 1c0fb82eaef34d440be3637fbb1af13b, type: 2}
   - {fileID: 2100000, guid: fcda4a977c9c8ef49b660ad15ab03d43, type: 2}
-  _isPlayerNode: 0
   _occupant: {fileID: 0}
   _trap: {fileID: 0}
   _terrain: {fileID: 0}
+  gCost: 0
+  hCost: 0
+  fCost: 0
+  cameFromNode: {fileID: 0}

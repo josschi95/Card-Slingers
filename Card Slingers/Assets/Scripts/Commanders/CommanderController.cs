@@ -23,7 +23,7 @@ public class CommanderController : MonoBehaviour
     [SerializeField] private int _currentMana = 4;
     [Space]
     [SerializeField] protected List<Card> _cardsInHand;
-    [SerializeField] private List<Card> _cardsInDeck;
+    [SerializeField] protected List<Card> _cardsInDeck;
     [SerializeField] private List<Card> _cardsInDiscardPile;
     [SerializeField] private List<Card> _cardsInExile;
     [Space]
@@ -55,18 +55,15 @@ public class CommanderController : MonoBehaviour
     #region - Initial Methods -
     public virtual void OnAssignCommander(CommanderSO commanderInfo)
     {
-        _commanderInfo = commanderInfo;
-        _commanderCard.AssignCard(commanderInfo, this);
+        this._commanderInfo = commanderInfo;
+        this._commanderCard.AssignCard(commanderInfo, this);
     }
 
     public virtual void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
     {
-        //Should only need this here for testing
-        duelManager = DuelManager.instance;
-        duelManager.onPhaseChange += SetPhase;
-        duelManager.onNewTurn += delegate { isTurn = !isTurn; };
-        _cardHolder = holder;
+        SubscribeToMatchEvents();
 
+        _cardHolder = holder;
         healthDisplay.gameObject.SetActive(true);
 
         _defaultMana = mana;
@@ -78,19 +75,21 @@ public class CommanderController : MonoBehaviour
         _permanentsOnField = new List<Card_Permanent>();
         _permanentsOnField.Add(CommanderCard);
 
-        GenerateDeck();
+        GenerateNewDeck();
         ShuffleDeck();
         StartCoroutine(DrawCards());
     }
 
-    protected virtual void GenerateDeck()
+    protected virtual void GenerateNewDeck()
     {
-        if (_commanderInfo == null) Debug.Log("CommanderSO is null");
+        if (_commanderInfo == null)
+        {
+            Debug.Log("CommanderSO is null");
+            return;
+        }
 
         foreach (CardSO cardSO in _commanderInfo.Deck.cards)
         {
-
-            //Card newCard = Instantiate(cardSO.cardPrefab).GetComponent<Card>();
             Card newCard = Instantiate(cardSO.cardPrefab);
             newCard.AssignCard(cardSO, this);
             PlaceCardInDeck(newCard);
@@ -154,7 +153,7 @@ public class CommanderController : MonoBehaviour
     private IEnumerator DrawCards()
     {
         isDrawingCards = true;
-        duelManager.onCardMovementStarted?.Invoke();
+        duelManager.onCardMovementStarted?.Invoke(null);
 
         while (_cardsInHand.Count < _handSize)
         {
@@ -174,7 +173,7 @@ public class CommanderController : MonoBehaviour
             yield return null;
         }
 
-        duelManager.onCardMovementEnded?.Invoke();
+        duelManager.onCardMovementEnded?.Invoke(null);
         isDrawingCards = false;
     }
 
@@ -207,7 +206,7 @@ public class CommanderController : MonoBehaviour
         card.transform.SetParent(_cardHolder.Hand);
     }
 
-    private void PlaceCardInDeck(Card card)
+    protected void PlaceCardInDeck(Card card)
     {
         _cardsInDeck.Add(card);
         card.SetCardLocation(CardLocation.InDeck);
@@ -250,24 +249,31 @@ public class CommanderController : MonoBehaviour
     //private void ReturnPermanentInPlayToHand(Card_Permanent card) { }
     #endregion
 
+    #region - Card Play -
     public bool CanPlayCard(Card card)
     {
         if (card.CardInfo.cost > _currentMana) return false;
         return true;
     }
 
-    public void OnInstantPlayed(GridNode node, Card_Spell spell)
+    public void OnCardPlayed(Card card, GridNode node)
+    {
+        if (card is Card_Spell spell) OnInstantPlayed(spell, node);
+        else if (card is Card_Permanent perm) OnPermanentPlayed(perm, node);
+    }
+
+    private void OnInstantPlayed(Card_Spell spell, GridNode node)
     {
         OnSpendMana(spell.CardInfo.cost);
 
         //Commander play casting animation
         _commanderCard.PermanentObject.GetComponent<Animator>().SetTrigger("ability");
-        _commanderCard.onAbilityAnimation += delegate { OnInstantResolved(node, spell); };
+        _commanderCard.onAbilityAnimation += delegate { OnInstantResolved(spell, node); };
 
         //This works for now but I should have the card go to a sort of limbo position
     }
 
-    public void OnInstantResolved(GridNode node, Card_Spell spell)
+    private void OnInstantResolved(Card_Spell spell, GridNode node)
     {
         Instantiate(spell.FX, node.transform.position + spell.StartPos, Quaternion.identity);
 
@@ -279,13 +285,13 @@ public class CommanderController : MonoBehaviour
             }
         }
 
-        _commanderCard.onAbilityAnimation -= delegate { OnInstantResolved(node, spell); };
+        _commanderCard.onAbilityAnimation -= delegate { OnInstantResolved(spell, node); };
 
         //Send to discard pile
         PlaceCardInDiscard(spell);
     }
 
-    public void OnPermanentPlayed(GridNode node, Card_Permanent card)
+    private void OnPermanentPlayed(Card_Permanent card, GridNode node)
     {
         //Spend Mana cost of card
         OnSpendMana(card.CardInfo.cost);
@@ -299,7 +305,7 @@ public class CommanderController : MonoBehaviour
 
         if (card is Card_Trap trap)
         {
-            OnTrapPlayed(node, trap);
+            OnTrapPlayed(trap, node);
             return;
         }
 
@@ -310,7 +316,7 @@ public class CommanderController : MonoBehaviour
         StartCoroutine(MoveCardToField(card, node));
     }
 
-    private void OnTrapPlayed(GridNode node, Card_Trap trap)
+    private void OnTrapPlayed(Card_Trap trap, GridNode node)
     {
         trap.transform.SetParent(_cardHolder.Traps);
 
@@ -331,7 +337,7 @@ public class CommanderController : MonoBehaviour
 
         if (this is not PlayerCommander) endRot = Quaternion.Euler(0, 180, 0);
 
-        duelManager.onCardMovementStarted?.Invoke();
+        duelManager.onCardMovementStarted?.Invoke(card);
         while (timeElapsed < timeToMove)
         {
             timeElapsed += Time.deltaTime;
@@ -341,7 +347,7 @@ public class CommanderController : MonoBehaviour
 
             yield return null;
         }
-        duelManager.onCardMovementEnded?.Invoke();
+        duelManager.onCardMovementEnded?.Invoke(card);
 
         //card.transform.position = endPos;
         card.transform.rotation = endRot;
@@ -352,6 +358,7 @@ public class CommanderController : MonoBehaviour
         //Remove trail display
         duelManager.ClearLineArc();
     }
+    #endregion
 
     #region - Mana -
     private void RefillMana()
@@ -422,29 +429,41 @@ public class CommanderController : MonoBehaviour
     }
     #endregion
 
-    public void OnVictory()
+    protected virtual void OnPlayerVictory()
     {
-        for (int i = 0; i < _permanentsOnField.Count; i++)
-        {
-            _permanentsOnField[i].OnCommanderVictory();
-        }
+        MatcheEnd();
 
-        OnMatchEnd();
+        //Meant to be overridden, but keep base
     }
 
-    public void OnDefeat()
+    protected virtual void OnPlayerDefeat()
     {
-        for (int i = 0; i < _permanentsOnField.Count; i++)
-        {
-            _permanentsOnField[i].OnCommanderDefeat();
-        }
+        MatcheEnd();
 
-        OnMatchEnd();
+        //Meant to be overridden, but keep base
     }
 
-    public virtual void OnMatchEnd()
+    protected void SubscribeToMatchEvents()
+    {       
+        duelManager.onPhaseChange += SetPhase;
+        duelManager.onNewTurn += delegate { isTurn = !isTurn; };
+
+        duelManager.onPlayerDefeat += OnPlayerDefeat;
+        duelManager.onPlayerVictory += OnPlayerVictory;
+    }
+
+    private void MatcheEnd()
     {
         duelManager.onPhaseChange -= SetPhase;
         duelManager.onNewTurn -= delegate { isTurn = !isTurn; };
+
+        duelManager.onPlayerVictory -= OnPlayerVictory;
+        duelManager.onPlayerDefeat -= OnPlayerDefeat;
+
+        if (healthDisplay != null) healthDisplay.gameObject.SetActive(false);
+
+        //need to let coroutines finish, and let player pocket their cards
+        if (_cardHolder != null) Destroy(_cardHolder.gameObject, 5f); 
+        //get rid of card holders. Probbly lerp them down eventually
     }
 }

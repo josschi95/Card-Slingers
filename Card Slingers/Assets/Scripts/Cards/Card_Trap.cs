@@ -19,9 +19,9 @@ public class Card_Trap : Card_Permanent
 
     private void OnTrapTriggered(Card_Unit unit)
     {
-        Debug.Log("Trap has been activated!");
         //same commander, trap doesn't trigger
         if (unit.Commander == Commander) return;
+        Debug.Log("Trap has been activated!");
 
         //apply effects of trap
         for (int i = 0; i < _trapInfo.Effects.Length; i++)

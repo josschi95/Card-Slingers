@@ -13,6 +13,9 @@ public class Card_Commander : Card_Unit
     {
         _currentHealth = NetMaxHealth();
 
+        onAttackAnimation += OnAttackAnimationTrigger;
+        onDeathAnimation += OnUnitDeathAnimationComplete;
+
         //Instantiate permanent
         var permanent = CardInfo as PermanentSO;
         _permanentObject = Instantiate(permanent.Prefab, transform.position, transform.rotation, gameObject.transform);
@@ -28,16 +31,29 @@ public class Card_Commander : Card_Unit
     {
         damage = Mathf.Clamp(damage - Defense, 0, int.MaxValue);
         _currentHealth -= damage;
+        
+        GameManager.instance.GetBloodParticles(transform.position + Vector3.up);
 
-        if (_currentHealth <= 0)
-        {
-            _animator.SetTrigger("death");
-            if (Commander is PlayerCommander) DuelManager.instance.onPlayerDefeat?.Invoke();
-            else DuelManager.instance.onPlayerVictory?.Invoke();
-        }
+        if (_currentHealth <= 0) _animator.SetTrigger("death");
         else
         {
             _animator.SetTrigger("damage");
-        }
+            if (UnitCanRetaliate())
+            {
+                Debug.Log("Unit can retaliate");
+                DuelManager.instance.onCardBeginAction?.Invoke(this);
+                StartCoroutine(TurnToFaceTarget(_attackTarget.transform.position));
+                _animator.SetTrigger("attack");
+                _canRetaliate = false;
+            }
+        } 
+
+        onValueChanged?.Invoke();
+    }
+
+    protected override void OnUnitDeathAnimationComplete()
+    {
+        if (Commander is PlayerCommander) DuelManager.instance.onPlayerDefeat?.Invoke();
+        else DuelManager.instance.onPlayerVictory?.Invoke();
     }
 }
