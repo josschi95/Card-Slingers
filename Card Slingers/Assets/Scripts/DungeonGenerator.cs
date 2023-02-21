@@ -37,10 +37,13 @@ public class DungeonGenerator : MonoBehaviour
         var startRoom = Instantiate(startRoomPrefab, Vector3.zero, Quaternion.identity);
         dungeonRooms.Add(startRoom);
 
-        StartCoroutine(SpawnRooms(mainRoomsToSpawn, bonusRoomsToSpawn));
+        //StartCoroutine(SpawnRooms_MethodA(mainRoomsToSpawn, bonusRoomsToSpawn));
+        StartCoroutine(SpawnRooms_MethodA(mainRoomsToSpawn, bonusRoomsToSpawn));
+
+        Debug.LogWarning("Now I need to set up the starting node to connect to the first room in the dungeon.");
     }
 
-    private IEnumerator SpawnRooms(int mainLineRoomsToSpawn, int bonusRooms)
+    private IEnumerator SpawnRooms_MethodA(int mainLineRoomsToSpawn, int bonusRooms)
     {
         while(mainLineRoomsToSpawn > 0)
         {
@@ -71,7 +74,7 @@ public class DungeonGenerator : MonoBehaviour
             dungeonRooms.Add(newRoom);
             mainLineRooms.Add(newRoom);
 
-            ConnectRooms(lastRoom, newRoom);
+            ConnectRoomsInLine(lastRoom, newRoom);
 
             mainLineRoomsToSpawn--;
 
@@ -80,7 +83,6 @@ public class DungeonGenerator : MonoBehaviour
 
         //Main line has been created
 
-        //May want to create connections between main line before adding bonus rooms so I know where I can add them
         int retries = 0;
         while (bonusRooms > 0)
         {
@@ -91,29 +93,16 @@ public class DungeonGenerator : MonoBehaviour
             var roomToConnectTo = mainLineRooms[Random.Range(1, mainLineRooms.Count)];
 
             var direction = Direction.Up;
-            bool roomIsValid = true;
-
-            for (int i = 0; i < roomToConnectTo.ConnectedRooms.Length; i++)
-            {
-                if (roomToConnectTo.ConnectedRooms[i] == null)
-                {
-                    direction = (Direction)i;
-                    break;
-                }
-                if (i == 3)
-                {
-                    //only should get here if all rooms are filledl
-                    Debug.Log("Room not valid");
-                    retries++;
-                    roomIsValid = false;
-                }
-            }
-            if (!roomIsValid) continue; //start over and try again
-
-            Debug.LogWarning("Pickup Here. Need to make sure that I'm positioning the new room in the correct direction");
+            if (roomToConnectTo.ConnectedRooms[(int)direction] != null) direction = Direction.Down;
+            if (roomToConnectTo.ConnectedRooms[(int)direction] != null) continue;
 
             var newRoomOffset = Vector3.zero;
-            newRoomOffset.z = roomToConnectTo.RoomDimensions.y * 0.5f + roomPrefab.RoomDimensions.y * 0.5f + 20;
+            var minZ = roomToConnectTo.RoomDimensions.y * 0.5f + roomPrefab.RoomDimensions.y * 0.5f + 20;
+            if (direction == Direction.Up) newRoomOffset.z = minZ;
+            else newRoomOffset.z = -minZ;
+
+            
+            //newRoomOffset.z = roomToConnectTo.RoomDimensions.y * 0.5f + roomPrefab.RoomDimensions.y * 0.5f + 20;
 
             float hertChance = Random.value;
             var hertOffset = roomToConnectTo.RoomDimensions.x * 0.5f + roomPrefab.RoomDimensions.x * 0.5f + 20;
@@ -125,27 +114,38 @@ public class DungeonGenerator : MonoBehaviour
 
             //Rounds it to a multiple of 5 for easy connection via tiles
             newRoomOffset = SnapPosition(newRoomOffset);
+            var newPosition = roomToConnectTo.transform.position + newRoomOffset;
+            var collidingRooms = Physics.OverlapBox(newPosition, new Vector3(roomPrefab.RoomDimensions.x * 0.5f, 5, roomPrefab.RoomDimensions.y * 0.5f));
 
-            var newRoom = Instantiate(roomPrefab, roomToConnectTo.transform.position + newRoomOffset, Quaternion.identity);
+            if (collidingRooms.Length > 0)
+            {
+                //Debug.Log("Overlap found. Retring.");
+                retries++;
+                continue;
+            }
+
+            var newRoom = Instantiate(roomPrefab, newPosition, Quaternion.identity);
 
             dungeonRooms.Add(newRoom);
 
-            ConnectRooms(roomToConnectTo, newRoom);
+            ConnectRoomsToNearest(roomToConnectTo, newRoom);
 
             bonusRooms--;
 
             yield return null;
         }
+
+        //Connect Waypoints
+        ConnectRoomWaypoints();
     }
 
-    private void ConnectRooms(DungeonRoom roomA, DungeonRoom roomB)
+    private void ConnectRoomsToNearest(DungeonRoom roomA, DungeonRoom roomB)
     {
-        //Just find the two closest connection nodes
-        //float lowestDistance = int.MaxValue;
+        float lowestDistance = int.MaxValue;
         int indexA = 0;
         int indexB = 0;
 
-        /*for (int a = 0; a < roomA.Nodes.Length; a++)
+        for (int a = 0; a < roomA.Nodes.Length; a++)
         {
             for (int b = 0; b < roomB.Nodes.Length; b++)
             {
@@ -157,10 +157,18 @@ public class DungeonGenerator : MonoBehaviour
                     lowestDistance = dist;
                 }
             }
-        }*/
+        }
 
-        //roomA.ConnectedRooms[indexA] = roomB;
-        //roomB.ConnectedRooms[indexB] = roomA;
+        roomA.ConnectedRooms[indexA] = roomB;
+        roomB.ConnectedRooms[indexB] = roomA;
+
+        Debug.DrawLine(roomA.Nodes[indexA].position, roomB.Nodes[indexB].position, Color.green, int.MaxValue);
+    }
+
+    private void ConnectRoomsInLine(DungeonRoom roomA, DungeonRoom roomB)
+    {
+        int indexA = 0;
+        int indexB = 0;
 
         //Still might run into issues with replacing, but I don't think I will
         //room B is to the right of room A
@@ -205,6 +213,31 @@ public class DungeonGenerator : MonoBehaviour
         float z = Mathf.Round(input.z / factor) * factor;
 
         return new Vector3(x, y, z);
+    }
+
+    private void ConnectRoomWaypoints()
+    {
+        foreach(DungeonRoom room in dungeonRooms)
+        {
+            for (int i = 0; i < room.ConnectedRooms.Length; i++)
+            {
+                if (room.ConnectedRooms[i] == null) continue;
+                var connectedRoom = room.ConnectedRooms[i];
+
+                Direction direction = (Direction)i;
+                Direction fromDirection = Direction.Up;
+
+                for (int r = 0; r < connectedRoom.ConnectedRooms.Length; r++)
+                {
+                    if (connectedRoom.ConnectedRooms[r] == room)
+                    {
+                        fromDirection = (Direction)r;
+                    }
+                }
+
+                room.SetConnectedRoom(connectedRoom, direction, fromDirection);
+            }
+        }
     }
 }
 

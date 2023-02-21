@@ -297,7 +297,7 @@ Transform:
   - {fileID: 4552987423555491232}
   - {fileID: 4552987423928730618}
   m_Father: {fileID: 4552987423566128104}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4552987422238002270
 MonoBehaviour:
@@ -1129,7 +1129,7 @@ Transform:
   - {fileID: 4552987423012157065}
   - {fileID: 4552987423947513698}
   m_Father: {fileID: 4552987423566128104}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4552987423142333480
 MonoBehaviour:
@@ -1336,6 +1336,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4552987423566128104}
   - component: {fileID: 4552987423566128105}
+  - component: {fileID: 2097728197056421262}
   m_Layer: 0
   m_Name: Dungeon Room A
   m_TagString: Untagged
@@ -1357,8 +1358,8 @@ Transform:
   m_Children:
   - {fileID: 4552987422548681551}
   - {fileID: 4552987422255556743}
-  - {fileID: 4552987422238002265}
   - {fileID: 4552987423142333483}
+  - {fileID: 4552987422238002265}
   - {fileID: 5661887346093719547}
   - {fileID: 4552987422689875113}
   - {fileID: 4552987422501074418}
@@ -1390,8 +1391,25 @@ MonoBehaviour:
   - {fileID: 6423035519385308164}
   - {fileID: 7285468944633499564}
   - {fileID: 616040684700583909}
-  connectedWaypoints: []
+  connectedWaypoints:
+  - {fileID: 4552987423142333480}
+  - {fileID: 4552987422238002270}
+  - {fileID: 1424179599716961088}
+  - {fileID: 4552987422689875115}
   encounter: {fileID: 4552987422548681548}
+--- !u!65 &2097728197056421262
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4552987423566128110}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 40, y: 5, z: 40}
+  m_Center: {x: 0, y: 2.5, z: 0}
 --- !u!1 &4552987423738107780
 GameObject:
   m_ObjectHideFlags: 0

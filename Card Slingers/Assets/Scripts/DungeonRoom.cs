@@ -16,21 +16,26 @@ public class DungeonRoom : MonoBehaviour
     public Vector2 RoomDimensions => _fullDimensions;
     public DungeonRoom[] ConnectedRooms => connectedRooms;
     public Transform[] Nodes => connectionNodes;
+    public Waypoint[] RoomWaypoints => connectedWaypoints;
 
     private void Start()
     {
-        var points = GetComponentsInChildren<Waypoint>();
-        connectedWaypoints = new Waypoint[points.Length];
-        connectedWaypoints = points;
-
         for (int i = 0; i < connectedWaypoints.Length; i++)
         {
             connectedWaypoints[i].SetRoom(this);
         }
     }
 
+    public void SetConnectedRoom(DungeonRoom room, Direction direction, Direction fromDirection)
+    {
+        connectedWaypoints[(int)direction].SetConnectedWaypoint(room.connectedWaypoints[(int)fromDirection]);
+    }
+
     public void OnRoomEntered()
     {
+        PlayerController.SetDestination(transform.position);
+        return;
+
         if (encounter != null) encounter.TriggerCombat();
         else
         {

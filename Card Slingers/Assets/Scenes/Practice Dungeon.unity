@@ -4947,7 +4947,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _neighborWaypoint: {fileID: 186786198}
-  _neighborRoom: {fileID: 0}
+  _room: {fileID: 0}
 --- !u!1001 &321205677
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9988,7 +9988,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _neighborWaypoint: {fileID: 1432570008}
-  _neighborRoom: {fileID: 0}
+  _room: {fileID: 0}
 --- !u!4 &758609304 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 450008, guid: 9830f561f80768b4f92139c1c15bc835, type: 3}
@@ -10055,7 +10055,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _neighborWaypoint: {fileID: 1616525589}
-  _neighborRoom: {fileID: 0}
+  _room: {fileID: 0}
 --- !u!4 &759994360 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 450008, guid: 9830f561f80768b4f92139c1c15bc835, type: 3}
@@ -12884,37 +12884,6 @@ MonoBehaviour:
   collectionChecks: 1
   maxPoolSize: 5
   _particlePrefab: {fileID: 6032245202526686640, guid: ae3cb788d74dcb04cac91e4beaa4dd99, type: 3}
---- !u!1 &957218059
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 957218060}
-  m_Layer: 0
-  m_Name: Waypoints
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &957218060
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 957218059}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 7
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &960192720 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 492316, guid: 07f4a007d7093a64bbbdc962a82b494a, type: 3}
@@ -15743,7 +15712,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _neighborWaypoint: {fileID: 2039511719}
-  _neighborRoom: {fileID: 0}
+  _room: {fileID: 0}
 --- !u!1 &1171342801
 GameObject:
   m_ObjectHideFlags: 0
@@ -15909,8 +15878,8 @@ Transform:
   m_Children:
   - {fileID: 1560102553}
   - {fileID: 153069411}
-  m_Father: {fileID: 2029808012}
-  m_RootOrder: 2
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &1180862002
 BoxCollider:
@@ -15938,7 +15907,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _neighborWaypoint: {fileID: 0}
-  _neighborRoom: {fileID: 0}
+  _room: {fileID: 0}
 --- !u!1 &1185206918
 GameObject:
   m_ObjectHideFlags: 0
@@ -19583,7 +19552,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _neighborWaypoint: {fileID: 753747378}
-  _neighborRoom: {fileID: 0}
+  _room: {fileID: 0}
 --- !u!1001 &1438461421
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23018,10 +22987,10 @@ MonoBehaviour:
   startRoomPrefab: {fileID: 4552987423566128105, guid: 5341a6445ae00764e95fdd2a22366ebf, type: 3}
   dungeonRoomPrefabs:
   - {fileID: 4552987423566128105, guid: 5341a6445ae00764e95fdd2a22366ebf, type: 3}
-  minMainLineRooms: 3
-  maxMainLineRooms: 5
-  minBonusRooms: 1
-  maxBonusRooms: 3
+  minMainLineRooms: 15
+  maxMainLineRooms: 20
+  minBonusRooms: 8
+  maxBonusRooms: 10
   dungeonRooms: []
   mainLineRooms: []
 --- !u!4 &1695420356
@@ -27108,7 +27077,6 @@ Transform:
   m_Children:
   - {fileID: 1365740410}
   - {fileID: 1276708638}
-  - {fileID: 1180862001}
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -27567,7 +27535,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _neighborWaypoint: {fileID: 1168506864}
-  _neighborRoom: {fileID: 0}
+  _room: {fileID: 0}
 --- !u!1001 &2042778062
 PrefabInstance:
   m_ObjectHideFlags: 0
