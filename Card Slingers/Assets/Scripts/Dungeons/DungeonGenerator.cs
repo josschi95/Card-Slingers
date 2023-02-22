@@ -21,6 +21,7 @@ public class DungeonGenerator : MonoBehaviour
 
     [SerializeField] private GameObject _hallwayVertical;
     [SerializeField] private GameObject _hallwayHorizontal;
+    [SerializeField] private GameObject _hallwayCorner;
 
     [Space]
     
@@ -108,7 +109,7 @@ public class DungeonGenerator : MonoBehaviour
 
         StartCoroutine(SpawnRooms(mainRooms, bonusRooms));
 
-        Debug.LogWarning("Check Notes");
+        Debug.LogWarning("Check Notes.");
         /*
          * Going to bed. last thing that I can think of is to build out hallways and nodes as I go along" +
             "rather than at the very end. e.g. When I place a room, I modify its position so that it lines up with whatever" +
@@ -116,6 +117,14 @@ public class DungeonGenerator : MonoBehaviour
 
             Basically once I decide on the tentative placement for the room, then go and check what the hallway will look like, 
             Then modify the position accordingly
+
+
+
+        ok changes have been made.
+        however, I'm geting conflicting results for the number of hallways that need to be made by the crossbar.
+        the crossbar hallway positions are still off, so I added isCrossBar in the create hallway function, use this along with
+        the offset crom connect rooms to reposition thos crossbars
+
         */
     }
 
@@ -166,7 +175,8 @@ public class DungeonGenerator : MonoBehaviour
             dungeonRooms.Add(newRoom);
             mainLineRooms.Add(newRoom);
 
-            ConnectRoomsInLine(previousRoom, newRoom);
+            var offset = ConnectRoomsInLineNew(previousRoom, newRoom);
+            newRoom.transform.position += offset;
             mainLineRoomsToSpawn--;
 
             yield return null;
@@ -217,7 +227,8 @@ public class DungeonGenerator : MonoBehaviour
 
             dungeonRooms.Add(newRoom);
 
-            ConnectRoomsToNearest(roomToConnectTo, newRoom);
+            var offset = ConnectRoomsToNearest(roomToConnectTo, newRoom);
+            newRoom.transform.position += offset;
 
             bonusRooms--;
 
@@ -230,8 +241,7 @@ public class DungeonGenerator : MonoBehaviour
             yield return null;
         }
 
-        //Connect Waypoints
-        ConnectWaypoints();
+        //ConnectWaypoints();
 
         //Close off unused entrances
         for (int i = 0; i < dungeonRooms.Count; i++)
@@ -242,11 +252,12 @@ public class DungeonGenerator : MonoBehaviour
         PlacePlayerStart();
     }
 
-    private void ConnectRoomsToNearest(DungeonRoom roomA, DungeonRoom roomB)
+    private Vector3 ConnectRoomsToNearest(DungeonRoom roomA, DungeonRoom roomB)
     {
         float lowestDistance = int.MaxValue;
-        int indexA = 0;
-        int indexB = 0;
+        int indexA = 0, indexB = 0;
+        var offset = Vector3.zero;
+        int mult = 1;
 
         for (int a = 0; a < roomA.Nodes.Length; a++)
         {
@@ -262,44 +273,277 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
 
-        roomA.ConnectedRooms[indexA] = roomB;
-        roomB.ConnectedRooms[indexB] = roomA;
+        //roomA.ConnectedRooms[indexA] = roomB;
+        //roomB.ConnectedRooms[indexB] = roomA;
+        ConnectWaypointsNew(roomA, roomB, (Direction)indexA, (Direction)indexB);
+        if (roomA.transform.position.x == roomB.transform.position.x) return offset;
+        if (roomA.transform.position.z == roomB.transform.position.z) return offset;
+        if (indexA >= 2 && indexB >= 2) mult = 2;
+        else if (indexA <= 1 && indexB <= 1) mult = 2;
+
+        if (roomB.transform.position.x > roomA.transform.position.x) offset.x += 2.5f * mult;
+        else offset.x -= 2.5f * mult;
+
+        //room A is higher than room B
+        if (roomA.transform.position.z > roomB.transform.position.z) offset.z -= 2.5f * mult;
+        else offset.z += 2.5f * mult;
+
+
+
+        return offset;
     }
 
-    private void ConnectRoomsInLine(DungeonRoom roomA, DungeonRoom roomB)
+    private Vector3 ConnectRoomsInLineNew(DungeonRoom roomA, DungeonRoom roomB)
     {
+        var offset = Vector3.zero;
+
         //The rooms have the same z value
         if (roomA.transform.position.z == roomB.transform.position.z)
         {
-            roomA.ConnectedRooms[(int)Direction.Right] = roomB;
-            roomB.ConnectedRooms[(int)Direction.Left] = roomA;
-            return;
+            ConnectWaypointsNew(roomA, roomB, Direction.Right, Direction.Left);
+            return offset;
         }
 
+        //Do I need to check for same X as well? Probably
+
         //room B is to the right of room A
+        Direction fromDirection;
+        Direction toDirection;
+
         if (roomB.transform.position.x > roomA.transform.position.x)
         {
-            roomB.ConnectedRooms[(int)Direction.Left] = roomA;
+            toDirection = Direction.Left;
+            offset.x += 2.5f;
         }
         else
         {
-            roomB.ConnectedRooms[(int)Direction.Right] = roomA;
+            toDirection = Direction.Right;
+            offset.x -= 2.5f;
         }
 
         //room A is higher than room B
         if (roomA.transform.position.z > roomB.transform.position.z)
         {
-            roomA.ConnectedRooms[(int)Direction.Down] = roomB;
+            fromDirection = Direction.Down;
+            offset.z -= 2.5f;
         }
         else
         {
-            roomA.ConnectedRooms[(int)Direction.Up] = roomB;
+            fromDirection = Direction.Up;
+            offset.z += 2.5f;
+        }
+
+        ConnectWaypointsNew(roomA, roomB, fromDirection, toDirection);
+        return offset;
+    }
+
+
+    private void ConnectWaypointsNew(DungeonRoom roomA, DungeonRoom roomB, Direction fromDirection, Direction toDirection)
+    {
+        roomA.ConnectedRooms[(int)fromDirection] = roomB;
+        roomB.ConnectedRooms[(int)toDirection] = roomA;
+
+        var pointA = roomA.RoomWaypoints[(int)fromDirection];
+        var pointB = roomB.RoomWaypoints[(int)toDirection];
+
+        if (pointA.ConnectedNode != null) Debug.LogWarning("Point A Already Connected");
+        if (pointB.ConnectedNode != null) Debug.LogWarning("Point B Already Connected");
+
+        var intermediaryPos = Vector3.zero;
+        //Connection requires wrapping around the entire room
+        if (fromDirection == toDirection) Debug.LogError("This should not happen.");
+        //fromDirection is Up or Down, toDirection is Left or Right
+        else if ((int)fromDirection <= 1 && (int)toDirection >= 2)
+        {
+            intermediaryPos.x = pointA.transform.position.x;
+            intermediaryPos.z = pointB.transform.position.z;
+        }
+        //fromDirection is Left or Right, toDirection is Up or Down
+        else if ((int)fromDirection >= 2 && (int)toDirection <= 1)
+        {
+            intermediaryPos.x = pointB.transform.position.x;
+            intermediaryPos.z = pointA.transform.position.z;
+        }
+        //The two nodes are in a straight line Up/Down or Left/Right
+        else if (pointA.transform.position.x == pointB.transform.position.x || pointA.transform.position.z == pointB.transform.position.z) //in a straight line
+        {
+            pointA.SetConnectedWaypoint(pointB);
+            pointB.SetConnectedWaypoint(pointA);
+            CreateHallways(pointA, pointB);
+        }
+        else //The two nodes are staggered
+        {
+            float crossBarXValue = (pointA.transform.position.z + pointB.transform.position.z) * 0.5f; //Find middle point
+            float crossBarZValue = (pointA.transform.position.z + pointB.transform.position.z) * 0.5f; //Find middle point
+
+            Vector3 firstIntermediatePos = SnapPosition(crossBarXValue, 0, crossBarZValue);
+            Vector3 secondIntermediatePos = SnapPosition(crossBarXValue, 0, crossBarZValue);
+
+            if (pointA.transform.position.x != pointB.transform.position.x) //Crossbar is Horizontal
+            {
+                firstIntermediatePos.x = pointA.transform.position.x;
+                secondIntermediatePos.x = pointB.transform.position.x;
+            }
+            else if (pointA.transform.position.z != pointB.transform.position.z) //Crossbar is Vertical
+            {
+                firstIntermediatePos.z = pointA.transform.position.z;
+                secondIntermediatePos.z = pointB.transform.position.z;
+            }
+
+            var firstIntermediate = Instantiate(_intermediaryNode, firstIntermediatePos, Quaternion.identity);
+            var secondIntermediate = Instantiate(_intermediaryNode, secondIntermediatePos, Quaternion.identity);
+
+            firstIntermediate.SetAsIntermediate(secondIntermediate, pointA);
+            secondIntermediate.SetAsIntermediate(firstIntermediate, pointB);
+
+            CreateHallways(firstIntermediate, secondIntermediate, true);
+            CreateHallways(pointA, firstIntermediate);
+            CreateHallways(pointB, secondIntermediate);
+        }
+
+        if (intermediaryPos != Vector3.zero)
+        {
+            var inter = Instantiate(_intermediaryNode, intermediaryPos, Quaternion.identity);
+            inter.SetAsIntermediate(pointA, pointB);
+
+            CreateHallways(pointA, inter);
+            CreateHallways(pointB, inter);
         }
     }
 
-    private void ConnectWaypoints()
+    private void CreateHallways(Waypoint fromPoint, Waypoint toPoint, bool isCrossbar = false)
     {
-        foreach(DungeonRoom room in dungeonRooms)
+        Vector3 spawnPos = Vector3.zero;
+        float offset = 5;
+        //waypoints are vertical
+        if (fromPoint.transform.position.x == toPoint.transform.position.x)
+        {
+            //Get the absolute value for the difference in their position, then divide by 5
+            int hallwaysToSpawn = Mathf.RoundToInt((Mathf.Abs(fromPoint.transform.position.z - toPoint.transform.position.z) * 0.2f));
+            if (isCrossbar)
+            {
+
+            }
+            // fromPoint.transform.position; //spawn from bottom to top
+            //if (toPoint.transform.position.z < fromPoint.transform.position.z) spawnPos = toPoint.transform.position;
+            if (toPoint.transform.position.z < fromPoint.transform.position.z)
+            {
+                spawnPos.z -= 5;
+                offset = -5;
+            }
+            
+            for (int i = 0; i < hallwaysToSpawn; i++)
+            {
+                //var hall = Instantiate(_hallwayVertical, spawnPos, Quaternion.identity, fromPoint.transform);
+                var hall = Instantiate(_hallwayVertical, fromPoint.transform);
+                hall.transform.localPosition = spawnPos;
+                spawnPos.z += offset;
+            }
+        }
+        //wayspoints are horizontal
+        else
+        {
+            //Get the absolute value for the difference in their position, then divide by 5
+            int hallwaysToSpawn = Mathf.RoundToInt((Mathf.Abs(fromPoint.transform.position.x - toPoint.transform.position.x) * 0.2f));
+            if (isCrossbar)
+            {
+
+            }
+            //var spawnPos = fromPoint.transform.position; //spawn from left to right
+            //if (toPoint.transform.position.x < fromPoint.transform.position.x) spawnPos = toPoint.transform.position;
+            if (toPoint.transform.position.x < fromPoint.transform.position.x)
+            {
+                spawnPos.x -= 5;
+                offset = -5;
+            }
+
+            for (int i = 0; i < hallwaysToSpawn; i++)
+            {
+                var hall = Instantiate(_hallwayHorizontal, fromPoint.transform);
+                hall.transform.localPosition = spawnPos;
+                spawnPos.x += offset;
+            }
+        }
+    }
+
+    private void PlacePlayerStart()
+    {
+        var player = GameObject.Find("PlayerController");
+        player.transform.position = transform.position;
+        if (dungeonRooms[0].ConnectedRooms[0] != null) player.transform.eulerAngles = Vector3.zero;
+        else if (dungeonRooms[0].ConnectedRooms[1] != null) player.transform.eulerAngles = new Vector3(0, 180, 0);
+        else if (dungeonRooms[0].ConnectedRooms[2] != null) player.transform.eulerAngles = new Vector3(0, -90, 0);
+        else if (dungeonRooms[0].ConnectedRooms[3] != null) player.transform.eulerAngles = new Vector3(0, 90, 0);
+    }
+    
+    private Vector3 SnapPosition(Vector3 input, float factor = 5)
+    {
+        if (factor == 0) throw new UnityException("Cannot divide by 0!");
+
+        float x = Mathf.Round(input.x / factor) * factor;
+        float y = Mathf.Round(input.y / factor) * factor;
+        float z = Mathf.Round(input.z / factor) * factor;
+
+        return new Vector3(x, y, z);
+    }
+    
+    private Vector3 SnapPosition(float x, float y, float z, float factor = 5)
+    {
+        if (factor == 0) throw new UnityException("Cannot divide by 0!");
+
+        x = Mathf.Round(x / factor) * factor;
+        y = Mathf.Round(y / factor) * factor;
+        z = Mathf.Round(z / factor) * factor;
+
+        return new Vector3(x, y, z);
+    }
+
+    ///////////////////////////////////
+
+    /*private void ConnectRoomsInLine(DungeonRoom roomA, DungeonRoom roomB)
+    {
+        //The rooms have the same z value
+        if (roomA.transform.position.z == roomB.transform.position.z)
+        {
+            ConnectWaypointsNew(roomA, roomB, Direction.Right, Direction.Left);
+            //roomA.ConnectedRooms[(int)Direction.Right] = roomB;
+            //roomB.ConnectedRooms[(int)Direction.Left] = roomA;
+            return;
+        }
+        //Do I need to check for same X as well? Probably
+
+        //room B is to the right of room A
+        Direction fromDirection;
+        Direction toDirection;
+        if (roomB.transform.position.x > roomA.transform.position.x)
+        {
+            //roomB.ConnectedRooms[(int)Direction.Left] = roomA;
+            toDirection = Direction.Left;
+        }
+        else
+        {
+            //roomB.ConnectedRooms[(int)Direction.Right] = roomA;
+            toDirection = Direction.Right;
+        }
+
+        //room A is higher than room B
+        if (roomA.transform.position.z > roomB.transform.position.z)
+        {
+            //roomA.ConnectedRooms[(int)Direction.Down] = roomB;
+            fromDirection = Direction.Down;
+        }
+        else
+        {
+            //roomA.ConnectedRooms[(int)Direction.Up] = roomB;
+            fromDirection = Direction.Up;
+        }
+
+        ConnectWaypointsNew(roomA, roomB, fromDirection, toDirection);
+    }*/
+
+    /*private void ConnectWaypoints()
+    {
+        foreach (DungeonRoom room in dungeonRooms)
         {
             for (int i = 0; i < room.ConnectedRooms.Length; i++)
             {
@@ -386,71 +630,9 @@ public class DungeonGenerator : MonoBehaviour
                 }
             }
         }
-    }
+    }*/
 
-    private void CreateHallways(Waypoint pointA, Waypoint pointB)
-    {
-        //waypoints are vertical
-        if (pointA.transform.position.x == pointB.transform.position.x)
-        {
-            //Get the absolute value for the difference in their position, then divide by 5
-            int hallwaysToSpawn = Mathf.RoundToInt((Mathf.Abs(pointA.transform.position.z - pointB.transform.position.z) * 0.2f));
-            var spawnPos = pointA.transform.position; //spawn from bottom to top
-            if (pointB.transform.position.z < pointA.transform.position.z) spawnPos = pointB.transform.position;
 
-            for (int i = 0; i < hallwaysToSpawn; i++)
-            {
-                Instantiate(_hallwayVertical, spawnPos, Quaternion.identity);
-                spawnPos.z += 5;
-            }
-        }
-        //wayspoints are horizontal
-        else
-        {
-            //Get the absolute value for the difference in their position, then divide by 5
-            int hallwaysToSpawn = Mathf.RoundToInt((Mathf.Abs(pointA.transform.position.x - pointB.transform.position.x) * 0.2f));
-            var spawnPos = pointA.transform.position; //spawn from left to right
-            if (pointB.transform.position.x < pointA.transform.position.x) spawnPos = pointB.transform.position;
-
-            for (int i = 0; i < hallwaysToSpawn; i++)
-            {
-                Instantiate(_hallwayHorizontal, spawnPos, Quaternion.identity);
-                spawnPos.x += 5;
-            }
-        }
-    }
-
-    private void PlacePlayerStart()
-    {
-        var player = GameObject.Find("PlayerController");
-        player.transform.position = transform.position;
-        if (dungeonRooms[0].ConnectedRooms[0] != null) player.transform.eulerAngles = Vector3.zero;
-        else if (dungeonRooms[0].ConnectedRooms[1] != null) player.transform.eulerAngles = new Vector3(0, 180, 0);
-        else if (dungeonRooms[0].ConnectedRooms[2] != null) player.transform.eulerAngles = new Vector3(0, -90, 0);
-        else if (dungeonRooms[0].ConnectedRooms[3] != null) player.transform.eulerAngles = new Vector3(0, 90, 0);
-    }
-    
-    private Vector3 SnapPosition(Vector3 input, float factor = 5)
-    {
-        if (factor == 0) throw new UnityException("Cannot divide by 0!");
-
-        float x = Mathf.Round(input.x / factor) * factor;
-        float y = Mathf.Round(input.y / factor) * factor;
-        float z = Mathf.Round(input.z / factor) * factor;
-
-        return new Vector3(x, y, z);
-    }
-    
-    private Vector3 SnapPosition(float x, float y, float z, float factor = 5)
-    {
-        if (factor == 0) throw new UnityException("Cannot divide by 0!");
-
-        x = Mathf.Round(x / factor) * factor;
-        y = Mathf.Round(y / factor) * factor;
-        z = Mathf.Round(z / factor) * factor;
-
-        return new Vector3(x, y, z);
-    }
 }
 
 public enum Direction { Up, Down, Left, Right}
