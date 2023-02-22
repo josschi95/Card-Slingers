@@ -6,6 +6,16 @@ public class Waypoint : MonoBehaviour, IInteractable
 {
     [SerializeField] protected Waypoint _neighborNode;
     [SerializeField] private DungeonRoom _room;
+    [SerializeField] private bool _hasHallways;
+
+    public DungeonRoom Room => _room;
+    public Waypoint ConnectedNode => _neighborNode;
+    public bool HasHallways => _hasHallways;
+
+    public void OnHallwaysCreated()
+    {
+        _hasHallways = true;
+    }
 
     public void SetRoom(DungeonRoom room)
     {
@@ -15,7 +25,7 @@ public class Waypoint : MonoBehaviour, IInteractable
     public void SetConnectedWaypoint(Waypoint point)
     {
         _neighborNode = point;
-        Debug.DrawLine(transform.position, _neighborNode.transform.position, Color.green, int.MaxValue);
+        //Debug.DrawLine(transform.position, _neighborNode.transform.position, Color.green, int.MaxValue);
 
     }
 

@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18028331, g: 0.2257133, b: 0.3069217, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -4938,6 +4938,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _neighborNode: {fileID: 0}
   _room: {fileID: 0}
+  _hasHallways: 0
 --- !u!1 &1185206918
 GameObject:
   m_ObjectHideFlags: 0
@@ -6582,17 +6583,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0431329ad68457b4f9f59371bb5f60b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _startWaypoint: {fileID: 1180862003}
-  _intermediaryNode: {fileID: 2796625268737473672, guid: e4bb1f10694378e4aa9dbb6e08fe621f, type: 3}
-  startRoomPrefab: {fileID: 4552987423566128105, guid: 5341a6445ae00764e95fdd2a22366ebf, type: 3}
+  TEST_HALF_OFFSET: 1
+  _generateAtStart: 1
+  _usePresetSize: 1
+  _dungeonSize: 0
   dungeonRoomPrefabs:
   - {fileID: 4552987423566128105, guid: fbe80236396fb68498aea4f3e459d2dc, type: 3}
   - {fileID: 4552987423566128105, guid: 5341a6445ae00764e95fdd2a22366ebf, type: 3}
-  minMainLineRooms: 10
-  maxMainLineRooms: 15
-  minBonusRooms: 8
-  maxBonusRooms: 10
-  _minimumOffset: 15
+  _intermediaryNode: {fileID: 2796625268737473672, guid: e4bb1f10694378e4aa9dbb6e08fe621f, type: 3}
+  startRoomPrefab: {fileID: 4552987423566128105, guid: 5341a6445ae00764e95fdd2a22366ebf, type: 3}
+  _hallwayVertical: {fileID: 3098107058568356514, guid: 74e16b1c12a5f4349a4802d27c9ea6ca, type: 3}
+  _hallwayHorizontal: {fileID: 8505325516101539096, guid: 3dfc48b2fc6040a4e974890fde9c1acf, type: 3}
+  minMainLineRooms: 4
+  maxMainLineRooms: 7
+  minBonusRooms: 3
+  maxBonusRooms: 4
+  _minimumOffset: 10
   dungeonRooms: []
   mainLineRooms: []
 --- !u!4 &1695420356

@@ -31,11 +31,6 @@ public class DungeonRoom : MonoBehaviour
         }
     }
 
-    public void SetConnectedRoom(DungeonRoom room, Direction fromDirection, Direction toDirection)
-    {
-        connectedWaypoints[(int)fromDirection].SetConnectedWaypoint(room.connectedWaypoints[(int)toDirection]);
-    }
-
     public void OnConfirmLayout()
     {
         //Disable all unconnected nodes

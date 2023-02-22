@@ -14,8 +14,8 @@ public class IntermediaryNode : Waypoint
         _neighborNode.SetConnectedWaypoint(this);
         _secondNeighbor.SetConnectedWaypoint(this);
 
-        Debug.DrawLine(transform.position, _neighborNode.transform.position, Color.green, int.MaxValue);
-        Debug.DrawLine(transform.position, _secondNeighbor.transform.position, Color.green, int.MaxValue);
+        //Debug.DrawLine(transform.position, _neighborNode.transform.position, Color.green, int.MaxValue);
+        //Debug.DrawLine(transform.position, _secondNeighbor.transform.position, Color.green, int.MaxValue);
     }
 
     public override void OnWaypointReached(Waypoint fromWaypoint)
