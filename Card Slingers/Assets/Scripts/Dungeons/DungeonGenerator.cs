@@ -35,7 +35,7 @@ public class DungeonGenerator : MonoBehaviour
 
     [Space]
 
-    [SerializeField] private int _minimumOffset = 15;
+    [SerializeField] private int _minimumOffset = 5;
 
     [Space]
 
@@ -128,6 +128,13 @@ public class DungeonGenerator : MonoBehaviour
         */
     }
 
+    /*
+     * Ok alternate option.... redo basically everything....
+     * From the previous room, send out a feeler in a given offset, if Physics.OverlapBox is > 0 go to next, otherwise set tentative position
+     * 
+     */
+
+
     public void GenerateDungeon(int minMain, int maxMain, int minBonus, int maxBonus)
     {
         dungeonRooms = new List<DungeonRoom>();
@@ -143,40 +150,80 @@ public class DungeonGenerator : MonoBehaviour
         StartCoroutine(SpawnRooms(mainRoomsToSpawn, bonusRoomsToSpawn));
     }
 
+
+    private bool TrySpawnRoom(DungeonRoom previousRoom, Direction direction)
+    {
+        if (previousRoom.ConnectedRooms[(int)direction] != null) return false;
+
+        var newRoomPrefab = dungeonRoomPrefabs[Random.Range(0, dungeonRoomPrefabs.Length)];
+        var newRoomPosition = previousRoom.transform.position + GetRoomOffset(previousRoom, newRoomPrefab, direction);
+
+
+
+
+
+        return false;
+    }
+
+    private bool NewPositionIsValid(DungeonRoom previousRoom, DungeonRoom newRoom, Direction fromDirection, Vector3 newPosition)
+    {
+        var collidingRooms = Physics.OverlapBox(newPosition, new Vector3(newRoom.RoomDimensions.x * 0.5f, 5, newRoom.RoomDimensions.y * 0.5f));
+        if (collidingRooms.Length > 0) return false; //there is a hallway or another room located here.
+
+        //Next Need to check how to place the hallways, and if there is any overlap with other things, return false
+        var toDirection = fromDirection;
+
+        if (previousRoom.transform.position.z == newPosition.z) //Rooms are horizontally aligned
+        {
+            if (fromDirection == Direction.Right) toDirection = Direction.Left;
+            else if (fromDirection == Direction.Left) toDirection = Direction.Right;
+            else Debug.LogError("Ya done fucked up.");
+            //Try place hallway in a straight line
+
+            
+            //toDirection is opposite fromDirection
+        }
+        else if (previousRoom.transform.position.x == newPosition.x) //Rooms are vertically aligned
+        {
+            if (fromDirection == Direction.Up) toDirection = Direction.Down;
+            else if (fromDirection == Direction.Down) toDirection = Direction.Up;
+            else Debug.LogError("Ya done fucked up.");
+            //Try place hallway in a straight line
+
+            //toDirection is opposite fromDirection
+        }
+        else
+        {
+            if (Random.value >= 0.5f) //make hallway an L
+            {
+
+            }
+            else //make hallway a Z
+            {
+
+            }
+        }
+        
+        return false;
+    }
+
     private IEnumerator SpawnRooms(int mainLineRoomsToSpawn, int bonusRooms)
     {
         //Create the main line of rooms
         while(mainLineRoomsToSpawn > 0)
         {
             var roomPrefab = dungeonRoomPrefabs[Random.Range(0, dungeonRoomPrefabs.Length)];
-
             var previousRoom = dungeonRooms[dungeonRooms.Count - 1];
 
-            var newRoomOffset = Vector3.zero;
-            newRoomOffset.x = previousRoom.RoomDimensions.x * 0.5f + roomPrefab.RoomDimensions.x * 0.5f + _minimumOffset;
-
-            float vertChance = Random.value;
-            var vertOffset = previousRoom.RoomDimensions.y * 0.5f + roomPrefab.RoomDimensions.y * 0.5f + _minimumOffset;
-
-            //Adjust up or down so it doesn't skew too much in the same direction
-            if (previousRoom.gameObject.transform.position.z > 50) vertChance = 0.1f;
-            else if (previousRoom.gameObject.transform.position.z < -50) vertChance = 0.9f;
-            
-            if (vertChance <= 0.2f) newRoomOffset.z = -vertOffset;
-            else if (vertChance <= 0.4f) newRoomOffset.z = -vertOffset * 0.5f;
-            else if (vertChance >= 0.8) newRoomOffset.z = vertOffset;
-            else if (vertChance >= 0.6) newRoomOffset.z = vertOffset * 0.5f;
-
-            //Rounds it to a multiple of 5 for easy connection via tiles
-            newRoomOffset = SnapPosition(newRoomOffset);
-
-            var newRoom = Instantiate(roomPrefab, previousRoom.transform.position + newRoomOffset, Quaternion.identity);
+            var newRoomPosition = previousRoom.transform.position + GetRoomOffset(previousRoom, roomPrefab, Direction.Right);
+            var newRoom = Instantiate(roomPrefab, newRoomPosition, Quaternion.identity);
             
             dungeonRooms.Add(newRoom);
             mainLineRooms.Add(newRoom);
 
-            var offset = ConnectRoomsInLineNew(previousRoom, newRoom);
+            var offset = ConnectRoomsInLine(previousRoom, newRoom);
             newRoom.transform.position += offset;
+
             mainLineRoomsToSpawn--;
 
             yield return null;
@@ -194,36 +241,29 @@ public class DungeonGenerator : MonoBehaviour
             var roomToConnectTo = mainLineRooms[Random.Range(1, mainLineRooms.Count)];
 
             var direction = Direction.Up;
+            /*for (int i = 0; i < roomToConnectTo.ConnectedRooms.Length; i++)
+            {
+                if (roomToConnectTo.ConnectedRooms[i] == null)
+                {
+                    direction = (Direction)i;
+                    break;
+                }
+            }*/
+
+            //Only going Up/Down for right now
             if (roomToConnectTo.ConnectedRooms[(int)direction] != null) direction = Direction.Down;
             if (roomToConnectTo.ConnectedRooms[(int)direction] != null) continue;
 
-            var newRoomOffset = Vector3.zero;
-            var minZ = roomToConnectTo.RoomDimensions.y * 0.5f + roomPrefab.RoomDimensions.y * 0.5f + _minimumOffset;
-            if (direction == Direction.Up) newRoomOffset.z = minZ;
-            else newRoomOffset.z = -minZ;
-
-            float hertChance = Random.value;
-            var hertOffset = roomToConnectTo.RoomDimensions.x * 0.5f + roomPrefab.RoomDimensions.x * 0.5f + _minimumOffset;
-
-            if (hertChance <= 0.2f) newRoomOffset.x = -hertOffset;
-            else if (hertChance <= 0.4f) newRoomOffset.x = -hertOffset * 0.5f;
-            else if (hertChance >= 0.8) newRoomOffset.x = hertOffset;
-            else if (hertChance >= 0.6) newRoomOffset.x = hertOffset * 0.5f;
-
-            //Rounds it to a multiple of 5 for easy connection via tiles
-            newRoomOffset = SnapPosition(newRoomOffset);
-
-            var newPosition = roomToConnectTo.transform.position + newRoomOffset;
-            var collidingRooms = Physics.OverlapBox(newPosition, new Vector3(roomPrefab.RoomDimensions.x * 0.5f, 5, roomPrefab.RoomDimensions.y * 0.5f));
+            var newRoomPosition = roomToConnectTo.transform.position + GetRoomOffset(roomToConnectTo, roomPrefab, direction);
+            var collidingRooms = Physics.OverlapBox(newRoomPosition, new Vector3(roomPrefab.RoomDimensions.x * 0.5f, 5, roomPrefab.RoomDimensions.y * 0.5f));
 
             if (collidingRooms.Length > 0)
             {
-                //Debug.Log("Overlap found. Retring.");
                 retries++;
                 continue;
             }
 
-            var newRoom = Instantiate(roomPrefab, newPosition, Quaternion.identity);
+            var newRoom = Instantiate(roomPrefab, newRoomPosition, Quaternion.identity);
 
             dungeonRooms.Add(newRoom);
 
@@ -293,7 +333,7 @@ public class DungeonGenerator : MonoBehaviour
         return offset;
     }
 
-    private Vector3 ConnectRoomsInLineNew(DungeonRoom roomA, DungeonRoom roomB)
+    private Vector3 ConnectRoomsInLine(DungeonRoom roomA, DungeonRoom roomB)
     {
         var offset = Vector3.zero;
 
@@ -397,7 +437,7 @@ public class DungeonGenerator : MonoBehaviour
             secondIntermediate.SetAsIntermediate(firstIntermediate, pointB);
 
             CreateHallways(firstIntermediate, secondIntermediate, true);
-            CreateHallways(pointA, firstIntermediate);
+            CreateHallways(pointA, firstIntermediate, false, true);
             CreateHallways(pointB, secondIntermediate);
         }
 
@@ -411,23 +451,75 @@ public class DungeonGenerator : MonoBehaviour
         }
     }
 
-    private void CreateHallways(Waypoint fromPoint, Waypoint toPoint, bool isCrossbar = false)
+    private void CreateStraightHallway(Waypoint fromPoint, Waypoint toPoint)
     {
         Vector3 spawnPos = Vector3.zero;
+        Vector3 offset = Vector3.zero;
+        GameObject prefab;
+        int hallwaysToSpawn = 0;
+
+        if (fromPoint.transform.position.x == toPoint.transform.position.x) //Hallway is Up/Down
+        {
+            prefab = _hallwayVertical;
+            hallwaysToSpawn = Mathf.RoundToInt((Mathf.Abs(fromPoint.transform.position.z - toPoint.transform.position.z) * 0.2f));
+
+            //Should I center the hallway prefabs? 
+
+            offset.z = 5;
+
+            if (toPoint.transform.position.z < fromPoint.transform.position.z)
+            {
+
+            }
+
+        }
+        else if (fromPoint.transform.position.z == toPoint.transform.position.z) //Hallway is Left/Right
+        {
+            prefab = _hallwayHorizontal;
+            hallwaysToSpawn = Mathf.RoundToInt((Mathf.Abs(fromPoint.transform.position.x - toPoint.transform.position.x) * 0.2f));
+
+            offset.x = 5;
+        }
+        else Debug.LogError("Cannot use this function for unaligned nodes.");
+
+        for (int i = 0; i < hallwaysToSpawn; i++)
+        {
+
+        }
+
+
+    }
+
+    private void CreateBentHallway(Waypoint fromPoint, Waypoint toPoint)
+    {
+
+    }
+
+    private void CreateCrossBarHallway(Waypoint fromPoint, Waypoint toPoint)
+    {
+
+    }
+
+    private void CreateHallways(Waypoint fromPoint, Waypoint toPoint, bool isCrossbar = false, bool hasCrossbar = false)
+    {
+        Vector3 spawnPos = Vector3.zero;
+        Vector3 spawnPosOffset = Vector3.zero;
+
         float offset = 5;
+
+        var tempList = new List<Vector3>();
+
         //waypoints are vertical
         if (fromPoint.transform.position.x == toPoint.transform.position.x)
         {
             //Get the absolute value for the difference in their position, then divide by 5
             int hallwaysToSpawn = Mathf.RoundToInt((Mathf.Abs(fromPoint.transform.position.z - toPoint.transform.position.z) * 0.2f));
-            if (isCrossbar)
-            {
+            if (hasCrossbar) hallwaysToSpawn--;
+            if (isCrossbar) spawnPos.z += 2.5f;
 
-            }
-            // fromPoint.transform.position; //spawn from bottom to top
-            //if (toPoint.transform.position.z < fromPoint.transform.position.z) spawnPos = toPoint.transform.position;
             if (toPoint.transform.position.z < fromPoint.transform.position.z)
             {
+                if (isCrossbar) spawnPos.z -= 5f;
                 spawnPos.z -= 5;
                 offset = -5;
             }
@@ -445,14 +537,12 @@ public class DungeonGenerator : MonoBehaviour
         {
             //Get the absolute value for the difference in their position, then divide by 5
             int hallwaysToSpawn = Mathf.RoundToInt((Mathf.Abs(fromPoint.transform.position.x - toPoint.transform.position.x) * 0.2f));
-            if (isCrossbar)
-            {
+            if (hasCrossbar) hallwaysToSpawn--;
+            if (isCrossbar) spawnPos.x += 2.5f;
 
-            }
-            //var spawnPos = fromPoint.transform.position; //spawn from left to right
-            //if (toPoint.transform.position.x < fromPoint.transform.position.x) spawnPos = toPoint.transform.position;
             if (toPoint.transform.position.x < fromPoint.transform.position.x)
             {
+                if (isCrossbar) spawnPos.x -= 5f;
                 spawnPos.x -= 5;
                 offset = -5;
             }
@@ -476,6 +566,61 @@ public class DungeonGenerator : MonoBehaviour
         else if (dungeonRooms[0].ConnectedRooms[3] != null) player.transform.eulerAngles = new Vector3(0, 90, 0);
     }
     
+    /// <summary>
+    /// Returns a minimum offset in the given direction plus a random offset in a parallel direction
+    /// </summary>
+    private Vector3 GetRoomOffset(DungeonRoom roomA, DungeonRoom roomB, Direction direction)
+    {
+        var offset = Vector3.zero;
+
+        //Sets the minimum offset between the two rooms
+        switch (direction)
+        {
+            case Direction.Up:
+                offset.z = roomA.RoomDimensions.y * 0.5f + roomB.RoomDimensions.y * 0.5f + _minimumOffset;
+                break;
+            case Direction.Down:
+                offset.z = -(roomA.RoomDimensions.y * 0.5f + roomB.RoomDimensions.y * 0.5f + _minimumOffset);
+                break;
+            case Direction.Left:
+                offset.x = -(roomA.RoomDimensions.x * 0.5f + roomB.RoomDimensions.x * 0.5f + _minimumOffset);
+                break;
+            case Direction.Right:
+                offset.x = roomA.RoomDimensions.x * 0.5f + roomB.RoomDimensions.x * 0.5f + _minimumOffset;
+                break;
+        }
+
+        offset += GetRandomOffset(roomA, roomB, direction);
+        return SnapPosition(offset);
+    }
+
+    private Vector3 GetRandomOffset(DungeonRoom roomA, DungeonRoom roomB, Direction direction)
+    {
+        var offset = Vector3.zero;
+        var offsetChance = Random.value;
+
+        if ((int)direction <= 1) //Up or Down : Modify the X value of the offset
+        {
+            var offsetX = roomA.RoomDimensions.x * 0.5f + roomB.RoomDimensions.x * 0.5f + _minimumOffset;
+            if (offsetChance <= 0.2f) offset.x -= offsetX;
+            else if (offsetChance <= 0.4f) offset.x -= offsetX * 0.5f;
+            //20% chance of having no offset
+            else if (offsetChance >= 0.8f) offset.x += offsetX;
+            else if (offsetChance >= 0.6f) offset.x += offsetX * 0.5f;
+        }
+        else //Left/Right : Modify the Z value of the offset
+        {
+            var offsetZ = roomA.RoomDimensions.y * 0.5f + roomB.RoomDimensions.y * 0.5f + _minimumOffset;
+            if (offsetChance <= 0.2f) offset.z -= offsetZ;
+            else if (offsetChance <= 0.4f) offset.z -= offsetZ * 0.5f;
+            //20% chance of having no offset
+            else if (offsetChance >= 0.8f) offset.z += offsetZ;
+            else if (offsetChance >= 0.6f) offset.z += offsetZ * 0.5f;
+        }
+
+        return offset;
+    }
+
     private Vector3 SnapPosition(Vector3 input, float factor = 5)
     {
         if (factor == 0) throw new UnityException("Cannot divide by 0!");
@@ -631,8 +776,6 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
     }*/
-
-
 }
 
 public enum Direction { Up, Down, Left, Right}
