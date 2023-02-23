@@ -4936,9 +4936,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c74f59dfac8febf4b850c9468476fc42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _point: {fileID: 0}
   _neighborNode: {fileID: 0}
   _room: {fileID: 0}
-  _hasHallways: 0
 --- !u!1 &1185206918
 GameObject:
   m_ObjectHideFlags: 0
@@ -6587,14 +6587,17 @@ MonoBehaviour:
   _generateAtStart: 1
   _usePresetSize: 1
   _dungeonSize: 1
+  startRoomPrefab: {fileID: 4552987423566128105, guid: 5341a6445ae00764e95fdd2a22366ebf, type: 3}
   dungeonRoomPrefabs:
   - {fileID: 4552987423566128105, guid: fbe80236396fb68498aea4f3e459d2dc, type: 3}
   - {fileID: 4552987423566128105, guid: 5341a6445ae00764e95fdd2a22366ebf, type: 3}
-  _intermediaryNode: {fileID: 2796625268737473672, guid: e4bb1f10694378e4aa9dbb6e08fe621f, type: 3}
-  startRoomPrefab: {fileID: 4552987423566128105, guid: 5341a6445ae00764e95fdd2a22366ebf, type: 3}
   _hallwayVertical: {fileID: 3098107058568356514, guid: 74e16b1c12a5f4349a4802d27c9ea6ca, type: 3}
   _hallwayHorizontal: {fileID: 8505325516101539096, guid: 3dfc48b2fc6040a4e974890fde9c1acf, type: 3}
-  _hallwayCorner: {fileID: 0}
+  _corners:
+  - {fileID: 8104045512107636186, guid: 48793899618ceff429344f66efe888a2, type: 3}
+  - {fileID: 8104045512107636186, guid: 3106366dcd2687545bae7658912613ba, type: 3}
+  - {fileID: 8104045512107636186, guid: cfdfe5230a37d6a44855c77f348028d2, type: 3}
+  - {fileID: 8104045512107636186, guid: 19efe416e530af649a1d1362c73e86e2, type: 3}
   minMainLineRooms: 4
   maxMainLineRooms: 7
   minBonusRooms: 3

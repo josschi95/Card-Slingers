@@ -4,18 +4,13 @@ using UnityEngine;
 
 public class Waypoint : MonoBehaviour, IInteractable
 {
+    [SerializeField] protected Transform _point;
     [SerializeField] protected Waypoint _neighborNode;
     [SerializeField] private DungeonRoom _room;
-    [SerializeField] private bool _hasHallways;
 
     public DungeonRoom Room => _room;
     public Waypoint ConnectedNode => _neighborNode;
-    public bool HasHallways => _hasHallways;
-
-    public void OnHallwaysCreated()
-    {
-        _hasHallways = true;
-    }
+    public Transform Point => _point;
 
     public void SetRoom(DungeonRoom room)
     {

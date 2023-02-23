@@ -5,6 +5,8 @@ using UnityEngine;
 public class IntermediaryNode : Waypoint
 {
     [SerializeField] private Waypoint _secondNeighbor;
+    [SerializeField] private Transform _pointSecondary;
+    public Transform PointTwo => _pointSecondary;
 
     public void SetAsIntermediate(Waypoint primary, Waypoint secondary)
     {
