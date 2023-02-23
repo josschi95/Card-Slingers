@@ -45,4 +45,9 @@ public class Waypoint : MonoBehaviour, IInteractable
             PlayerController.SetWaypoint(_neighborNode);
         }
     }
+
+    private void OnDestroy()
+    {
+        if (_neighborNode != null) _neighborNode.SetConnectedWaypoint(null);
+    }
 }

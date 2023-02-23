@@ -23,6 +23,14 @@ public class DungeonRoom : MonoBehaviour
     public Transform[] Nodes => connectionNodes;
     public Waypoint[] RoomWaypoints => connectedWaypoints;
 
+    private void OnEnable()
+    {
+        for (int i = 0; i < connectedWaypoints.Length; i++)
+        {
+            connectedWaypoints[i].SetConnectedWaypoint(null);
+        }
+    }
+
     private void Start()
     {
         for (int i = 0; i < connectedWaypoints.Length; i++)
