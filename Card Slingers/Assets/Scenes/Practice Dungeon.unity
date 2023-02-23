@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028331, g: 0.2257133, b: 0.3069217, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -6586,7 +6586,7 @@ MonoBehaviour:
   TEST_HALF_OFFSET: 1
   _generateAtStart: 1
   _usePresetSize: 1
-  _dungeonSize: 1
+  _dungeonSize: 2
   startRoomPrefab: {fileID: 4552987423566128105, guid: 5341a6445ae00764e95fdd2a22366ebf, type: 3}
   dungeonRoomPrefabs:
   - {fileID: 4552987423566128105, guid: fbe80236396fb68498aea4f3e459d2dc, type: 3}

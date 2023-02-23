@@ -140,48 +140,6 @@ public class DungeonGenerator : MonoBehaviour
         StartCoroutine(SpawnRooms(mainRoomsToSpawn, bonusRoomsToSpawn));
     }
 
-    private bool TryAddRoom(DungeonRoom oldRoom, DungeonRoom newRoomPrefab, Vector3 tentativePosition, out Direction fromDirection, out Direction toDirection, bool inLine = false)
-    {
-        
-        fromDirection = Direction.Up;
-        toDirection = Direction.Up;
-
-        var colls = Physics.OverlapBox(tentativePosition, new Vector3(newRoomPrefab.RoomDimensions.x * 0.5f, 5, newRoomPrefab.RoomDimensions.y * 0.5f));
-        if (colls.Length > 0) return false; //Cannot place this room here, there is another room or hallway
-
-        var newRoom = Instantiate(newRoomPrefab, tentativePosition, Quaternion.identity);
-        tentativePieces.Add(newRoom.gameObject);
-
-        bool success;
-        if (inLine) success = ConnectRoomsInLine(oldRoom, newRoomPrefab);
-        else success = ConnectRoomsToNearest(oldRoom, newRoomPrefab);
-
-        if (!success)
-        {
-            for (int i = 0; i < tentativePieces.Count; i++)
-            {
-                Destroy(tentativePieces[i]);
-            }
-
-            tentativePieces.Clear();
-            return false;
-        }
-        //Now try to find out where the hallways would go
-        //Either ConnectInLine or ConnectToNearest, don't bother with the offset here
-        //This will just set what sides they are connected on
-
-        //Once the sides have been decided, then try to create the hallways, 
-
-
-        //Adjust the new room's position accordingly
-        //If the hallways would overlap, just return false. I could probably try another connection method, but... meh
-
-        dungeonRooms.Add(newRoom);
-        mainLineRooms.Add(newRoom);
-
-        return true;
-    }
-
     private void PurgeAttempts()
     {
         for (int i = 0; i < tentativePieces.Count; i++)
@@ -189,6 +147,7 @@ public class DungeonGenerator : MonoBehaviour
             Destroy(tentativePieces[i]);
         }
         tentativePieces.Clear();
+        Debug.LogWarning("Purge Performed.");
     }
 
     private bool CanAddRoom(DungeonRoom newRoomPrefab, Vector3 tentativePosition)
@@ -196,7 +155,7 @@ public class DungeonGenerator : MonoBehaviour
         var colls = Physics.OverlapBox(tentativePosition, new Vector3(newRoomPrefab.RoomDimensions.x * 0.5f, 5, newRoomPrefab.RoomDimensions.y * 0.5f));
         if (colls.Length > 0)
         {
-            Debug.Log("Cannot place room at " + tentativePosition);
+            //Debug.Log("Cannot place room at " + tentativePosition);
             return false; //Cannot place this room here, there is another room or hallway
         }
         return true;
@@ -208,7 +167,7 @@ public class DungeonGenerator : MonoBehaviour
         //Create the main line of rooms
         while(mainLineRoomsToSpawn > 0)
         {
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.25f);
 
             tentativePieces.Clear();
             var roomPrefab = dungeonRoomPrefabs[Random.Range(0, dungeonRoomPrefabs.Length)];
@@ -216,16 +175,9 @@ public class DungeonGenerator : MonoBehaviour
 
             var newRoomPosition = previousRoom.transform.position + GetRoomOffset(previousRoom, roomPrefab, Direction.Right);
 
-            if (!CanAddRoom(roomPrefab, newRoomPosition))
-            {
-                Debug.Break();
-                continue;
-            }
-            Debug.Log("Can place room.");
+            if (!CanAddRoom(roomPrefab, newRoomPosition)) continue;
 
             var newRoom = Instantiate(roomPrefab, newRoomPosition, Quaternion.identity);
-            dungeonRooms.Add(newRoom);
-            mainLineRooms.Add(newRoom);
             tentativePieces.Add(newRoom.gameObject);
             
             Physics.SyncTransforms();
@@ -233,10 +185,12 @@ public class DungeonGenerator : MonoBehaviour
             if (!ConnectRoomsInLine(previousRoom, newRoom))
             {
                 Debug.Break();
-                //PurgeAttempts();
+                PurgeAttempts();
                 continue;
             }
 
+            dungeonRooms.Add(newRoom);
+            mainLineRooms.Add(newRoom);
             mainLineRoomsToSpawn--;
             yield return null;
         }
@@ -245,41 +199,37 @@ public class DungeonGenerator : MonoBehaviour
         //Add on side rooms to the main line
         while (bonusRooms > 0)
         {
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.25f);
 
-            Debug.LogWarning("Everything seems to work okay until I get to this point.");
-            if (retries > 10) yield break; //just stop any infinite loops
+            if (retries > 10) bonusRooms = 0; //just stop any infinite loops
             tentativePieces.Clear();
             var roomPrefab = dungeonRoomPrefabs[Random.Range(0, dungeonRoomPrefabs.Length)];
 
             //Don't add any bonus rooms to the start room
             var roomToConnectTo = mainLineRooms[Random.Range(1, mainLineRooms.Count)];
 
-            var direction = Direction.Up;
-
-            //Only going Up/Down for right now
+            var direction = Direction.Up; //Sure ain't pretty, but it works I think?
             if (roomToConnectTo.ConnectedRooms[(int)direction] != null) direction = Direction.Down;
+            if (roomToConnectTo.ConnectedRooms[(int)direction] != null) direction = Direction.Left;
+            if (roomToConnectTo.ConnectedRooms[(int)direction] != null) direction = Direction.Right;
             if (roomToConnectTo.ConnectedRooms[(int)direction] != null) continue;
 
             var newRoomPosition = roomToConnectTo.transform.position + GetRoomOffset(roomToConnectTo, roomPrefab, direction);
             
             if (!CanAddRoom(roomPrefab, newRoomPosition))
             {
-                Debug.Log("Cannot place room at " + newRoomPosition);
-                Debug.Break();
                 retries++;
                 continue;
             }
 
             var newRoom = Instantiate(roomPrefab, newRoomPosition, Quaternion.identity);
-            dungeonRooms.Add(newRoom);
             tentativePieces.Add(newRoom.gameObject);
 
             if (!ConnectRoomsToNearest(roomToConnectTo, newRoom))
             {
                 Debug.Log("Cannot place hallways.");
                 Debug.Break();
-                //PurgeAttempts();
+                PurgeAttempts();
                 retries++;
                 continue;
             }
@@ -290,6 +240,7 @@ public class DungeonGenerator : MonoBehaviour
             {
                 //Add a second bonus room onto the already existing bonus room
             }
+            dungeonRooms.Add(newRoom);
 
             yield return null;
         }
@@ -301,7 +252,8 @@ public class DungeonGenerator : MonoBehaviour
         }
 
         PlacePlayerStart();
-        Debug.LogWarning("Complete.");
+        Physics.autoSyncTransforms = false;
+        Debug.Log("Complete.");
     }
 
     private bool ConnectRoomsInLine(DungeonRoom roomA, DungeonRoom roomB)
@@ -343,7 +295,7 @@ public class DungeonGenerator : MonoBehaviour
             offset.z += 2.5f;
         }
 
-        roomB.transform.position += offset; //Add offset to align room properly
+        //roomB.transform.position += offset; //Add offset to align room properly
 
         return ConnectWaypoints(roomA, roomB, fromDirection, toDirection);
     }
@@ -369,8 +321,8 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
 
-        //if (indexA >= 2 && indexB >= 2) mult = 2;
-        //else if (indexA <= 1 && indexB <= 1) mult = 2;
+        if (indexA >= 2 && indexB >= 2) mult = 2;
+        else if (indexA <= 1 && indexB <= 1) mult = 2;
 
         if (roomB.transform.position.x > roomA.transform.position.x) offset.x += 2.5f * mult;
         else offset.x -= 2.5f * mult;
@@ -408,13 +360,19 @@ public class DungeonGenerator : MonoBehaviour
             Debug.LogWarning("Point B Already Connected");
             return false;
         }
-        if (fromDirection == toDirection) return false;
+        if (fromDirection == toDirection)
+        {
+            Debug.LogWarning("Cannot connect rooms from same directions.");
+            return false;
+        }
 
         var intermediaryPos = Vector3.zero;
 
         //Nodes are vertically aligned
         if (pointA.transform.position.x == pointB.transform.position.x)
         {
+            //Should be no need to adjust the positions of the two rooms
+
             pointA.SetConnectedWaypoint(pointB);
             pointB.SetConnectedWaypoint(pointA);
             return CreateVerticalHallway(pointA.Point, pointB.Point);
@@ -422,6 +380,8 @@ public class DungeonGenerator : MonoBehaviour
         //Nodes are horizontally aligned
         else if (pointA.transform.position.z == pointB.transform.position.z)
         {
+            //Should be no need to adjust the positions of the two rooms
+
             pointA.SetConnectedWaypoint(pointB);
             pointB.SetConnectedWaypoint(pointA);
             return CreateHorizontalHallway(pointA.Point, pointB.Point);
@@ -429,6 +389,9 @@ public class DungeonGenerator : MonoBehaviour
         //fromDirection is Up/Down, toDirection is Left/Right
         else if ((int)fromDirection <= 1 && (int)toDirection >= 2)
         {
+            //Will need to adjust position of Room B
+            AdjustRoomPosition(roomA, roomB);
+
             intermediaryPos.x = roomA.transform.position.x;
             intermediaryPos.z = roomB.transform.position.z;
 
@@ -442,6 +405,9 @@ public class DungeonGenerator : MonoBehaviour
         //fromDirection is Left/Right, toDirection is Up/Down
         else if ((int)fromDirection >= 2 && (int)toDirection <= 1)
         {
+            //Will need to adjust position of Room B
+            AdjustRoomPosition(roomA, roomB);
+
             intermediaryPos.x = roomB.transform.position.x;
             intermediaryPos.z = roomA.transform.position.z;
 
@@ -455,16 +421,24 @@ public class DungeonGenerator : MonoBehaviour
         //The two nodes are in a staggered Up/Down
         else if ((int)fromDirection <= 1 && (int)toDirection <= 1)
         {
-            //main room going down to a side passage, push it away a little
-            if (toDirection == Direction.Up) 
+            //AdjustRoomPosition(roomA, roomB);
+            if (roomA.transform.position.z > roomB.transform.position.z) roomB.transform.position += Vector3.back * 2.5f;
+            else roomB.transform.position += Vector3.forward * 2.5f;// offset.z += 2.5f;
+
+            float dist = (Mathf.Abs(pointA.Point.position.z - pointB.Point.position.z));
+            if (dist != SnapFloat(dist))
             {
-                //roomB.transform.position += new Vector3(0, 0, -2.5f);
+                if (fromDirection == Direction.Up) roomB.transform.position += Vector3.forward * 2.5f;
+                else roomB.transform.position += Vector3.back * 2.5f;
             }
-            float crossBarZValue = SnapFloat((pointA.transform.position.z + pointB.transform.position.z) * 0.5f); //Find middle point
-            //So if I don't snap it, then the crossbar doesn't line up with anything
-            //If I do snap it, then it doesn't align with Snapped rooms, but does align with non-snapped (2.5f) rooms
+
+            //Base the crossBarZValue on the location of pointA.Point
+            int numHalls = Mathf.FloorToInt((Mathf.Abs(pointA.Point.position.z - pointB.Point.position.z) * 0.2f)) + 1;
+
+            float crossBarZValue = pointA.Point.position.z; //Place initial position to be even with the start point for pointA
+            crossBarZValue +=  (pointA.Point.localPosition.z * 2) * Mathf.RoundToInt(numHalls * 0.5f);
             
-            Vector3 firstMidPos = new Vector3(pointA.Point.position.x, 0, crossBarZValue); //keep x value but snap the z
+            Vector3 firstMidPos = new Vector3(pointA.Point.position.x, 0, crossBarZValue);
             Vector3 secondMidPos = new Vector3(pointB.Point.position.x, 0, crossBarZValue);
 
             IntermediaryNode firstCorner;
@@ -489,18 +463,39 @@ public class DungeonGenerator : MonoBehaviour
             firstIntermediate.SetAsIntermediate(secondIntermediate, pointA);
             secondIntermediate.SetAsIntermediate(firstIntermediate, pointB);
 
-            //Need vertical from A to first intermediate
-            if (!CreateVerticalHallway(pointA.Point, firstIntermediate.Point)) return false;
-            //Need second vertical from B to second intermediate
-            if (!CreateVerticalHallway(pointB.Point, secondIntermediate.Point)) return false;
+            //Need vertical from A to first intermediate, but only if hallway length is at least 1
+            if (firstIntermediate.transform.position != pointA.Point.position)
+            {
+                if (!CreateVerticalHallway(pointA.Point, firstIntermediate.Point, false, true)) return false;
+            }
+            //Need second vertical from B to second intermediate, but only if hallway length is at least 1
+            if (secondIntermediate.transform.position != pointB.Point.position)
+            {
+                if (!CreateVerticalHallway(pointB.Point, secondIntermediate.Point)) return false;
+            }
             //Need horizontal between two intermediates. intermediate's point two is always left/right
             return CreateHorizontalHallway(firstIntermediate.PointTwo, secondIntermediate.PointTwo, true);
         }
         //The two nodes are in a staggered Left/Right
         else if ((int)fromDirection >= 2 && (int)toDirection >= 2)
         {
-            Debug.LogWarning("This should not happen yet.");
-            float crossBarXValue = SnapFloat((pointA.transform.position.z + pointB.transform.position.z) * 0.5f); //Find middle point
+            //Will need to adjust position of Room B
+            if (roomB.transform.position.x > roomA.transform.position.x) roomB.transform.position += Vector3.right * 2.5f;
+            else roomB.transform.position += Vector3.left * 2.5f;
+
+            float dist = (Mathf.Abs(pointA.Point.position.x - pointB.Point.position.x));
+            if (dist != SnapFloat(dist))
+            {
+                if (fromDirection == Direction.Left) roomB.transform.position += Vector3.left * 2.5f;
+                else roomB.transform.position += Vector3.right * 2.5f;
+            }
+
+            //Base the crossBarXValue on the location of pointA.Point
+            int numHalls = Mathf.FloorToInt((Mathf.Abs(pointA.Point.position.x - pointB.Point.position.x) * 0.2f)) + 1;
+
+            float crossBarXValue = pointA.Point.position.x; //Place initial position to be even with the start point for pointA
+            crossBarXValue += (pointA.Point.localPosition.x * 2) * Mathf.RoundToInt(numHalls * 0.5f);
+
             Vector3 firstMidPos = new Vector3(crossBarXValue, 0, pointA.Point.position.z); //keep z value but snap x
             Vector3 secondMidPos = new Vector3(crossBarXValue, 0, pointB.Point.position.z);
 
@@ -526,9 +521,15 @@ public class DungeonGenerator : MonoBehaviour
             secondIntermediate.SetAsIntermediate(firstIntermediate, pointB);
 
             //Need horizontal from A to first intermediate
-            if (!CreateHorizontalHallway(pointA.Point, firstIntermediate.PointTwo)) return false;
+            if (firstIntermediate.transform.position != pointA.Point.position)
+            {
+                if (!CreateHorizontalHallway(pointA.Point, firstIntermediate.PointTwo)) return false;
+            }
             //Need second horizontal from B to second intermediate
-            if (!CreateHorizontalHallway(pointB.Point, secondIntermediate.PointTwo)) return false;
+            if (secondIntermediate.transform.position != pointB.Point.position)
+            {
+                if (!CreateHorizontalHallway(pointB.Point, secondIntermediate.PointTwo)) return false;
+            }
             //Need vertical between two intermediates
             return CreateVerticalHallway(firstIntermediate.Point, secondIntermediate.Point, true);
         }
@@ -540,34 +541,25 @@ public class DungeonGenerator : MonoBehaviour
     }
 
     //Creates the hallway objects, returns false if they would intersect with an existing object
-    private bool CreateVerticalHallway(Transform fromPoint, Transform toPoint, bool isCrossbar = false)
+    private bool CreateVerticalHallway(Transform fromPoint, Transform toPoint, bool isCrossbar = false, bool toCrossbar = false)
     {
         Physics.SyncTransforms();
 
-        int numToSpawn = Mathf.FloorToInt((Mathf.Abs(fromPoint.position.z - toPoint.position.z) * 0.2f)) + 1;
-        if (isCrossbar) numToSpawn--; //crossbar Points are slightly closer
-        if (numToSpawn == 0)
-        {
-            Debug.Log("No rooms to spawn. " + fromPoint.position + ", " + toPoint.position);
-            return true; //This should only happen with narrow Z hallways
-        }
+        int numToSpawn = Mathf.FloorToInt((Mathf.Abs(fromPoint.position.z - toPoint.position.z) * 0.2f));
+        if (!isCrossbar || toCrossbar) numToSpawn++; //crossbar Points are slightly closer
+        if (numToSpawn == 0) return true; //This should only happen with narrow Z hallways
 
         for (int i = 0; i < numToSpawn; i++)
         {
             var pos = fromPoint.position + (fromPoint.localPosition * i * 2);
             if (isCrossbar) pos += fromPoint.localPosition;
 
-            var coll = Physics.OverlapBox(pos, Vector3.one * 0.5f);
-            if (coll.Length > 0)
+            if (Physics.CheckBox(pos + Vector3.up * 2.5f, Vector3.one))
             {
-                for (int c = 0; c < coll.Length; c++)
-                {
-                    Debug.Log(i + " Intersected " + coll[c].name + " located at " + coll[c].gameObject.transform.position + " at " + pos);
-                    DrawBox(pos + Vector3.up * 2.5f, Quaternion.identity, Vector3.one, Color.red);
-                }
+                Debug.Log(i + "(crossbar: " + isCrossbar + ")" + " Intersected at " + pos);
+                DrawBox(pos + Vector3.up * 2.5f, Quaternion.identity, Vector3.one, Color.red);
+                return false; //There is something here
             }
-
-            if (Physics.CheckBox(pos + Vector3.up * 2.5f, Vector3.one)) return false; //There is something here
 
             GameObject hall = Instantiate(_hallwayVertical, pos, Quaternion.identity);
             hall.gameObject.transform.SetParent(fromPoint);
@@ -577,34 +569,27 @@ public class DungeonGenerator : MonoBehaviour
     }
 
     //Creates the hallway objects, returns false if they would intersect with an existing object
-    private bool CreateHorizontalHallway(Transform fromPoint, Transform toPoint, bool isCrossbar = false)
+    private bool CreateHorizontalHallway(Transform fromPoint, Transform toPoint, bool isCrossbar = false, bool toCrossbar = false)
     {
         Physics.SyncTransforms();
 
-        int numToSpawn = Mathf.FloorToInt((Mathf.Abs(fromPoint.position.x - toPoint.position.x) * 0.2f)) + 1;
-        if (isCrossbar) numToSpawn--; //crossbar Points are slightly closer
-        if (numToSpawn == 0)
-        {
-            Debug.Log("No rooms to spawn. " + fromPoint.position + ", " + toPoint.position);
-            return true; //This should only happen with narrow Z hallways
-        }
+        //if (isCrossbar || toCrossbar) numToSpawn--; //crossbar Points are slightly closer
+        //if (numToSpawn == 0) return true; //This should only happen with narrow Z hallways
+        int numToSpawn = Mathf.FloorToInt((Mathf.Abs(fromPoint.position.x - toPoint.position.x) * 0.2f));
+        if (!isCrossbar || toCrossbar) numToSpawn++; //crossbar Points are slightly closer
+        if (numToSpawn == 0) return true; //This should only happen with narrow Z hallways
 
         for (int i = 0; i < numToSpawn; i++)
         {
             var pos = fromPoint.position + (fromPoint.localPosition * i * 2);
             if (isCrossbar) pos += fromPoint.localPosition;
 
-            var coll = Physics.OverlapBox(pos + Vector3.up * 2.5f, Vector3.one * 0.5f);
-            if (coll.Length > 0)
+            if (Physics.CheckBox(pos + Vector3.up * 2.5f, Vector3.one))
             {
-                for (int c = 0; c < coll.Length; c++)
-                {
-                    Debug.Log(i + " Intersected " + coll[c].name + " located at " + coll[c].gameObject.transform.position + " at " + pos);
-                    DrawBox(pos + Vector3.up * 2.5f, Quaternion.identity, Vector3.one, Color.red);
-                }
+                Debug.Log(i + "(crossbar: " + isCrossbar + ")" + " Intersected at " + pos);
+                DrawBox(pos + Vector3.up * 2.5f, Quaternion.identity, Vector3.one, Color.red);
+                return false; //There is something here
             }
-
-            if (Physics.CheckBox(pos + Vector3.up * 2.5f, Vector3.one)) return false; //There is something here
 
             GameObject hall = Instantiate(_hallwayHorizontal, pos, Quaternion.identity) as GameObject;
             hall.gameObject.transform.SetParent(fromPoint);
@@ -638,6 +623,19 @@ public class DungeonGenerator : MonoBehaviour
                 return _corners[3]; //coming from left, so need right
             }
         }
+    }
+
+    private void AdjustRoomPosition(DungeonRoom roomA, DungeonRoom roomB)
+    {
+        var offset = Vector3.zero;
+        //Will need to adjust position of Room B
+        if (roomB.transform.position.x > roomA.transform.position.x) offset.x += 2.5f;
+        else offset.x -= 2.5f;
+
+        //room A is higher than room B
+        if (roomA.transform.position.z > roomB.transform.position.z) offset.z -= 2.5f;
+        else offset.z += 2.5f;
+        roomB.transform.position += offset;
     }
 
     /// <summary>
@@ -695,14 +693,32 @@ public class DungeonGenerator : MonoBehaviour
         return offset;
     }
 
-    //Return an int for Direction enum, use -1 for "null" if all are full
-    private int GetOpenNode(DungeonRoom room)
+    private bool CanAddToRoom(DungeonRoom room)
     {
+        if (room == dungeonRooms[0]) return false;
+
         for (int i = 0; i < room.ConnectedRooms.Length; i++)
         {
-            if (room.ConnectedRooms[i] == null) return i;
+            if (room.ConnectedRooms[i] == null) return true;
         }
-        return -1;
+        return false;
+    }
+    
+    //Return an int for Direction enum, use -1 for "null" if all are full
+    private Direction GetOpenNode(DungeonRoom room)
+    {
+        int d = Random.Range(0, 4);
+        if (room.ConnectedRooms[d] == null) return (Direction)d;
+
+        d = Random.Range(0, 4);
+        if (room.ConnectedRooms[d] == null) return (Direction)d;
+
+        for (int i = 0; i < room.ConnectedRooms.Length; i++)
+        {
+            if (room.ConnectedRooms[i] == null) return (Direction)i;
+        }
+
+        throw new UnityException("This is not a valid room!");
     }
 
     private Vector3 SnapPosition(Vector3 input, float factor = 5)
@@ -733,6 +749,7 @@ public class DungeonGenerator : MonoBehaviour
         f = Mathf.Round(f / factor) * factor;
         return f;
     }
+
 
     private void DrawBox(Vector3 pos, Quaternion rot, Vector3 scale, Color c)
     {
