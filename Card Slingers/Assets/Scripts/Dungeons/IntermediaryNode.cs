@@ -20,9 +20,9 @@ public class IntermediaryNode : Waypoint
         //Debug.DrawLine(transform.position, _secondNeighbor.transform.position, Color.green, int.MaxValue);
     }
 
-    public override void OnWaypointReached(Waypoint fromWaypoint)
+    public override Waypoint OnWaypointReached(Waypoint fromWaypoint)
     {
-        if (fromWaypoint == _neighborNode) PlayerController.SetWaypoint(_secondNeighbor);
-        else PlayerController.SetWaypoint(_neighborNode);
+        if (fromWaypoint == _neighborNode) return _secondNeighbor;
+        else return _neighborNode;
     }
 }

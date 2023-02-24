@@ -107,8 +107,9 @@ public class PlayerController : MonoBehaviour
         _animator.SetFloat("speed", 0);
         _isMoving = false;
 
-        point.OnWaypointReached(_currentWaypoint);
+        var nextPoint = point.OnWaypointReached(_currentWaypoint);
         _currentWaypoint = point;
+        if (nextPoint != null) SetPlayerWaypoint(nextPoint);
     }
 
     private IEnumerator MoveToPosition(Vector3 point)

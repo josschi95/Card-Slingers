@@ -8,6 +8,7 @@ public class Waypoint : MonoBehaviour, IInteractable
     [SerializeField] protected Transform _point;
     [SerializeField] protected Waypoint _neighborNode;
     [SerializeField] private DungeonRoom _room;
+    [SerializeField] private ParticleSystem _hallwayFog;
 
     public Direction direction => _direction;
     public DungeonRoom Room => _room;
@@ -21,9 +22,17 @@ public class Waypoint : MonoBehaviour, IInteractable
 
     public void SetConnectedWaypoint(Waypoint point)
     {
+        if (point != null && _neighborNode != null && point != _neighborNode)
+        {
+            Debug.LogWarning("Changing neighbor node");
+            Debug.DrawLine(transform.position, _neighborNode.transform.position, Color.red, int.MaxValue);
+        }
         _neighborNode = point;
-        //Debug.DrawLine(transform.position, _neighborNode.transform.position, Color.green, int.MaxValue);
-
+        if (_neighborNode != null)
+        {
+            //Debug.DrawLine(transform.position, _neighborNode.transform.position, Color.green, int.MaxValue);
+        }
+       
     }
 
     public void OnLeftClick()
@@ -36,16 +45,16 @@ public class Waypoint : MonoBehaviour, IInteractable
         //Do nothing
     }
 
-    public virtual void OnWaypointReached(Waypoint fromWaypoint)
+    public virtual Waypoint OnWaypointReached(Waypoint fromWaypoint)
     {
+        _hallwayFog.Stop();
+
         if (fromWaypoint == _neighborNode)
         {
-            _room.OnRoomEntered();
+            _room.OnRoomEntered(_direction);
+            return null;
         }
-        else
-        {
-            PlayerController.SetWaypoint(_neighborNode);
-        }
+        else return _neighborNode;
     }
 
     private void OnDestroy()
