@@ -21,13 +21,29 @@ public class DungeonRoom : MonoBehaviour
     public Vector2 RoomDimensions => _fullDimensions;
     public DungeonRoom[] ConnectedRooms => connectedRooms;
     public Transform[] Nodes => connectionNodes;
-    public Waypoint[] RoomWaypoints => connectedWaypoints;
+    public Waypoint[] Waypoints => connectedWaypoints;
 
     private void OnEnable()
     {
         for (int i = 0; i < connectedWaypoints.Length; i++)
         {
             connectedWaypoints[i].SetConnectedWaypoint(null);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        for (int i = 0; i < connectedRooms.Length; i++)
+        {
+            if (connectedRooms[i] == null) continue;
+
+            for (int x = 0; x < connectedRooms[i].ConnectedRooms.Length; x++)
+            {
+                if (connectedRooms[i].ConnectedRooms[x] == this)
+                {
+                    connectedRooms[i].ConnectedRooms[x] = null;
+                }
+            }
         }
     }
 

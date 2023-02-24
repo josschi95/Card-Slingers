@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class Waypoint : MonoBehaviour, IInteractable
 {
+    [SerializeField] private Direction _direction;
     [SerializeField] protected Transform _point;
     [SerializeField] protected Waypoint _neighborNode;
     [SerializeField] private DungeonRoom _room;
 
+    public Direction direction => _direction;
     public DungeonRoom Room => _room;
     public Waypoint ConnectedNode => _neighborNode;
     public Transform Point => _point;

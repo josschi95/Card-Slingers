@@ -319,6 +319,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c74f59dfac8febf4b850c9468476fc42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _direction: 1
   _point: {fileID: 8380057516611917866}
   _neighborNode: {fileID: 0}
   _room: {fileID: 0}
@@ -542,6 +543,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c74f59dfac8febf4b850c9468476fc42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _direction: 3
   _point: {fileID: 534298954756415420}
   _neighborNode: {fileID: 0}
   _room: {fileID: 0}
@@ -605,6 +607,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c74f59dfac8febf4b850c9468476fc42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _direction: 0
   _point: {fileID: 4474393977852790573}
   _neighborNode: {fileID: 0}
   _room: {fileID: 0}
@@ -824,6 +827,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c74f59dfac8febf4b850c9468476fc42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _direction: 2
   _point: {fileID: 8178388437319881952}
   _neighborNode: {fileID: 0}
   _room: {fileID: 0}
