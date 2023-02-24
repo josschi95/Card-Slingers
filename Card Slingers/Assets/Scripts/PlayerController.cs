@@ -12,7 +12,8 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private Waypoint _currentWaypoint;
     [SerializeField] private CommanderSO playerCommander;
-    [SerializeField] private float inputSensitivity = 50f;
+    [SerializeField] private float _inputSensitivity = 7.5f;
+    [SerializeField] private float _rotationSpeed = 10f;
     [SerializeField] private Transform _deckPocket;
 
     public Transform DeckPocket => _deckPocket;
@@ -50,7 +51,7 @@ public class PlayerController : MonoBehaviour
     private void RotatePlayer()
     {
         if (_inCombat || _isMoving) return;
-        transform.localEulerAngles += rotationInput * inputSensitivity * Time.deltaTime;
+        transform.localEulerAngles += rotationInput * 10 * _inputSensitivity * Time.deltaTime;
     }
 
     private void OnDestroy()
@@ -96,7 +97,7 @@ public class PlayerController : MonoBehaviour
     {
         _isMoving = true;
 
-        while (Vector3.Distance(transform.position, point.transform.position) > 0.1f)
+        while (Vector3.Distance(transform.position, point.transform.position) > 0.15f)
         {
             _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
             FaceTarget(point.transform.position);
@@ -104,19 +105,18 @@ public class PlayerController : MonoBehaviour
         }
 
         transform.position = point.transform.position;
-        _animator.SetFloat("speed", 0);
-        _isMoving = false;
-
+        _isMoving = false; //set to false so SetPlayerWaypoint/SetPlayerDestination can be called
         var nextPoint = point.OnWaypointReached(_currentWaypoint);
-        _currentWaypoint = point;
+        _currentWaypoint = point; //Set this after reaching the destination
         if (nextPoint != null) SetPlayerWaypoint(nextPoint);
+        else _animator.SetFloat("speed", 0);
     }
 
     private IEnumerator MoveToPosition(Vector3 point)
     {
         _isMoving = true;
 
-        while (Vector3.Distance(transform.position, point) > 0.1f)
+        while (Vector3.Distance(transform.position, point) > 0.15f)
         {
             _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
             FaceTarget(point);
@@ -132,7 +132,7 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 direction = (pos - transform.position).normalized;
         Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * _rotationSpeed);
     }
     #endregion
 

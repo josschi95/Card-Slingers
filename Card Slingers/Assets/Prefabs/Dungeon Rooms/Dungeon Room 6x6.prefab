@@ -479,7 +479,7 @@ MonoBehaviour:
   _direction: 1
   _point: {fileID: 4888281182330008360}
   _neighborNode: {fileID: 0}
-  _room: {fileID: 0}
+  _room: {fileID: 4552987423566128105}
   _hallwayFog: {fileID: 8458046878472332280}
 --- !u!65 &4552987422238002264
 BoxCollider:
@@ -740,7 +740,7 @@ MonoBehaviour:
   _direction: 3
   _point: {fileID: 5904619462599194852}
   _neighborNode: {fileID: 0}
-  _room: {fileID: 0}
+  _room: {fileID: 4552987423566128105}
   _hallwayFog: {fileID: 7013390168345033751}
 --- !u!65 &4552987422689875112
 BoxCollider:
@@ -805,7 +805,7 @@ MonoBehaviour:
   _direction: 0
   _point: {fileID: 1419385923882579512}
   _neighborNode: {fileID: 0}
-  _room: {fileID: 0}
+  _room: {fileID: 4552987423566128105}
   _hallwayFog: {fileID: 3801977655016395175}
 --- !u!65 &4552987423142333481
 BoxCollider:
@@ -999,7 +999,7 @@ MonoBehaviour:
   _direction: 2
   _point: {fileID: 7463970213952916651}
   _neighborNode: {fileID: 0}
-  _room: {fileID: 0}
+  _room: {fileID: 4552987423566128105}
   _hallwayFog: {fileID: 5276697249054326948}
 --- !u!65 &3980487918759868311
 BoxCollider:

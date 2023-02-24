@@ -29,7 +29,8 @@ public class DungeonRoom : MonoBehaviour
     {
         for (int i = 0; i < _waypoints.Length; i++)
         {
-            _waypoints[i].SetConnectedWaypoint(null);
+            _waypoints[i].SetRoom(this);
+            //_waypoints[i].SetConnectedWaypoint(null);
         }
     }
 
@@ -49,27 +50,17 @@ public class DungeonRoom : MonoBehaviour
         }
     }
 
-    private void Start()
-    {
-        for (int i = 0; i < _waypoints.Length; i++)
-        {
-            _waypoints[i].SetRoom(this);
-        }
-    }
-
     public void OnConfirmLayout()
     {
         _fogOfWar.SetActive(true);
-        //Disable all unconnected nodes
-        //Enable walls in place of the unconnected Nodes
         for (int i = 0; i < connectedRooms.Length; i++)
         {
             _entranceParents[i].SetActive(connectedRooms[i] != null);
             _closedEntranceParents[i].SetActive(connectedRooms[i] == null);
 
-            if (_waypoints[i].ConnectedNode == null)
+            if (connectedRooms[i] != null && _waypoints[i].ConnectedNode == null)
             {
-                Debug.LogError("Lost Reference to Neighor Node " + transform.position);
+                Debug.LogError("Lost Reference to Neighor Node " + transform.position + ", " + _waypoints[i].direction);
             }
         }
     }

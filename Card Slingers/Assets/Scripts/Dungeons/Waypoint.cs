@@ -27,6 +27,9 @@ public class Waypoint : MonoBehaviour, IInteractable
             Debug.LogWarning("Changing neighbor node");
             Debug.DrawLine(transform.position, _neighborNode.transform.position, Color.red, int.MaxValue);
         }
+        
+        if (point == null) Debug.LogWarning("nulling neighbor node at " + transform.position);
+
         _neighborNode = point;
         if (_neighborNode != null)
         {
@@ -45,6 +48,16 @@ public class Waypoint : MonoBehaviour, IInteractable
         //Do nothing
     }
 
+    private void OnMouseEnter()
+    {
+        
+    }
+
+    private void OnMouseExit()
+    {
+        
+    }
+
     public virtual Waypoint OnWaypointReached(Waypoint fromWaypoint)
     {
         _hallwayFog.Stop();
@@ -59,6 +72,6 @@ public class Waypoint : MonoBehaviour, IInteractable
 
     private void OnDestroy()
     {
-        if (_neighborNode != null) _neighborNode.SetConnectedWaypoint(null);
+        //if (_neighborNode != null) _neighborNode.SetConnectedWaypoint(null);
     }
 }
