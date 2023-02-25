@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Barrel Bearer Override Controller
+  m_Controller: {fileID: 9100000, guid: 788242f339864b74ba7077b77124d36d, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: f8c2d6a0ce3bc2d40b090cd67dd23862, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: 00840c2b737697649b308143556b6320, type: 3}
+  - m_OriginalClip: {fileID: 7400010, guid: 5fe51830c6e12034892d1041e85357b6, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: 650f9009bce40b641b8eac4905985b1e, type: 3}
+  - m_OriginalClip: {fileID: 7400000, guid: 14bb6cc2cfe209c44ab485feff86d45d, type: 3}
+    m_OverrideClip: {fileID: 7400006, guid: 4af09ae521601c24cbfa8210ea4e50c5, type: 3}
+  - m_OriginalClip: {fileID: 7400000, guid: cee75325fcf65b0438ff52bb277d175d, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: b33e277ba31608d489e1f592a86136ff, type: 2}
+  - m_OriginalClip: {fileID: 7400016, guid: 5fe51830c6e12034892d1041e85357b6, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: 9aa44444c2ee0814180ea4ab48b2b091, type: 3}

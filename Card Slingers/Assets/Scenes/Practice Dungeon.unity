@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18028331, g: 0.2257133, b: 0.3069217, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -6600,10 +6600,10 @@ MonoBehaviour:
   - {fileID: 8104045512107636186, guid: 3106366dcd2687545bae7658912613ba, type: 3}
   - {fileID: 8104045512107636186, guid: cfdfe5230a37d6a44855c77f348028d2, type: 3}
   - {fileID: 8104045512107636186, guid: 19efe416e530af649a1d1362c73e86e2, type: 3}
-  minMainLineRooms: 15
-  maxMainLineRooms: 20
-  minBonusRooms: 25
-  maxBonusRooms: 30
+  minRooms: 5
+  maxRooms: 7
+  minCombats: 0
+  maxCombats: 0
   dungeonRooms: []
   tentativePieces: []
 --- !u!4 &1695420356
