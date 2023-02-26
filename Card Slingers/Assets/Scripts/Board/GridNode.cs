@@ -60,7 +60,7 @@ public class GridNode : MonoBehaviour, IInteractable
     public int occupantPower { get; private set; }
     #endregion
 
-    #region - Pathfinding Variables -
+    #region - Pathfinding Properties -
     public int gridX { get; private set; }
     public int gridZ { get; private set; }
     public bool isPlayerNode { get; private set; } //located on player half of the grid
@@ -70,8 +70,6 @@ public class GridNode : MonoBehaviour, IInteractable
     public int fCost; //the current best guess as to the cost of the path
     public GridNode cameFromNode;
     #endregion
-
-    //-----------------------//
 
     #region - Pooling -
     public void SetPool(IObjectPool<GridNode> pool) => _pool = pool;

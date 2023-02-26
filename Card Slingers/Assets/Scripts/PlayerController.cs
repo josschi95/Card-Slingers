@@ -4,18 +4,22 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    private static PlayerController instance;
+    public delegate void OnRoomEnteredCallback(DungeonRoom room);
+    public OnRoomEnteredCallback onRoomEntered;
+
+    public static PlayerController instance;
     private void Awake()
     {
         instance = this;
     }
 
-    [SerializeField] private Waypoint _currentWaypoint;
     [SerializeField] private CommanderSO playerCommander;
     [SerializeField] private float _inputSensitivity = 7.5f;
     [SerializeField] private float _rotationSpeed = 10f;
     [SerializeField] private Transform _deckPocket;
+    private PathNode _currentWaypoint;
 
+    public DungeonRoom currentRoom { get; private set; }
     public Transform DeckPocket => _deckPocket;
     private Vector3 rotationInput;
 
@@ -23,29 +27,43 @@ public class PlayerController : MonoBehaviour
     private bool _isMoving;
     private bool _inCombat;
 
+    public Transform rayPos;
+    /*
+     * For changing to manual input for movement, basically keep the same set up but the player would have to hold down W to change the animator speed from 0 to 1
+     * Of course there would also have to be a bool for _allowInput so player can't move during combat, or when they're being sent to the middle after combat
+     * This actually works pretty well even when not on a track. The only issue is that I'll then have to add colliders back onto walls
+     * And I can't do that without majorly fucking up the dungeon generation
+    */
+
     private void Start()
     {
         CreateCommander();
         DuelManager.instance.onMatchStarted += delegate { _inCombat = true; };
         DuelManager.instance.onPlayerDefeat += delegate { _inCombat = false; };
         DuelManager.instance.onPlayerVictory += delegate { _inCombat = false; };
+
+        onRoomEntered += (room) => currentRoom = room;
     }
 
-    public void SetStartingWaypoint(Waypoint point)
-    {
-        _currentWaypoint = point;
-        transform.position = _currentWaypoint.transform.position;
-        transform.rotation = _currentWaypoint.transform.rotation;
-    }
+    float _speed;
+    RaycastHit hit;
 
     private void Update()
     {
         rotationInput.y = InputHandler.GetRotationInput();
+        _speed = InputHandler.GetMoveInput().y;
+    }
+
+    private void FixedUpdate()
+    {
+
     }
 
     private void LateUpdate()
     {
         RotatePlayer();
+
+        _animator.SetFloat("speed", _speed);
     }
 
     private void RotatePlayer()
@@ -67,11 +85,11 @@ public class PlayerController : MonoBehaviour
         player.OnAssignCommander(playerCommander);
         player.CommanderCard.OnCommanderSummon();
         _animator = player.CommanderCard.PermanentObject.GetComponent<Animator>();
-        _animator.speed = 2;
+        //_animator.speed = 2;
     }
 
     #region - Movement -
-    public static void SetWaypoint(Waypoint point)
+    public static void SetWaypoint(PathNode point)
     {
         instance.SetPlayerWaypoint(point);
     }
@@ -81,7 +99,7 @@ public class PlayerController : MonoBehaviour
         instance.SetPlayerDestination(destination);
     }
 
-    private void SetPlayerWaypoint(Waypoint point)
+    private void SetPlayerWaypoint(PathNode point)
     {
         if (_isMoving || _inCombat) return;
         StartCoroutine(MoveToWaypoint(point));
@@ -93,7 +111,7 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(MoveToPosition(destination));
     }
 
-    private IEnumerator MoveToWaypoint(Waypoint point)
+    private IEnumerator MoveToWaypoint(PathNode point)
     {
         _isMoving = true;
 
@@ -116,7 +134,7 @@ public class PlayerController : MonoBehaviour
     {
         _isMoving = true;
 
-        while (Vector3.Distance(transform.position, point) > 0.15f)
+        while (Vector3.Distance(transform.position, point) > 0.2f)
         {
             _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
             FaceTarget(point);

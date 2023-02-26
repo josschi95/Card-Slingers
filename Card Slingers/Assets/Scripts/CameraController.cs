@@ -98,7 +98,7 @@ public class CameraController : MonoBehaviour
         else if (_currentView == CameraView.Free)
         {
             //Switch to Aerial
-            var battlefieldPos = BattlefieldManager.instance.Center;
+            var battlefieldPos = BattlefieldManager.instance.Center.position;
             battlefieldPos.y += 25;
             aerialCam.transform.position = battlefieldPos;
 
@@ -149,7 +149,7 @@ public class CameraController : MonoBehaviour
 
     private void HandleFreeCameraZoom()
     {
-        var battlefieldHeight = BattlefieldManager.instance.Center.y + 5;
+        var battlefieldHeight = BattlefieldManager.instance.Center.position.y + 5;
         if (freeCam.transform.position.y <= battlefieldHeight && zoomInput > 0) return; //prevent camera from sliding forward
 
         //Don't change FOV, but actually move the camera in/out 

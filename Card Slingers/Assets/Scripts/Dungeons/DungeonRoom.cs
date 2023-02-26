@@ -4,35 +4,63 @@ using UnityEngine;
 
 public class DungeonRoom : MonoBehaviour
 {
-    public bool TESTING_NO_ENCOUNTER = true;
-
+    [SerializeField] private CombatEncounter _encounter;
     [SerializeField] private Vector2 _fullDimensions;
     [SerializeField] private Vector2Int _boardDimensions;
 
-    [SerializeField] private DungeonRoom[] connectedRooms = new DungeonRoom[4]; // up/down/left/right
-    [SerializeField] private Transform[] connectionNodes = new Transform[4];
-    [SerializeField] private Waypoint[] _waypoints;
     [Space]
+    
+    [SerializeField] private PathNode[] _nodes;
     [SerializeField] private GameObject[] _entranceParents;
     [SerializeField] private GameObject[] _closedEntranceParents;
-    [SerializeField] private CombatEncounter encounter;
+    
+    [Space]
+
+    [SerializeField] private Transform _transform;
+    [SerializeField] private Collider _collider;
     [SerializeField] private GameObject _fogOfWar;
-    [SerializeField] private GameObject TEST_ORIENTATION_MARKER;
 
-    public Vector2Int BoardDimensions => _boardDimensions;
-    public Vector2 RoomDimensions => _fullDimensions;
-    public DungeonRoom[] ConnectedRooms => connectedRooms;
-    public Transform[] Nodes => connectionNodes;
-    public Waypoint[] Waypoints => _waypoints;
+    private DungeonRoom[] connectedRooms = new DungeonRoom[4]; // up/down/left/right
 
-    private void OnEnable()
+    [Space]
+
+    [Space]
+
+    private Vector3 _orientation;
+    private bool _encounterTriggered;
+
+    #region - Properties - 
+    public CombatEncounter Encounter
     {
-        for (int i = 0; i < _waypoints.Length; i++)
+        get => _encounter;
+        set
         {
-            _waypoints[i].SetRoom(this);
-            //_waypoints[i].SetConnectedWaypoint(null);
+            _encounter = value;
         }
     }
+    public Vector2 RoomDimensions => _fullDimensions;
+    public Vector2Int BoardDimensions => _boardDimensions;
+    public PathNode[] Nodes => _nodes;
+    public Transform Transform => _transform;
+    public DungeonRoom[] ConnectedRooms
+    {
+        get => connectedRooms;
+        set
+        {
+            connectedRooms = value;
+        }
+    }
+    public Vector3 Orientation
+    {
+        get => _orientation;
+        private set
+        {
+            _orientation = value;
+        }
+    }
+    #endregion
+
+    public bool TESTING_NO_ENCOUNTER;
 
     private void OnDestroy()
     {
@@ -52,34 +80,37 @@ public class DungeonRoom : MonoBehaviour
 
     public void OnConfirmLayout()
     {
+        _collider.enabled = false;
         _fogOfWar.SetActive(true);
         for (int i = 0; i < connectedRooms.Length; i++)
         {
             _entranceParents[i].SetActive(connectedRooms[i] != null);
             _closedEntranceParents[i].SetActive(connectedRooms[i] == null);
 
-            if (connectedRooms[i] != null && _waypoints[i].ConnectedNode == null)
+            if (connectedRooms[i] != null && _nodes[i].ConnectedNode == null)
             {
-                Debug.LogError("Lost Reference to Neighor Node " + transform.position + ", " + _waypoints[i].direction);
+                Debug.LogError("Lost Reference to Neighor Node " + transform.position + ", " + _nodes[i].direction);
             }
         }
     }
 
     public void OnRoomEntered(Direction direction)
     {
+        PlayerController.instance.onRoomEntered?.Invoke(this);
+
         switch (direction)
         {
             case Direction.Up:
-                TEST_ORIENTATION_MARKER.transform.eulerAngles = Vector3.up * 180;
+                _orientation = Vector3.up * 180;
                 break;
             case Direction.Down:
-                TEST_ORIENTATION_MARKER.transform.eulerAngles = Vector3.zero;
+                _orientation = Vector3.zero;
                 break;
             case Direction.Left:
-                TEST_ORIENTATION_MARKER.transform.eulerAngles = Vector3.up * 90;
+                _orientation = Vector3.up * 90;
                 break;
             case Direction.Right:
-                TEST_ORIENTATION_MARKER.transform.eulerAngles = Vector3.up * -90;
+                _orientation = Vector3.up * -90;
                 break;
         }
 
@@ -91,10 +122,14 @@ public class DungeonRoom : MonoBehaviour
             return;
         }
 
-        if (encounter != null) encounter.TriggerCombat();
-        else
-        {
-            PlayerController.SetDestination(transform.position);
-        }
+        if (_encounter != null && !_encounterTriggered) OnCombatEncounter();
+        else PlayerController.SetDestination(transform.position);
+    }
+
+    private void OnCombatEncounter()
+    {
+        _encounter.TriggerCombat();
+        _encounterTriggered = true;
+        DuelManager.instance.onMatchStarted?.Invoke(_encounter);
     }
 }

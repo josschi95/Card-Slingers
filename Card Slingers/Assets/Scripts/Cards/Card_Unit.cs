@@ -22,7 +22,7 @@ public class Card_Unit : Card_Permanent
     protected bool _canRetaliate;
     private bool _actedThisTurn;
 
-    #region - Public Reference Variables -
+    #region - Properties -
     public int MaxHealth => NetMaxHealth();
     public int CurrentHealth => _currentHealth;
     public int Damage => NetDamage();

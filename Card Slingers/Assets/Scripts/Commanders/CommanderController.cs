@@ -34,7 +34,7 @@ public class CommanderController : MonoBehaviour
     private int _defaultMana = 4;
     private int _handSize = 4;
 
-    #region - Public Variable References -
+    #region - Properties -
     public bool isDrawingCards { get; private set; } //drawing cards, don't trigger raise card
     public CommanderSO CommanderInfo => _commanderInfo;
     public Card_Commander CommanderCard => _commanderCard;
@@ -394,7 +394,7 @@ public class CommanderController : MonoBehaviour
     {
         isMoving = true;
 
-        while (Vector3.Distance(transform.position, node.transform.position) > 0.1f)
+        while (Vector3.Distance(transform.position, node.transform.position) > 0.2f)
         {
             animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
             FaceTarget(node.transform.position);
@@ -425,7 +425,7 @@ public class CommanderController : MonoBehaviour
     {
         Vector3 direction = (pos - transform.position).normalized;
         Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 25f);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 10f);
     }
     #endregion
 

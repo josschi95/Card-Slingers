@@ -5,7 +5,7 @@ using UnityEngine;
 public class DungeonManager : MonoBehaviour
 {
     [SerializeField] private DungeonGenerator _generator;
-    [SerializeField] private Waypoint _startingWaypoint;
+    [SerializeField] private PathNode _startingWaypoint;
 
     [SerializeField] private List<CombatEncounter> encounters = new List<CombatEncounter>();
 

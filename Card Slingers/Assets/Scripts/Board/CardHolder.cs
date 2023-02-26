@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class CardHolder : MonoBehaviour
 {
+    [SerializeField] private Transform _parent;
     [SerializeField] private CardPile _hand, _deck, _traps, _discard, _exile;
     
     public bool IsPlayer
@@ -17,6 +18,8 @@ public class CardHolder : MonoBehaviour
             _exile.isPlayer = value;
         }
     }
+
+    public Transform Parent => _parent;
 
     public Transform Hand => _hand.transform;
     public Transform Deck => _deck.transform;

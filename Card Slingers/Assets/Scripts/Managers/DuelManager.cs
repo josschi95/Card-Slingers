@@ -55,7 +55,7 @@ public class DuelManager : MonoBehaviour
 
     [Space]
 
-    #region - Phase Variables -
+    #region - Phase Fields -
     private Phase _currentPhase;
     private int _turnCount; //total number of turns taken
     private int _cardsInTransition; //prevents phase transition if cards are moving around
@@ -64,8 +64,9 @@ public class DuelManager : MonoBehaviour
     private Coroutine phaseDelayCoroutine; //short delay while cards move
     #endregion
 
-    private BattlefieldManager _battleField;
-    private PlayerCommander _playerCommander;
+    private PlayerController playerController;
+    private BattlefieldManager battleField;
+    private PlayerCommander playerCommander;
     private CombatEncounter _currentEncounter;
     private LineRenderer arcLine;
 
@@ -75,7 +76,7 @@ public class DuelManager : MonoBehaviour
     private List<GridNode> _validTargetNodes = new List<GridNode>(); //used to hold valid nodes for summons and instants
 
 
-    #region - Action Declaration Variables -
+    #region - Action Declaration Fields -
     public bool canDeclareNewAction { get; private set; }
     private bool _waitForTargetNode; //waitinf for a node to be selected to perform an action
     private GridNode _nodeToTarget; //the node that will be targeted to move/attack 
@@ -86,16 +87,17 @@ public class DuelManager : MonoBehaviour
     private bool _waitForValidNode;
     #endregion
 
-    #region - Public Variable References -
+    #region - Properties -
     public CombatEncounter CurrentEncounter => _currentEncounter;
-    public BattlefieldManager Battlefield => _battleField;
-    public PlayerCommander Player_Commander => _playerCommander;
+    public BattlefieldManager Battlefield => battleField;
+    public PlayerCommander Player_Commander => playerCommander;
     public int TurnCount => _turnCount;
     #endregion
 
     private void Start()
     {
-        _battleField = BattlefieldManager.instance;
+        playerController = PlayerController.instance;
+        battleField = BattlefieldManager.instance;
 
         onMatchStarted += OnMatchStart;
         onPlayerVictory += OnPlayerVictory;
@@ -117,7 +119,7 @@ public class DuelManager : MonoBehaviour
 
         arcLine = GetComponent<LineRenderer>();
 
-        _playerCommander = GameObject.Find("PlayerController").GetComponent<PlayerCommander>();
+        playerCommander = GameObject.Find("PlayerController").GetComponent<PlayerCommander>();
     }
 
     private void DebugOnCardMoveStart(Card card)
@@ -158,7 +160,10 @@ public class DuelManager : MonoBehaviour
 
         _turnCount = 1;
         _currentPhase = Phase.Begin;
-        _battleField.CreateGrid(encounter.transform.position, encounter.Dimensions);
+        var room = playerController.currentRoom;
+
+        battleField.CreateGrid(room.Transform.position, room.Orientation, room.BoardDimensions);
+
         CameraController.instance.OnCombatStart();
 
         if (encounter.Commander is MonsterManager monsters) OnMonsterMatchStart(monsters);
@@ -168,7 +173,7 @@ public class DuelManager : MonoBehaviour
     //Initiate a new match //This will also likely take in the battlefield later
     private void OnCommanderMatchStart(OpponentCommander opponent)
     {
-        SetCommanderStartingNode(_playerCommander);
+        SetCommanderStartingNode(playerCommander);
         SetCommanderStartingNode(opponent);
 
         _isPlayerTurn = true;
@@ -178,7 +183,7 @@ public class DuelManager : MonoBehaviour
 
     private void OnMonsterMatchStart(MonsterManager overlord)
     {
-        SetCommanderStartingNode(_playerCommander);
+        SetCommanderStartingNode(playerCommander);
         overlord.OnMatchStart(null); //they don't have cards to play
 
         _isPlayerTurn = true;
@@ -189,7 +194,7 @@ public class DuelManager : MonoBehaviour
     {
         StartCoroutine(SetCommanderCardMat(commander));
         
-        float width = _battleField.Width;
+        float width = battleField.Width;
 
         int nodeZ = 0;
         int nodeX = Mathf.RoundToInt(width * 0.5f);
@@ -198,26 +203,31 @@ public class DuelManager : MonoBehaviour
         if (commander is not PlayerCommander)
         {
             nodeX = Mathf.CeilToInt(width * 0.5f) - 1;
-            nodeZ = _battleField.Depth - 1;
-            frontNode = _battleField.Depth - 2;
+            nodeZ = battleField.Depth - 1;
+            frontNode = battleField.Depth - 2;
         }
 
-        var node = _battleField.GetNode(nodeX, nodeZ);
-        commander.SetStartingNode(node, _battleField.GetNode(nodeX, frontNode).transform.position);
+        var node = battleField.GetNode(nodeX, nodeZ);
+        commander.SetStartingNode(node, battleField.GetNode(nodeX, frontNode).transform.position);
     }
 
     private IEnumerator SetCommanderCardMat(CommanderController commander)
     {
-        var dist = _battleField.Depth * _battleField.CellSize * 0.5f + 3.5f;
+        var dist = battleField.Depth * battleField.CellSize * 0.5f + 3.5f;
         if (commander is PlayerCommander) dist *= -1;
-        var matPos = new Vector3(_battleField.Center.x, _battleField.Center.y - 2, _battleField.Center.z + dist);
+        //var matPos = new Vector3(battleField.Center.position.x, battleField.Center.position.y - 2, battleField.Center.position.z + dist);
 
-        var cardMat = Instantiate(_cardHolderPrefab, matPos, commander.transform.rotation);
+        //var cardMat = Instantiate(_cardHolderPrefab, matPos, battleField.Center.rotation);
+        var cardMat = Instantiate(_cardHolderPrefab, battleField.Center);
+        cardMat.transform.localPosition += new Vector3(0, -1, dist);
+        cardMat.transform.SetParent(null);
 
+        var matPos = cardMat.transform.position;
         matPos.y += 2;
 
-        float timeElapsed = 0, timeToMove = 2.5f;
+        yield return new WaitForSeconds(1.5f); //Let the commander move past their cardholder first
 
+        float timeElapsed = 0, timeToMove = 3f;
         while (timeElapsed < timeToMove)
         {
             cardMat.transform.position = Vector3.Lerp(cardMat.transform.position, matPos, timeElapsed / timeToMove);
@@ -408,7 +418,7 @@ public class DuelManager : MonoBehaviour
     private bool PlayerCanPlayCard(Card card)
     {
         if (!_isPlayerTurn || _currentPhase == Phase.Begin) return false; //not their turn
-        if (card.Commander != _playerCommander) return false; //not their card
+        if (card.Commander != playerCommander) return false; //not their card
         if (!Player_Commander.CanPlayCard(card)) return false; //not enough mana
         if (card is Card_Permanent && _currentPhase == Phase.Attack) return false;
         return true;
@@ -424,11 +434,11 @@ public class DuelManager : MonoBehaviour
     {
         if (card is Card_Permanent)
         {
-            _validTargetNodes.AddRange(_battleField.GetSummonableLanes(card.Commander));
+            _validTargetNodes.AddRange(battleField.GetSummonableLanes(card.Commander));
         }
         else if (card is Card_Spell spell)
         {
-            _validTargetNodes.AddRange(_battleField.GetAllNodesInArea(_playerCommander.CommanderCard.Node, spell.Range));
+            _validTargetNodes.AddRange(battleField.GetAllNodesInArea(playerCommander.CommanderCard.Node, spell.Range));
         }
 
         for (int i = 0; i < _validTargetNodes.Count; i++) _validTargetNodes[i].SetLockedDisplay(GridNode.MaterialType.Blue);
@@ -455,8 +465,8 @@ public class DuelManager : MonoBehaviour
     private IEnumerator DisplayAvailableNodes(Card_Unit unit)
     {
         _waitForTargetNode = true;
-        var walkNodes = _battleField.FindReachableNodes(unit);
-        var atkNodes = _battleField.FindTargetableNodes(unit, unit.Range);
+        var walkNodes = battleField.FindReachableNodes(unit);
+        var atkNodes = battleField.FindTargetableNodes(unit, unit.Range);
         for (int i = 0; i < walkNodes.Count; i++) walkNodes[i].SetLockedDisplay(GridNode.MaterialType.Yellow);
         for (int i = 0; i < atkNodes.Count; i++) atkNodes[i].SetLockedDisplay(GridNode.MaterialType.Red);
 
@@ -492,7 +502,7 @@ public class DuelManager : MonoBehaviour
     public void OnAttackActionConfirmed(Card_Unit unit, GridNode nodeToAttack)
     {
         //Debug.Log("Attack action confirmed");
-        int distanceFromTarget = _battleField.GetDistanceInNodes(unit.Node, nodeToAttack);        
+        int distanceFromTarget = battleField.GetDistanceInNodes(unit.Node, nodeToAttack);        
         if (distanceFromTarget <= unit.Range)
         {
             //Debug.Log("Unit is within range to attack without moving");
@@ -501,7 +511,7 @@ public class DuelManager : MonoBehaviour
         else
         {
             //Debug.Log("target located at " + nodeToAttack.gridX + "," + nodeToAttack.gridZ + " is out of direct range from unit located at " + unit.Node.gridX + "," + unit.Node.gridZ);
-            var nodePath = _battleField.FindNodePath(unit, nodeToAttack, true, true);
+            var nodePath = battleField.FindNodePath(unit, nodeToAttack, true, true);
             if (nodePath != null)
             {
                 if (nodePath[nodePath.Count - 1] == nodeToAttack)
@@ -558,7 +568,7 @@ public class DuelManager : MonoBehaviour
     private void OnMatchEnd()
     {
         StopAllCoroutines(); //exit out of any coroutines going, likely the action resolution one
-        _battleField.DestroyGrid();
+        battleField.DestroyGrid();
     }
 
     //The player won!
@@ -586,7 +596,7 @@ public class DuelManager : MonoBehaviour
     //Move player to center of the battlefield and allow them to select their next destination
     public void CloseOutMatch()
     {
-        PlayerController.SetDestination(_battleField.Center);
+        PlayerController.SetDestination(battleField.Center.position);
         CameraController.instance.OnCombatEnd();
     }
     #endregion

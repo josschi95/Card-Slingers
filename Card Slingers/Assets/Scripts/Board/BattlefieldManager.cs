@@ -11,20 +11,18 @@ public class BattlefieldManager : MonoBehaviour
 
     private const float CELL_SIZE = 5f;
 
-    [SerializeField] private bool CREATE_TEST_CHECKERBOARD;
-
     private GridNode[,] gridArray;
     private Vector2Int _dimensions;
     [SerializeField] private int[] _laneThreatArray;
     [Space]
-    [SerializeField] private Transform _nodeParent;
+    [SerializeField] private Transform _center;
+    [SerializeField] private Transform _cameraHome;
     [SerializeField] private GridNode node; //Move this to being pooled
-    [SerializeField] private Transform _checkerBoardParent;
-    [SerializeField] private GameObject checkerboardWhite, checkerboardGray; //these won't be needed beyond testing
-    private Vector3 _origin;
-    public Vector3 Center { get; private set; } //probably change this to a transform later on to handle rotations with turns
 
-    #region - Public Variable References -
+    public Transform Center => _center;
+    private Vector3 _origin; //The [0,0] position of the grid
+
+    #region - Properties -
     public int Width => _dimensions.x; //These are currently only being used for early testing
     public int Depth => _dimensions.y;
     public float CellSize => CELL_SIZE;
@@ -32,15 +30,16 @@ public class BattlefieldManager : MonoBehaviour
     #endregion
 
     #region - Grid -
-    public void CreateGrid(Vector3 center, Vector2Int dimensions)
+    public void CreateGrid(Vector3 center, Vector3 rotation, Vector2Int dimensions)
     {
-        Center = center;
+        _center.position = center;
         _dimensions = dimensions;
 
         _origin = new Vector3(
-            (-Width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + Center.x, 
-            Center.y, 
-            (-Depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + Center.z);
+            (-Width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + _center.position.x,
+            _center.position.y, 
+            (-Depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + _center.position.z);
+        
 
         float f = Depth; int playerDepth = Mathf.RoundToInt(f * 0.5f);
 
@@ -52,11 +51,9 @@ public class BattlefieldManager : MonoBehaviour
             for (int z = 0; z < gridArray.GetLength(1); z++)
             {
                 var pos = GetGridPosition(x, z);
-                TESTING_CREATE_CHECKERBOARD(pos, x, z);
 
-                pos.y += 0.001f;
-                var go = Instantiate(node, pos, Quaternion.identity);
-                go.transform.SetParent(_nodeParent);
+                pos.y += 0.18f;
+                var go = Instantiate(node, pos, Quaternion.identity, _center);
 
                 gridArray[x, z] = go;
                 gridArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);
@@ -64,8 +61,12 @@ public class BattlefieldManager : MonoBehaviour
             }
         }
 
+        _center.localEulerAngles = rotation;
+
         float initZ = 27 + ((Depth - 6) * 2.5f);
-        CameraController.instance.SetHome(new Vector3(Center.x, Center.y + 12, Center.z - initZ), transform.rotation.y);
+        _cameraHome.localPosition = new Vector3(0, 12, -initZ);
+
+        CameraController.instance.SetHome(_cameraHome.position, _center.localEulerAngles.y);
     }
 
     public void DestroyGrid()
@@ -80,40 +81,8 @@ public class BattlefieldManager : MonoBehaviour
                 //Destroy(node.gameObject);
             }
         }
-    }
 
-    //For testing only
-    private void TESTING_CREATE_CHECKERBOARD(Vector3 pos, int x, int z)
-    {
-        if (!CREATE_TEST_CHECKERBOARD) return;
-
-        var go = checkerboardGray;
-        pos.y -= 0.01f;
-        if (z%2 == 0) //row is even
-        {
-            if (x % 2 == 0) //column is even
-            {
-                //gray
-            }
-            else //column is odd
-            {
-                go = checkerboardWhite;
-            }
-        }
-        else //row is odd
-        {
-            if (x % 2 == 0) //column is even
-            {
-                go = checkerboardWhite;
-            }
-            else //column is odd
-            {
-                //gray
-            }
-        }
-
-        var newgo = Instantiate(go, pos, Quaternion.identity);
-        newgo.transform.SetParent(_checkerBoardParent);
+        _center.localEulerAngles = Vector3.zero;
     }
 
     public GridNode GetNode(int x, int z)
@@ -124,6 +93,11 @@ public class BattlefieldManager : MonoBehaviour
         }
 
         throw new System.Exception("parameter " + x + "," + z + " outside bounds of array");
+    }
+
+    private Vector3 GetLocalGridPosition(int x, int z)
+    {
+        return new Vector3(x * CELL_SIZE, 0, z * CELL_SIZE);
     }
 
     public Vector3 GetGridPosition(int x, int z)
