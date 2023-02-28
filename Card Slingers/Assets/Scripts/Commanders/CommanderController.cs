@@ -7,8 +7,9 @@ public class CommanderController : MonoBehaviour
     public delegate void OnCommanderPhaseChangeCallback(Phase phase);
     public OnCommanderPhaseChangeCallback onNewPhase;
 
-    public delegate void OnManaChangeCallback();
-    public OnManaChangeCallback onManaChange;
+    public delegate void OnStatValueChangedCallback();
+    public OnStatValueChangedCallback onHealthChange;
+    public OnStatValueChangedCallback onManaChange;
 
     public delegate void OnPermanentDestroyedCallback(Card_Permanent card);
     public OnPermanentDestroyedCallback onPermanentDestroyed;
@@ -46,6 +47,7 @@ public class CommanderController : MonoBehaviour
     protected virtual void Start()
     {
         duelManager = DuelManager.instance;
+
         onPermanentDestroyed += SendPermanentToDiscard;
         healthDisplay = GetComponentInChildren<HealthDisplay>();
         healthDisplay.gameObject.SetActive(false);
@@ -55,8 +57,8 @@ public class CommanderController : MonoBehaviour
     #region - Initial Methods -
     public virtual void OnAssignCommander(CommanderSO commanderInfo)
     {
-        this._commanderInfo = commanderInfo;
-        this._commanderCard.AssignCard(commanderInfo, this);
+        _commanderInfo = commanderInfo;
+        _commanderCard.AssignCard(commanderInfo, this);
     }
 
     public virtual void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
@@ -429,6 +431,7 @@ public class CommanderController : MonoBehaviour
     }
     #endregion
 
+    #region - Match End -
     protected virtual void OnPlayerVictory()
     {
         MatcheEnd();
@@ -444,7 +447,7 @@ public class CommanderController : MonoBehaviour
     }
 
     protected void SubscribeToMatchEvents()
-    {       
+    {
         duelManager.onPhaseChange += SetPhase;
         duelManager.onNewTurn += delegate { isTurn = !isTurn; };
 
@@ -466,4 +469,5 @@ public class CommanderController : MonoBehaviour
         if (_cardHolder != null) Destroy(_cardHolder.gameObject, 5f); 
         //get rid of card holders. Probbly lerp them down eventually
     }
+    #endregion
 }

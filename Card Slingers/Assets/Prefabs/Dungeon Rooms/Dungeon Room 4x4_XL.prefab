@@ -1123,7 +1123,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8897249717183943381}
   - component: {fileID: 6374590967672513439}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Combat Marker
   m_TagString: Untagged
   m_Icon: {fileID: 0}

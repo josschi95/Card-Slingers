@@ -148,7 +148,7 @@ public class BattlefieldManager : MonoBehaviour
         return tempList;
     }
 
-    public List<GridNode> GetSummonableLanes(CommanderController commander)
+    public List<GridNode> GetSummonableNodes(CommanderController commander)
     {
         var tempList = new List<GridNode>();
         int halfDepth = Mathf.RoundToInt(Depth * 0.5f);

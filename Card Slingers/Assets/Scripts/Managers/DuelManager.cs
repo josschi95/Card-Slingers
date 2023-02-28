@@ -98,8 +98,10 @@ public class DuelManager : MonoBehaviour
     private void Start()
     {
         playerController = PlayerController.instance;
-        battleField = BattlefieldManager.instance;
+        playerCommander = playerController.GetComponent<PlayerCommander>();
         monsterManager = GetComponent<MonsterManager>();
+        battleField = BattlefieldManager.instance;
+        arcLine = GetComponent<LineRenderer>();
 
         onMatchStarted += OnMatchStart;
         onPlayerVictory += OnPlayerVictory;
@@ -119,40 +121,6 @@ public class DuelManager : MonoBehaviour
 
         onCardInHandSelected += OnCardInHandSelected;
 
-        arcLine = GetComponent<LineRenderer>();
-
-        playerCommander = GameObject.Find("PlayerController").GetComponent<PlayerCommander>();
-    }
-
-    private void DebugOnCardMoveStart(Card card)
-    {
-        if (card != null)
-        {
-            if (card.transform.parent != null)
-            {
-                Debug.Log(card.transform.parent.name + ", " + card.name + " start.");
-            }
-            else
-            {
-                Debug.Log("[NULL] " +  card.name + " start.");
-            }
-        }
-            
-    }
-
-    private void DebugOnCardMoveEnd(Card card)
-    {
-        if (card != null)
-        {
-            if (card.transform.parent != null)
-            {
-                Debug.Log(card.transform.parent.name + ", " + card.name + " end.");
-            }
-            else
-            {
-                Debug.Log("[NULL] " + card.name + " end.");
-            }
-        }
     }
 
     #region - Match Start -
@@ -169,7 +137,7 @@ public class DuelManager : MonoBehaviour
         CameraController.instance.OnCombatStart();
 
         if (encounter is CommanderEncounter commander) OnCommanderMatchStart(commander.Commander);
-        else OnMonsterMatchStart();
+        else OnMonsterMatchStart(encounter as MonsterEncounter);
     }
 
     //Initiate a new match //This will also likely take in the battlefield later
@@ -183,10 +151,10 @@ public class DuelManager : MonoBehaviour
         //onPhaseChange?.Invoke(_currentPhase);
     }
 
-    private void OnMonsterMatchStart()
+    private void OnMonsterMatchStart(MonsterEncounter encounter)
     {
         SetCommanderStartingNode(playerCommander);
-        monsterManager.OnMatchStart(null); //they don't have cards to play
+        monsterManager.OnNewMatchStart(encounter);
 
         _isPlayerTurn = true;
         onPhaseChange?.Invoke(_currentPhase);
@@ -440,7 +408,7 @@ public class DuelManager : MonoBehaviour
     {
         if (card is Card_Permanent)
         {
-            _validTargetNodes.AddRange(battleField.GetSummonableLanes(card.Commander));
+            _validTargetNodes.AddRange(battleField.GetSummonableNodes(card.Commander));
         }
         else if (card is Card_Spell spell)
         {
@@ -575,6 +543,7 @@ public class DuelManager : MonoBehaviour
     {
         StopAllCoroutines(); //exit out of any coroutines going, likely the action resolution one
         battleField.DestroyGrid();
+        monsterManager.ClearEncounter(); //Clears all cards and wipes board
     }
 
     //The player won!
@@ -604,6 +573,39 @@ public class DuelManager : MonoBehaviour
     {
         PlayerController.SetDestination(battleField.Center.position);
         CameraController.instance.OnCombatEnd();
+    }
+    #endregion
+
+    #region - Debug -
+    private void DebugOnCardMoveStart(Card card)
+    {
+        if (card != null)
+        {
+            if (card.transform.parent != null)
+            {
+                Debug.Log(card.transform.parent.name + ", " + card.name + " start.");
+            }
+            else
+            {
+                Debug.Log("[NULL] " + card.name + " start.");
+            }
+        }
+
+    }
+
+    private void DebugOnCardMoveEnd(Card card)
+    {
+        if (card != null)
+        {
+            if (card.transform.parent != null)
+            {
+                Debug.Log(card.transform.parent.name + ", " + card.name + " end.");
+            }
+            else
+            {
+                Debug.Log("[NULL] " + card.name + " end.");
+            }
+        }
     }
     #endregion
 }

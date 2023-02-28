@@ -45,7 +45,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5939385793568137484}
   - component: {fileID: 8888892885477147387}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Combat Marker
   m_TagString: Untagged
   m_Icon: {fileID: 0}

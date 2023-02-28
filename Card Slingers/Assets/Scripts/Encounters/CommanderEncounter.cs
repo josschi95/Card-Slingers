@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "New Commander Encounter", menuName = "Scriptable Objects/Commander Encounter")]
+[CreateAssetMenu(fileName = "New Commander Encounter", menuName = "Scriptable Objects/Encounters/Commander Encounter")]
 public class CommanderEncounter : CombatEncounter
 {
     [SerializeField] private CommanderSO enemyCommander;

@@ -11,9 +11,36 @@ public class CombatGenerator : MonoBehaviour
 
     public bool isComplete { get; private set; }
 
+    public void GenerateCombats(DungeonRoom[] dungeonRooms, DungeonFeatures features)
+    {
+        StartCoroutine(PlaceCombats(dungeonRooms, features));
+    }
+
     public void GenerateCombats(DungeonRoom[] dungeonRooms)
     {
         StartCoroutine(PlaceCombats(dungeonRooms));
+    }
+
+    private IEnumerator PlaceCombats(DungeonRoom[] dungeonRooms, DungeonFeatures features)
+    {
+        isComplete = false;
+
+        int combats = Random.Range(features.minCombats, features.maxCombats + 1);
+        combats = Mathf.Clamp(combats, 0, Mathf.RoundToInt((dungeonRooms.Length - 1) * 0.65f));
+
+        while (combats > 0)
+        {
+            var room = dungeonRooms[Random.Range(1, dungeonRooms.Length)];
+            if (room.Encounter != null) continue;
+
+            room.Encounter = _encounters[Random.Range(0, _encounters.Length)];
+            DrawDebugBox(room.Transform.position + Vector3.up * 3f, Quaternion.identity, new Vector3(room.RoomDimensions.x + 1, 6f, room.RoomDimensions.y + 1), Color.yellow);
+
+            combats--;
+            yield return null;
+        }
+
+        isComplete = true;
     }
 
     private IEnumerator PlaceCombats(DungeonRoom[] dungeonRooms)

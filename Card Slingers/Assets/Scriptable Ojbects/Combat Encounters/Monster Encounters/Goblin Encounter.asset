@@ -9,8 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e4c287bf7aba754e9f5822a436ccefe, type: 3}
-  m_Name: Test Commander Encounter
+  m_Script: {fileID: 11500000, guid: e3cc3a008fac0a1449a659464f2df25e, type: 3}
+  m_Name: Goblin Encounter
   m_EditorClassIdentifier: 
-  enemyCommander: {fileID: 11400000, guid: d2ee51e1513bedb47a724860d3ed5e1f, type: 2}
   _battlefieldDimensions: {x: 0, y: 0}
+  _monsterPool:
+  - {fileID: 11400000, guid: 54412063b9561a54382e3451c865ca95, type: 2}

@@ -22,7 +22,7 @@ public class UIManager : MonoBehaviour
         TEST_END_PHASE_BUTTON.onClick.AddListener(delegate
         {
             Debug.Log("TEST END PHASE");
-            DuelManager.instance.OnCurrentPhaseFinished();
+            duelManager.OnCurrentPhaseFinished();
         });
     }
     #endregion
@@ -32,6 +32,9 @@ public class UIManager : MonoBehaviour
     {
         instance = this;
     }
+
+    private DuelManager duelManager;
+    private PlayerCommander player;
 
     #region - Commander Banner -
     [Header("Commander Banner")]
@@ -86,31 +89,36 @@ public class UIManager : MonoBehaviour
         gameOverPanel.anchoredPosition = closeOutPanelPos;
 
         hideCardDisplayButton.onClick.AddListener(HideCardDisplay);
-        DuelManager.instance.onMatchStarted += OnMatchStart;
-        DuelManager.instance.onPlayerVictory += delegate { OnPlayerVictory(); };
-        DuelManager.instance.onPlayerDefeat += delegate { OnPlayerDefeat(); };
 
-        DuelManager.instance.onPhaseChange += OnPhaseChange;
-        DuelManager.instance.onNewTurn += delegate { OnNewTurn(); };
+        duelManager = DuelManager.instance;
+        duelManager.onMatchStarted += OnMatchStart;
+        duelManager.onPlayerVictory += delegate { OnPlayerVictory(); };
+        duelManager.onPlayerDefeat += delegate { OnPlayerDefeat(); };
+
+        duelManager.onPhaseChange += OnPhaseChange;
+        duelManager.onNewTurn += delegate { OnNewTurn(); };
 
         endPhaseButton.onClick.AddListener(OnPlayerEndPhase);
-        cancelActionButton.onClick.AddListener(delegate { DuelManager.instance.OnClearAction(); });
+        cancelActionButton.onClick.AddListener(delegate { duelManager.OnClearAction(); });
 
         retreatButton.onClick.AddListener(delegate { GameManager.OnLoadScene("Town"); });
         continueButton.onClick.AddListener(delegate
         {
             StartCoroutine(LerpRectTransform(victoryPanel, closeOutPanelPos, 2f));
-            DuelManager.instance.CloseOutMatch();
+            duelManager.CloseOutMatch();
         });
+
+        player = GameObject.Find("Player Controller").GetComponent<PlayerCommander>();
     }
 
     private void OnMatchStart(CombatEncounter encounter)
     {
         playerTurn = true;
         //Subscribe to events
-        DuelManager.instance.Player_Commander.onManaChange += OnCommanderValuesChanged;
+        player.onHealthChange += OnCommanderValuesChanged;
+        player.onManaChange += OnCommanderValuesChanged;
 
-        playerCommanderName.text = DuelManager.instance.Player_Commander.CommanderInfo.name;
+        playerCommanderName.text = player.CommanderInfo.name;
         if (encounter is CommanderEncounter commander) SetEnemyCommander(commander.Commander);
         else
         {
@@ -129,15 +137,21 @@ public class UIManager : MonoBehaviour
 
         enemyCommander = enemy;
         opponentCommanderName.text = enemyCommander.CommanderInfo.name;
+        enemyCommander.onHealthChange += OnCommanderValuesChanged;
         enemyCommander.onManaChange += OnCommanderValuesChanged;
     }
 
     private void OnMatchEnd()
     {
         //Unsubscribe to events
-        DuelManager.instance.Player_Commander.onManaChange -= OnCommanderValuesChanged;
+        player.onHealthChange -= OnCommanderValuesChanged;
+        player.onManaChange -= OnCommanderValuesChanged;
 
-        if (enemyCommander != null) enemyCommander.onManaChange -= OnCommanderValuesChanged;
+        if (enemyCommander != null)
+        {
+            enemyCommander.onHealthChange -= OnCommanderValuesChanged;
+            enemyCommander.onManaChange -= OnCommanderValuesChanged;
+        }
         enemyCommander = null;
 
         if (lerpBannerCoroutine != null) StopCoroutine(lerpBannerCoroutine);
@@ -159,10 +173,7 @@ public class UIManager : MonoBehaviour
     //Player has selected to end their current phase
     private void OnPlayerEndPhase()
     {
-        if (DuelManager.instance.Player_Commander.isTurn)
-        {
-            DuelManager.instance.OnCurrentPhaseFinished();
-        }
+        if (player.isTurn) duelManager.OnCurrentPhaseFinished();
     }
 
     private void OnNewTurn()
@@ -182,12 +193,12 @@ public class UIManager : MonoBehaviour
 
     private void OnCommanderValuesChanged()
     {
-        playerHealth.text = "[NULL]";
-        playerMana.text = DuelManager.instance.Player_Commander.CurrentMana.ToString();
+        playerHealth.text = player.CommanderCard.CurrentHealth.ToString();
+        playerMana.text = player.CurrentMana.ToString();
         
         if (enemyCommander != null)
         {
-            opponentHealth.text = "[NULL]";
+            playerHealth.text = enemyCommander.CommanderCard.CurrentHealth.ToString();
             opponentMana.text = enemyCommander.CurrentMana.ToString();
         }
     }

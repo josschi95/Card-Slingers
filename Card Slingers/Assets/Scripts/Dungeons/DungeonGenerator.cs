@@ -7,40 +7,42 @@ public class DungeonGenerator : MonoBehaviour
     #region - Fields -
     private const int MINIMUM_OFFSET = 15; //Anything less will cause issues with hallways
 
+    [Header("TESTING")]
+    [SerializeField] private bool _generateAtStart;
+    [SerializeField] private int minRooms;
+    [SerializeField] private int maxRooms;
+    [SerializeField] private bool _useCustomSize;
+
+    [Space]
+
+    [Space]
 
     [SerializeField] private CombatGenerator combatGenerator;
     [SerializeField] private MiniMapController miniMap;
 
     [Space]
 
-    [SerializeField] private bool _generateAtStart;
-    [SerializeField] private bool _usePresetSize;
     [SerializeField] private DungeonSize _dungeonSize;
 
     [Space]
-    [Space]
+
+    [SerializeField] private DungeonRoom[] dungeonRoomPrefabs;
+    [SerializeField] private IntermediaryNode[] _corners;
 
     [SerializeField] private DungeonRoom startRoomPrefab;
-    [SerializeField] private DungeonRoom[] dungeonRoomPrefabs;
-
-    [Space]
 
     [SerializeField] private GameObject _hallwayVertical;
     [SerializeField] private GameObject _hallwayHorizontal;
     [Tooltip("Up/Left, Up/Right, Down/Left, Down/Right")]
-    [SerializeField] private IntermediaryNode[] _corners;
-
-    [Space]
-
-    [SerializeField] private int minRooms;
-    [SerializeField] private int maxRooms;
 
     public bool _isComplete { get; private set; }
 
     [Space]
 
     [SerializeField] private List<DungeonRoom> dungeonRooms;
-    [SerializeField] private List<GameObject> tentativePieces;
+    private List<GameObject> tentativePieces;
+
+    private DungeonFeatures _dungeonPreset;
 
     public enum DungeonSize { Small, Medium, Large }
     private static DungeonFeatures[] _dungeonSizes;
@@ -69,8 +71,8 @@ public class DungeonGenerator : MonoBehaviour
     {
         if (_generateAtStart)
         {
-            if (_usePresetSize) GenerateDungeon(_dungeonSize);
-            else GenerateDungeon(minRooms, maxRooms);
+            if (_useCustomSize) GenerateDungeon(minRooms, maxRooms);
+            else GenerateDungeon(_dungeonSize);
         }
     }
 
@@ -81,11 +83,9 @@ public class DungeonGenerator : MonoBehaviour
         dungeonRooms = new List<DungeonRoom>();
         tentativePieces = new List<GameObject>();
 
-        var features = SMALL_DUNGEON;
-        if (dungeonSize == DungeonSize.Medium) features = MEDIUM_DUNGEON;
-        else if (dungeonSize == DungeonSize.Large) features = LARGE_DUNGEON;
+        _dungeonPreset = _dungeonSizes[(int)dungeonSize];
 
-        int mainRooms = Random.Range(features.minRooms, features.maxRooms + 1);
+        int mainRooms = Random.Range(_dungeonPreset.minRooms, _dungeonPreset.maxRooms + 1);
 
         var startRoom = Instantiate(startRoomPrefab, Vector3.zero, Quaternion.identity, gameObject.transform);
         dungeonRooms.Add(startRoom);
@@ -148,7 +148,9 @@ public class DungeonGenerator : MonoBehaviour
 
         TryConnectLoops();
 
-        combatGenerator.GenerateCombats(dungeonRooms.ToArray());
+        if (_useCustomSize) combatGenerator.GenerateCombats(dungeonRooms.ToArray());
+        else combatGenerator.GenerateCombats(dungeonRooms.ToArray(), _dungeonPreset);
+
         while (!combatGenerator.isComplete) yield return null;
 
         OnDungeonComplete();
@@ -452,7 +454,7 @@ public class DungeonGenerator : MonoBehaviour
 
         miniMap.SetBounds(dungeonRooms.ToArray());
 
-        var player = GameObject.Find("PlayerController").transform;
+        var player = GameObject.Find("Player Controller").transform;
         player.position = transform.position;
         if (dungeonRooms[0].ConnectedRooms[0] != null) player.eulerAngles = Vector3.zero;
         else if (dungeonRooms[0].ConnectedRooms[1] != null) player.eulerAngles = new Vector3(0, 180, 0);
