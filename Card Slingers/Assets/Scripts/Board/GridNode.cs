@@ -16,7 +16,7 @@ public class GridNode : MonoBehaviour, IInteractable
     #endregion
 
     #region - Display -
-    public enum MaterialType { Normal, Blue, Red, Yellow };
+    public enum MaterialType { Normal, Blue, Red, Yellow, Green };
     [SerializeField] private MeshRenderer meshRenderer;
     [SerializeField] private Material[] highlightMats;
     private bool _lockedForDisplay; //ignore mouse movements to change the color

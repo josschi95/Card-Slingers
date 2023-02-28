@@ -51,19 +51,14 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         rotationInput.y = InputHandler.GetRotationInput();
-        _speed = InputHandler.GetMoveInput().y;
-    }
-
-    private void FixedUpdate()
-    {
-
+        //_speed = InputHandler.GetMoveInput().y;
     }
 
     private void LateUpdate()
     {
         RotatePlayer();
 
-        _animator.SetFloat("speed", _speed);
+        //_animator.SetFloat("speed", _speed);
     }
 
     private void RotatePlayer()

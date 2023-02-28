@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+//NOTE: Split this all up into a central UI Manager and what is in here now put into a CombatHUD script
+
 public class UIManager : MonoBehaviour
 {
     #region - TESTING -
@@ -39,6 +41,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Text playerCommanderName, playerHealth, playerMana;
     [SerializeField] private Button endPhaseButton, cancelActionButton;
     [Space]
+    [SerializeField] private GameObject enemyBannerParent;
     [SerializeField] private TMP_Text opponentCommanderName;
     [SerializeField] private TMP_Text opponentHealth, opponentMana;
     private OpponentCommander enemyCommander;
@@ -108,8 +111,11 @@ public class UIManager : MonoBehaviour
         DuelManager.instance.Player_Commander.onManaChange += OnCommanderValuesChanged;
 
         playerCommanderName.text = DuelManager.instance.Player_Commander.CommanderInfo.name;
-        if (encounter.Commander != null) SetEnemyCommander(encounter.Commander);
-
+        if (encounter is CommanderEncounter commander) SetEnemyCommander(commander.Commander);
+        else
+        {
+            enemyBannerParent.SetActive(false);
+        }
         OnCommanderValuesChanged();
 
         phaseBanner.anchoredPosition = phaseBannerPos * Vector2.left;
@@ -119,6 +125,8 @@ public class UIManager : MonoBehaviour
 
     private void SetEnemyCommander(OpponentCommander enemy)
     {
+        enemyBannerParent.SetActive(true);
+
         enemyCommander = enemy;
         opponentCommanderName.text = enemyCommander.CommanderInfo.name;
         enemyCommander.onManaChange += OnCommanderValuesChanged;

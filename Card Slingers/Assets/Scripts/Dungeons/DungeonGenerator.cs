@@ -7,7 +7,11 @@ public class DungeonGenerator : MonoBehaviour
     #region - Fields -
     private const int MINIMUM_OFFSET = 15; //Anything less will cause issues with hallways
 
-    public bool _isComplete { get; private set; }
+
+    [SerializeField] private CombatGenerator combatGenerator;
+    [SerializeField] private MiniMapController miniMap;
+
+    [Space]
 
     [SerializeField] private bool _generateAtStart;
     [SerializeField] private bool _usePresetSize;
@@ -28,17 +32,10 @@ public class DungeonGenerator : MonoBehaviour
 
     [Space]
 
-    [SerializeField] private CombatEncounter[] _encounters;
-
-    [Space]
-
     [SerializeField] private int minRooms;
     [SerializeField] private int maxRooms;
 
-    [Space]
-
-    [SerializeField] private int minCombats;
-    [SerializeField] private int maxCombats;
+    public bool _isComplete { get; private set; }
 
     [Space]
 
@@ -73,7 +70,7 @@ public class DungeonGenerator : MonoBehaviour
         if (_generateAtStart)
         {
             if (_usePresetSize) GenerateDungeon(_dungeonSize);
-            else GenerateDungeon(minRooms, maxRooms, minCombats, maxCombats);
+            else GenerateDungeon(minRooms, maxRooms);
         }
     }
 
@@ -89,7 +86,6 @@ public class DungeonGenerator : MonoBehaviour
         else if (dungeonSize == DungeonSize.Large) features = LARGE_DUNGEON;
 
         int mainRooms = Random.Range(features.minRooms, features.maxRooms + 1);
-        int combats = Random.Range(features.minCombats, features.maxCombats + 1);
 
         var startRoom = Instantiate(startRoomPrefab, Vector3.zero, Quaternion.identity, gameObject.transform);
         dungeonRooms.Add(startRoom);
@@ -98,7 +94,7 @@ public class DungeonGenerator : MonoBehaviour
     }
 
     //This is largely only going to be used for testing I think
-    public void GenerateDungeon(int minMain, int maxMain, int minCombat, int maxCombat)
+    public void GenerateDungeon(int minMain, int maxMain)
     {
         _isComplete = false;
 
@@ -135,7 +131,6 @@ public class DungeonGenerator : MonoBehaviour
 
             Direction toDirection = GetDirectionToNearest(fromRoom, newRoom, fromDirection);
 
-            //if (!ConnectWaypoints(fromRoom, newRoom, fromDirection, toDirection))
             if (!ConnectWaypoints(fromRoom.Nodes[(int)fromDirection], newRoom.Nodes[(int)toDirection]))
             {
                 PurgeAttempts();
@@ -153,7 +148,8 @@ public class DungeonGenerator : MonoBehaviour
 
         TryConnectLoops();
 
-        yield return StartCoroutine(PlaceCombats());
+        combatGenerator.GenerateCombats(dungeonRooms.ToArray());
+        while (!combatGenerator.isComplete) yield return null;
 
         OnDungeonComplete();
     }
@@ -178,7 +174,7 @@ public class DungeonGenerator : MonoBehaviour
 
         var intermediaryPos = Vector3.zero;
         //Nodes are vertically aligned
-        if (fromNode.Point.position.x == toNode.Point.position.x)
+        if (fromNode.Transform.position.x == toNode.Transform.position.x)
         {
             if (CreateHallway(fromNode.Point, toNode.Point, _hallwayVertical))
             {
@@ -189,7 +185,7 @@ public class DungeonGenerator : MonoBehaviour
             return false;
         }
         //Nodes are horizontally aligned
-        else if (fromNode.Point.position.z == toNode.Point.position.z)
+        else if (fromNode.Transform.position.z == toNode.Transform.position.z)
         {
             if (CreateHallway(fromNode.Point, toNode.Point, _hallwayHorizontal))
             {
@@ -445,24 +441,6 @@ public class DungeonGenerator : MonoBehaviour
         }
     }
 
-    private IEnumerator PlaceCombats()
-    {
-        int combats = Random.Range(minCombats, maxCombats + 1);
-        combats = Mathf.Clamp(combats, 0, Mathf.RoundToInt((dungeonRooms.Count - 1) * 0.65f));
-
-        while (combats > 0)
-        {
-            var room = dungeonRooms[Random.Range(1, dungeonRooms.Count)];
-            if (room.Encounter != null) continue;
-            
-            room.Encounter = _encounters[Random.Range(0, _encounters.Length)];
-            DrawDebugBox(room.Transform.position, Quaternion.identity, new Vector3(room.RoomDimensions.x, 5, room.RoomDimensions.y), Color.yellow);
-
-            combats--;
-            yield return null;
-        }
-    }
-
     //Confirm layout and orient player
     private void OnDungeonComplete()
     {
@@ -471,6 +449,8 @@ public class DungeonGenerator : MonoBehaviour
         {
             dungeonRooms[i].OnConfirmLayout();
         }
+
+        miniMap.SetBounds(dungeonRooms.ToArray());
 
         var player = GameObject.Find("PlayerController").transform;
         player.position = transform.position;
@@ -500,7 +480,7 @@ public class DungeonGenerator : MonoBehaviour
         if (Physics.CheckBox(tentativePosition, new Vector3(newRoomPrefab.RoomDimensions.x * 0.5f, 5, newRoomPrefab.RoomDimensions.y * 0.5f)))
         {
             if (readjustment) newRoomPrefab.gameObject.SetActive(true);
-            DrawDebugBox(tentativePosition, Quaternion.identity, new Vector3(newRoomPrefab.RoomDimensions.x, 5, newRoomPrefab.RoomDimensions.y), Color.red);
+            DrawDebugBox(tentativePosition + Vector3.up * 2.5f, Quaternion.identity, new Vector3(newRoomPrefab.RoomDimensions.x, 5, newRoomPrefab.RoomDimensions.y), Color.red);
             return false;
         }
         if (readjustment) newRoomPrefab.gameObject.SetActive(true);

@@ -128,8 +128,9 @@ public class DungeonRoom : MonoBehaviour
 
     private void OnCombatEncounter()
     {
-        _encounter.TriggerCombat();
+        _encounter.OnCombatTriggered(); //Call this first to summon units
         _encounterTriggered = true;
+
         DuelManager.instance.onMatchStarted?.Invoke(_encounter);
     }
 }

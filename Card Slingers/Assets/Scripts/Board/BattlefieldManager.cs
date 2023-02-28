@@ -50,10 +50,7 @@ public class BattlefieldManager : MonoBehaviour
         {
             for (int z = 0; z < gridArray.GetLength(1); z++)
             {
-                var pos = GetGridPosition(x, z);
-
-                pos.y += 0.18f;
-                var go = Instantiate(node, pos, Quaternion.identity, _center);
+                var go = Instantiate(node, GetGridPosition(x, z), Quaternion.identity, _center);
 
                 gridArray[x, z] = go;
                 gridArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);

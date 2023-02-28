@@ -4,12 +4,25 @@ using UnityEngine;
 
 public class PathNode : MonoBehaviour, IInteractable
 {
+    [SerializeField] private Transform _transform;
     [SerializeField] private Direction _direction;
     [SerializeField] private DungeonRoom _room;
     [SerializeField] protected Transform _point;
     [SerializeField] private ParticleSystem _hallwayFog;
     [Space]
     [SerializeField] protected PathNode _neighborNode;
+
+    public Transform Transform
+    {
+        get
+        {
+            if (_transform == null)
+            {
+                _transform = transform;
+            }
+            return _transform;
+        }
+    }
 
     public Direction direction => _direction;
     public DungeonRoom Room => _room;

@@ -35,6 +35,90 @@ Transform:
   m_Father: {fileID: 5921336362587228942}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1011487122684218399
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5939385793568137484}
+  - component: {fileID: 8888892885477147387}
+  m_Layer: 0
+  m_Name: Combat Marker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5939385793568137484
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1011487122684218399}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 5.1, z: 0}
+  m_LocalScale: {x: 19.5, y: 19.5, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4552987423566128104}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!212 &8888892885477147387
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1011487122684218399}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 21300000, guid: 37ab793ad1918e54199cd9dab2e569d6, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 2.56, y: 2.56}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
 --- !u!1 &1522721806091814772
 GameObject:
   m_ObjectHideFlags: 0
@@ -280,6 +364,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4991c9c038cf69c47bb1ee05983251c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _transform: {fileID: 4552987422238002265}
   _direction: 1
   _room: {fileID: 4552987423566128105}
   _point: {fileID: 4888281182330008360}
@@ -541,6 +626,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4991c9c038cf69c47bb1ee05983251c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _transform: {fileID: 4552987422689875113}
   _direction: 3
   _room: {fileID: 4552987423566128105}
   _point: {fileID: 5904619462599194852}
@@ -606,6 +692,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4991c9c038cf69c47bb1ee05983251c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _transform: {fileID: 4552987423142333483}
   _direction: 0
   _room: {fileID: 4552987423566128105}
   _point: {fileID: 1419385923882579512}
@@ -659,6 +746,7 @@ Transform:
   - {fileID: 5921336362587228942}
   - {fileID: 2057183651487491446}
   - {fileID: 5781277436699402560}
+  - {fileID: 5939385793568137484}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -789,6 +877,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4991c9c038cf69c47bb1ee05983251c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _transform: {fileID: 5661887346093719547}
   _direction: 2
   _room: {fileID: 4552987423566128105}
   _point: {fileID: 7463970213952916651}

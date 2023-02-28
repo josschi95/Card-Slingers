@@ -66,6 +66,7 @@ public class DuelManager : MonoBehaviour
 
     private PlayerController playerController;
     private BattlefieldManager battleField;
+    private MonsterManager monsterManager;
     private PlayerCommander playerCommander;
     private CombatEncounter _currentEncounter;
     private LineRenderer arcLine;
@@ -98,6 +99,7 @@ public class DuelManager : MonoBehaviour
     {
         playerController = PlayerController.instance;
         battleField = BattlefieldManager.instance;
+        monsterManager = GetComponent<MonsterManager>();
 
         onMatchStarted += OnMatchStart;
         onPlayerVictory += OnPlayerVictory;
@@ -166,8 +168,8 @@ public class DuelManager : MonoBehaviour
 
         CameraController.instance.OnCombatStart();
 
-        if (encounter.Commander is MonsterManager monsters) OnMonsterMatchStart(monsters);
-        else OnCommanderMatchStart(encounter.Commander);
+        if (encounter is CommanderEncounter commander) OnCommanderMatchStart(commander.Commander);
+        else OnMonsterMatchStart();
     }
 
     //Initiate a new match //This will also likely take in the battlefield later
@@ -181,10 +183,10 @@ public class DuelManager : MonoBehaviour
         //onPhaseChange?.Invoke(_currentPhase);
     }
 
-    private void OnMonsterMatchStart(MonsterManager overlord)
+    private void OnMonsterMatchStart()
     {
         SetCommanderStartingNode(playerCommander);
-        overlord.OnMatchStart(null); //they don't have cards to play
+        monsterManager.OnMatchStart(null); //they don't have cards to play
 
         _isPlayerTurn = true;
         onPhaseChange?.Invoke(_currentPhase);
@@ -250,6 +252,8 @@ public class DuelManager : MonoBehaviour
     {
         if (_inPhaseTransition) return; //Don't allow the accidental skipping of a phase
 
+        OnClearAction(); //Clear any highlighted nodes and unselect any cards
+
         if (phaseDelayCoroutine != null) StopCoroutine(phaseDelayCoroutine);
         phaseDelayCoroutine = StartCoroutine(PhaseTransitionDelay());
     }
@@ -257,6 +261,8 @@ public class DuelManager : MonoBehaviour
     private IEnumerator PhaseTransitionDelay()
     {
         _inPhaseTransition = true;
+
+
 
         //wait until all cards have moved to their final destination
         while(_cardsInTransition > 0) yield return null;
@@ -441,7 +447,7 @@ public class DuelManager : MonoBehaviour
             _validTargetNodes.AddRange(battleField.GetAllNodesInArea(playerCommander.CommanderCard.Node, spell.Range));
         }
 
-        for (int i = 0; i < _validTargetNodes.Count; i++) _validTargetNodes[i].SetLockedDisplay(GridNode.MaterialType.Blue);
+        for (int i = 0; i < _validTargetNodes.Count; i++) _validTargetNodes[i].SetLockedDisplay(GridNode.MaterialType.Green);
 
         //Keep valid nodes highlighted until one has been selected
         while (_waitForValidNode) yield return null;
