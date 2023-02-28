@@ -5,17 +5,24 @@ using UnityEngine;
 public class DungeonManager : MonoBehaviour
 {
     [SerializeField] private DungeonGenerator _generator;
-    [SerializeField] private PathNode _startingWaypoint;
 
-    [SerializeField] private List<CombatEncounter> encounters = new List<CombatEncounter>();
+    [Space]
+
+    [SerializeField] private DungeonSize _dungeonSize;
+
+    [Space]
+
+    [SerializeField] private List<CombatEncounter> _encounters;
 
     private void Start()
     {
-        //_generator.GenerateDungeon();
-
-        //GameObject.Find("PlayerController").GetComponent<PlayerController>().SetStartingWaypoint(_startingWaypoint);
-        //Player position should always be Vector3.zero at the start
+        _generator.GenerateDungeon(_dungeonSize);
         DuelManager.instance.onMatchStarted += WatchMatch;
+    }
+
+    public void SetEncounters(List<CombatEncounter> encounters)
+    {
+        _encounters = new List<CombatEncounter>(encounters);
     }
 
     private void WatchMatch(CombatEncounter encounter)
@@ -29,8 +36,8 @@ public class DungeonManager : MonoBehaviour
     {
         DuelManager.instance.onPlayerVictory -= delegate { OnMatchFinished(encounter); };
 
-        encounters.Remove(encounter);
-        if (encounters.Count == 0) Debug.Log("All Encounters complete! Return to town.");
+        _encounters.Remove(encounter);
+        if (_encounters.Count == 0) Debug.Log("All Encounters complete! Return to town.");
     }
 
     //Criteria to leave

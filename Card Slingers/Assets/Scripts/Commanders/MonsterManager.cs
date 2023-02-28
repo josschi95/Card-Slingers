@@ -132,6 +132,12 @@ public class MonsterManager : OpponentCommander
         if (_permanentsOnField.Count == 0) DuelManager.instance.onPlayerVictory?.Invoke();
     }
 
+    protected override void OnPlayerVictory()
+    {
+        //Base OpponentCommander script destroys the gameObject on death. Don't do that.
+        MatcheEnd();
+    }
+
     public void ClearEncounter()
     {
         _encounter = null;

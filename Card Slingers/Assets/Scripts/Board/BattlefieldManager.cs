@@ -36,9 +36,9 @@ public class BattlefieldManager : MonoBehaviour
         _dimensions = dimensions;
 
         _origin = new Vector3(
-            (-Width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + _center.position.x,
-            _center.position.y, 
-            (-Depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + _center.position.z);
+            (-Width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + Center.position.x,
+            Center.position.y, 
+            (-Depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + Center.position.z);
         
 
         float f = Depth; int playerDepth = Mathf.RoundToInt(f * 0.5f);
@@ -50,7 +50,7 @@ public class BattlefieldManager : MonoBehaviour
         {
             for (int z = 0; z < gridArray.GetLength(1); z++)
             {
-                var go = Instantiate(node, GetGridPosition(x, z), Quaternion.identity, _center);
+                var go = Instantiate(node, GetGridPosition(x, z), Quaternion.identity, Center);
 
                 gridArray[x, z] = go;
                 gridArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);
@@ -63,7 +63,7 @@ public class BattlefieldManager : MonoBehaviour
         float initZ = 27 + ((Depth - 6) * 2.5f);
         _cameraHome.localPosition = new Vector3(0, 12, -initZ);
 
-        CameraController.instance.SetHome(_cameraHome.position, _center.localEulerAngles.y);
+        CameraController.instance.SetHome(_cameraHome.position, Center.localEulerAngles.y);
     }
 
     public void DestroyGrid()

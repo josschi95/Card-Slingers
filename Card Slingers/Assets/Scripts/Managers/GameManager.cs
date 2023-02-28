@@ -97,5 +97,6 @@ public enum CardFocus { Offense, Defense, Utility }
 public enum ActionType { Move, Attack, Ability }
 public enum CardType { Unit, Structure, Trap, Equipment, Terrain, Spell, Commander }
 public enum Faction { Arcane, Kingdom, Goblins, Coven, Undead, Demons}
+public enum DungeonSize { Small, Medium, Large }
 
 public enum Effects { Damage, Halt, StatModifier }

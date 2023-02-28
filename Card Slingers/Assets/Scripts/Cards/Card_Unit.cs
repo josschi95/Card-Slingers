@@ -21,6 +21,7 @@ public class Card_Unit : Card_Permanent
     protected Card_Permanent _attackTarget;
     protected bool _canRetaliate;
     private bool _actedThisTurn;
+    private bool _isDestroyed;
 
     #region - Properties -
     public int MaxHealth => NetMaxHealth();
@@ -52,6 +53,7 @@ public class Card_Unit : Card_Permanent
     public override void OnSummoned(GridNode node)
     {
         //set max health before occupying node
+        _isDestroyed = false;
         _currentHealth = NetMaxHealth();
 
         base.OnSummoned(node);
@@ -337,6 +339,9 @@ public class Card_Unit : Card_Permanent
     #region - Card Destroyed -
     protected override void OnPermanentDestroyed()
     {
+        if (_isDestroyed) return;
+        _isDestroyed = true;
+
         //Debug.Log("unit has been destroyed");
         _animator.SetTrigger("death");
         DuelManager.instance.onCardMovementStarted?.Invoke(this);

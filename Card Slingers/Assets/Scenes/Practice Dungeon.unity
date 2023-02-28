@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028331, g: 0.2257133, b: 0.3069217, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -312,9 +312,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 225bc11ca7c7f2b43b71d02b458c3d3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _generator: {fileID: 0}
-  _startingWaypoint: {fileID: 0}
-  encounters: []
+  _generator: {fileID: 1695420355}
+  _dungeonSize: 0
+  _encounters: []
 --- !u!4 &34534417
 Transform:
   m_ObjectHideFlags: 0
@@ -329,7 +329,7 @@ Transform:
   m_Children:
   - {fileID: 297752908}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!120 &34534418
 LineRenderer:
@@ -1663,7 +1663,7 @@ RectTransform:
   - {fileID: 2016703689}
   - {fileID: 1553595691}
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -2549,7 +2549,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
 --- !u!1 &705876555
 GameObject:
@@ -2840,6 +2840,7 @@ MonoBehaviour:
   cam: {fileID: 963194227}
   _currentView: 0
   inputSensitivity: 15
+  _zoomSensitivity: 5
   followCam: {fileID: 1352917515}
   freeCam: {fileID: 1803950738}
   aerialCam: {fileID: 1525034515}
@@ -2862,7 +2863,7 @@ Transform:
   - {fileID: 1352917516}
   - {fileID: 1803950739}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &780640284
 GameObject:
@@ -3854,7 +3855,7 @@ Transform:
   m_Children:
   - {fileID: 892603100}
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &952284055
 MonoBehaviour:
@@ -6391,7 +6392,7 @@ Transform:
   - {fileID: 1004848771}
   - {fileID: 1824586027}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1607091873
 MonoBehaviour:
@@ -6718,7 +6719,6 @@ MonoBehaviour:
   _useCustomSize: 0
   combatGenerator: {fileID: 1695420357}
   miniMap: {fileID: 1553595695}
-  _dungeonSize: 0
   dungeonRoomPrefabs:
   - {fileID: 4552987423566128105, guid: fbe80236396fb68498aea4f3e459d2dc, type: 3}
   - {fileID: 4552987423566128105, guid: 6820ef99f1748c449bedfe77581b0ded, type: 3}
@@ -8193,7 +8193,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!1 &2009057364
 GameObject:

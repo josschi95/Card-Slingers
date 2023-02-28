@@ -230,8 +230,6 @@ public class DuelManager : MonoBehaviour
     {
         _inPhaseTransition = true;
 
-
-
         //wait until all cards have moved to their final destination
         while(_cardsInTransition > 0) yield return null;
         
@@ -450,7 +448,7 @@ public class DuelManager : MonoBehaviour
             else
             {
                 if (walkNodes.Contains(highlightedNode)) DisplayLineArc(unit.Node.transform.position, highlightedNode.transform.position);
-                else if (atkNodes.Contains(highlightedNode)) DisplayLineArc(unit.Node.transform.position, highlightedNode.transform.position);
+                else if (atkNodes.Contains(highlightedNode)) DisplayLineArc(unit.Node.transform.position, highlightedNode.transform.position, true);
                 else ClearLineArc();
             }
             yield return null;

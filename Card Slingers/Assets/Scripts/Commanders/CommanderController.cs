@@ -455,7 +455,7 @@ public class CommanderController : MonoBehaviour
         duelManager.onPlayerVictory += OnPlayerVictory;
     }
 
-    private void MatcheEnd()
+    protected void MatcheEnd()
     {
         duelManager.onPhaseChange -= SetPhase;
         duelManager.onNewTurn -= delegate { isTurn = !isTurn; };

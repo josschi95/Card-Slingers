@@ -15,14 +15,11 @@ public class DungeonGenerator : MonoBehaviour
 
     [Space]
 
-    [Space]
-
     [SerializeField] private CombatGenerator combatGenerator;
     [SerializeField] private MiniMapController miniMap;
 
     [Space]
 
-    [SerializeField] private DungeonSize _dungeonSize;
 
     [Space]
 
@@ -44,7 +41,6 @@ public class DungeonGenerator : MonoBehaviour
 
     private DungeonFeatures _dungeonPreset;
 
-    public enum DungeonSize { Small, Medium, Large }
     private static DungeonFeatures[] _dungeonSizes;
 
     //EXTRA_SMALL_DUNGEON
@@ -67,17 +63,14 @@ public class DungeonGenerator : MonoBehaviour
         _dungeonSizes[2] = LARGE_DUNGEON;
     }
 
-    private void Start()
-    {
-        if (_generateAtStart)
-        {
-            if (_useCustomSize) GenerateDungeon(minRooms, maxRooms);
-            else GenerateDungeon(_dungeonSize);
-        }
-    }
-
     public void GenerateDungeon(DungeonSize dungeonSize)
     {
+        if (_useCustomSize)
+        {
+            GenerateDungeon(minRooms, maxRooms);
+            return;
+        }
+
         _isComplete = false;
 
         dungeonRooms = new List<DungeonRoom>();

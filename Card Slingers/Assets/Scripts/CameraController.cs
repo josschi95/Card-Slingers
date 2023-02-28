@@ -15,6 +15,8 @@ public class CameraController : MonoBehaviour
     [SerializeField] private CameraView _currentView;
     [Range(5, 50)]
     [SerializeField] private float inputSensitivity = 15f;
+    [Range(1, 10)]
+    [SerializeField] private float _zoomSensitivity = 5f;
     [Space]
     [SerializeField] private CinemachineVirtualCamera followCam;
     [SerializeField] private CinemachineVirtualCamera freeCam;
@@ -22,6 +24,8 @@ public class CameraController : MonoBehaviour
     [Header("Aerial Camera")]
     [SerializeField] private CinemachineVirtualCamera aerialCam;
     [SerializeField] private int aerialCamMinFOV = 60, aerialCamMaxFOV = 90;
+
+    private Transform _battlefieldCenter;
 
     private Vector2 movementInput;
     private Vector3 cameraDelta;
@@ -37,6 +41,9 @@ public class CameraController : MonoBehaviour
     private void Start()
     {
         SetActiveCamera(CameraView.Follow);
+
+         _battlefieldCenter = BattlefieldManager.instance.Center;
+
     }
 
     private void Update()
@@ -98,7 +105,7 @@ public class CameraController : MonoBehaviour
         else if (_currentView == CameraView.Free)
         {
             //Switch to Aerial
-            var battlefieldPos = BattlefieldManager.instance.Center.position;
+            var battlefieldPos = _battlefieldCenter.position;
             battlefieldPos.y += 25;
             aerialCam.transform.position = battlefieldPos;
 
@@ -149,12 +156,13 @@ public class CameraController : MonoBehaviour
 
     private void HandleFreeCameraZoom()
     {
-        var battlefieldHeight = BattlefieldManager.instance.Center.position.y + 5;
+        var battlefieldHeight = _battlefieldCenter.position.y + 5;
         if (freeCam.transform.position.y <= battlefieldHeight && zoomInput > 0) return; //prevent camera from sliding forward
 
         //Don't change FOV, but actually move the camera in/out 
+        //So right now this is actually moving the camera in/out based on where it's facing, but just changing the heigh may be better
         var camForward = cam.transform.forward * zoomInput + cam.transform.right * cameraDelta.x;
-        freeCam.transform.position += camForward * inputSensitivity * 0.5f * Time.deltaTime;
+        freeCam.transform.position += camForward * _zoomSensitivity * Time.deltaTime;
 
         if (freeCam.transform.position.y < battlefieldHeight)
             freeCam.transform.position = new Vector3(freeCam.transform.position.x, battlefieldHeight, freeCam.transform.position.z);
