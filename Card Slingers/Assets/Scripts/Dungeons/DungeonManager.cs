@@ -16,7 +16,7 @@ public class DungeonManager : MonoBehaviour
 
     private void Start()
     {
-        _generator.GenerateDungeon(_dungeonSize);
+        _generator.BeginGeneration(_dungeonSize);
         DuelManager.instance.onMatchStarted += WatchMatch;
     }
 

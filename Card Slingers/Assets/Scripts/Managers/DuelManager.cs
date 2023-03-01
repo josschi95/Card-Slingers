@@ -133,6 +133,12 @@ public class DuelManager : MonoBehaviour
         var room = playerController.currentRoom;
 
         battleField.CreateGrid(room.Transform.position, room.Orientation, room.BoardDimensions);
+        for (int i = 0; i < room.Obstacles.Count; i++)
+        {
+            var obstacle = room.Obstacles[i];
+
+            battleField.GetNode(obstacle.x, obstacle.z).Obstacle = obstacle;
+        }
 
         CameraController.instance.OnCombatStart();
 

@@ -279,6 +279,7 @@ MonoBehaviour:
   _cardInfo: {fileID: 0}
   _occupiedNode: {fileID: 0}
   _permanentObject: {fileID: 0}
+  _modifiedThreatLevel: 0
 --- !u!1 &4254606768402894296
 GameObject:
   m_ObjectHideFlags: 0

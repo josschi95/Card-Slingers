@@ -7,15 +7,10 @@ public class DungeonGenerator : MonoBehaviour
     #region - Fields -
     private const int MINIMUM_OFFSET = 15; //Anything less will cause issues with hallways
 
-    [Header("TESTING")]
-    [SerializeField] private bool _generateAtStart;
-    [SerializeField] private int minRooms;
-    [SerializeField] private int maxRooms;
-    [SerializeField] private bool _useCustomSize;
-
     [Space]
 
     [SerializeField] private CombatGenerator combatGenerator;
+    [SerializeField] private ObstacleGenerator obstacleGenerator;
     [SerializeField] private MiniMapController miniMap;
 
     [Space]
@@ -63,14 +58,8 @@ public class DungeonGenerator : MonoBehaviour
         _dungeonSizes[2] = LARGE_DUNGEON;
     }
 
-    public void GenerateDungeon(DungeonSize dungeonSize)
+    public void BeginGeneration(DungeonSize dungeonSize)
     {
-        if (_useCustomSize)
-        {
-            GenerateDungeon(minRooms, maxRooms);
-            return;
-        }
-
         _isComplete = false;
 
         dungeonRooms = new List<DungeonRoom>();
@@ -78,30 +67,28 @@ public class DungeonGenerator : MonoBehaviour
 
         _dungeonPreset = _dungeonSizes[(int)dungeonSize];
 
-        int mainRooms = Random.Range(_dungeonPreset.minRooms, _dungeonPreset.maxRooms + 1);
+        int rooms = Random.Range(_dungeonPreset.minRooms, _dungeonPreset.maxRooms + 1);
+        int combats = Random.Range(_dungeonPreset.minCombats, _dungeonPreset.maxCombats + 1);
 
         var startRoom = Instantiate(startRoomPrefab, Vector3.zero, Quaternion.identity, gameObject.transform);
         dungeonRooms.Add(startRoom);
 
-        StartCoroutine(SpawnRooms(mainRooms));
-    }
-
-    //This is largely only going to be used for testing I think
-    public void GenerateDungeon(int minMain, int maxMain)
-    {
-        _isComplete = false;
-
-        dungeonRooms = new List<DungeonRoom>();
-
-        int roomsToSpawn = Random.Range(minMain, maxMain + 1);
-
-        var startRoom = Instantiate(startRoomPrefab, Vector3.zero, Quaternion.identity, gameObject.transform);
-        dungeonRooms.Add(startRoom);
-
-        //StartCoroutine(SpawnRooms(mainRoomsToSpawn, bonusRoomsToSpawn));
-        StartCoroutine(SpawnRooms(roomsToSpawn));
+        StartCoroutine(GenerateDungeon(rooms, combats));
     }
     
+    private IEnumerator GenerateDungeon(int rooms, int combats)
+    {
+        //Build the rooms and connect hallways
+        yield return StartCoroutine(SpawnRooms(rooms));
+
+        //Place the combats
+        yield return StartCoroutine(combatGenerator.PlaceCombats(dungeonRooms.ToArray(), combats));
+
+        obstacleGenerator.GenerateObstacles(dungeonRooms);
+
+        OnDungeonComplete();
+    }
+
     private IEnumerator SpawnRooms(int roomsToSpawn)
     {
         while (roomsToSpawn > 0)
@@ -141,12 +128,13 @@ public class DungeonGenerator : MonoBehaviour
 
         TryConnectLoops();
 
-        if (_useCustomSize) combatGenerator.GenerateCombats(dungeonRooms.ToArray());
-        else combatGenerator.GenerateCombats(dungeonRooms.ToArray(), _dungeonPreset);
+        //else combatGenerator.GenerateCombats(dungeonRooms.ToArray(), _dungeonPreset);
 
-        while (!combatGenerator.isComplete) yield return null;
+        //while (!combatGenerator.isComplete) yield return null;
 
-        OnDungeonComplete();
+        //GetComponent<ObstacleGenerator>().GenerateObstacles(dungeonRooms);
+
+        //OnDungeonComplete();
     }
 
     //connect waypoints and build out hallways
@@ -393,10 +381,6 @@ public class DungeonGenerator : MonoBehaviour
                 {
                     CheckForNearbyNode(room.Nodes[i]);
                 }
-                if (room.ConnectedRooms[i] == null)
-                {
-                    //Was here
-                }
             }
         }
     }
@@ -426,7 +410,7 @@ public class DungeonGenerator : MonoBehaviour
                 Debug.DrawLine(node.Point.position, newNode.Point.position, Color.green, int.MaxValue);
                 node.Room.ConnectedRooms[(int)node.direction] = newNode.Room;
                 newNode.Room.ConnectedRooms[(int)newNode.direction] = node.Room;
-                Debug.Log("Loop Created!");
+                //Debug.Log("Loop Created!");
             }
             else
             {

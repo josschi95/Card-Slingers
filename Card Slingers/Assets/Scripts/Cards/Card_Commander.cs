@@ -40,7 +40,7 @@ public class Card_Commander : Card_Unit
             _animator.SetTrigger("damage");
             if (UnitCanRetaliate())
             {
-                Debug.Log("Unit can retaliate");
+                //Debug.Log("Unit can retaliate");
                 DuelManager.instance.onCardBeginAction?.Invoke(this);
                 StartCoroutine(TurnToFaceTarget(_attackTarget.transform.position));
                 _animator.SetTrigger("attack");

@@ -349,6 +349,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce5ffe4017d000746848b1b0ce4468a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  animator: {fileID: 0}
   _commanderInfo: {fileID: 11400000, guid: 976e9b0abbe12e240ade98a6315322c2, type: 2}
   _commanderCard: {fileID: 1569306437134555641}
   currentPhase: 0
@@ -358,6 +359,7 @@ MonoBehaviour:
   _cardsInDiscardPile: []
   _cardsInExile: []
   _permanentsOnField: []
+  _existingDeck: []
 --- !u!114 &1569306437134555641
 MonoBehaviour:
   m_ObjectHideFlags: 0

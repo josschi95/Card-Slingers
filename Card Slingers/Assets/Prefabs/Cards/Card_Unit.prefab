@@ -362,6 +362,7 @@ MonoBehaviour:
   _cardInfo: {fileID: 0}
   _occupiedNode: {fileID: 0}
   _permanentObject: {fileID: 0}
+  _modifiedThreatLevel: 0
   _currentHealth: 0
   _equipment: []
   _statModifiers: 0000000000000000000000000000000000000000

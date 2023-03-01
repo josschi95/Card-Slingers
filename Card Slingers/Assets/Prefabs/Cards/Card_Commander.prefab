@@ -349,6 +349,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be81b7571fdd5484cabdf3b9a7789da6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  animator: {fileID: 0}
   _commanderInfo: {fileID: 0}
   _commanderCard: {fileID: 1569306437134555641}
   currentPhase: 0
@@ -358,7 +359,8 @@ MonoBehaviour:
   _cardsInDiscardPile: []
   _cardsInExile: []
   _permanentsOnField: []
-  invadesLanes: 
+  instantiateOnStart: 0
+  threats: []
 --- !u!114 &1569306437134555641
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -385,6 +387,7 @@ MonoBehaviour:
   _cardInfo: {fileID: 0}
   _occupiedNode: {fileID: 0}
   _permanentObject: {fileID: 0}
+  _modifiedThreatLevel: 0
   _currentHealth: 0
   _equipment: []
   _statModifiers: 0000000000000000000000000000000000000000

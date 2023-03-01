@@ -21,6 +21,8 @@ public class DungeonRoom : MonoBehaviour
     [SerializeField] private GameObject _fogOfWar;
 
     private DungeonRoom[] connectedRooms = new DungeonRoom[4]; // up/down/left/right
+    private List<Obstacle> _obstacles = new List<Obstacle>();
+    public List<Obstacle> Obstacles => _obstacles;
 
     [Space]
 
@@ -81,7 +83,7 @@ public class DungeonRoom : MonoBehaviour
     public void OnConfirmLayout()
     {
         _collider.enabled = false;
-        _fogOfWar.SetActive(true);
+        //_fogOfWar.SetActive(true);
         for (int i = 0; i < connectedRooms.Length; i++)
         {
             _entranceParents[i].SetActive(connectedRooms[i] != null);
@@ -92,6 +94,11 @@ public class DungeonRoom : MonoBehaviour
                 Debug.LogError("Lost Reference to Neighor Node " + transform.position + ", " + _nodes[i].direction);
             }
         }
+    }
+
+    public void AddObjstacle(Obstacle obstacle)
+    {
+        _obstacles.Add(obstacle);
     }
 
     public void OnRoomEntered(Direction direction)

@@ -13,7 +13,7 @@ public class StructureSO : PermanentSO
     [SerializeField] private int _maxHealth;
     [SerializeField] private int _defense = 1;
     [Tooltip("if true: an allied unit is able to move into an occupy the structure")]
-    [SerializeField] private bool _canBeOccupied = true;
+    [SerializeField] private bool _canBeOccupied = false; //Likely going to remove the ability to occupy structures entirely
     [Tooltip("if true: an allied unit is able to move through the space of this structure")]
     [SerializeField] private bool _canBeTraversed = true;
 

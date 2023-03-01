@@ -24,9 +24,10 @@ public class GridNode : MonoBehaviour, IInteractable
     #endregion
 
     #region - Node Contents -
-    [SerializeField] private Card_Permanent _occupant = null;
+    [SerializeField] private Card_Permanent _occupant;
     [SerializeField] private Card_Trap _trap;
     [SerializeField] private Card _terrain;
+    [SerializeField] private Obstacle _obstacle;
     public Card_Permanent Occupant
     {
         get => _occupant;
@@ -57,6 +58,15 @@ public class GridNode : MonoBehaviour, IInteractable
         }
     }
     public Card Terrain => _terrain;
+    public Obstacle Obstacle
+    {
+        get => _obstacle;
+        set
+        {
+            _obstacle = value;
+        }
+    }
+
     public int occupantPower { get; private set; }
     #endregion
 
@@ -156,6 +166,8 @@ public class GridNode : MonoBehaviour, IInteractable
     #region - Queries -
     public bool CanBeOccupied(Card_Permanent card)
     {
+        if (_obstacle != null) return false;
+
         if (_occupant == null) return true; //not occupied at all
         if (_occupant.Commander != card.Commander) return false; //occupied by an enemy unit/structure
         if (_occupant is Card_Structure structure && structure.CanBeOccupied) return true; //can move into structure
@@ -165,6 +177,8 @@ public class GridNode : MonoBehaviour, IInteractable
 
     public bool CanBeAttacked(Card_Permanent attacker)
     {
+        if (_obstacle != null) return true;
+
         if (_occupant == null) return false; //nothing to attack
         if (_occupant.Commander == attacker.Commander) return false; //same team
         return true; //occupied by enemy
@@ -172,6 +186,8 @@ public class GridNode : MonoBehaviour, IInteractable
 
     public bool CanBeTraversed(Card_Unit unit)
     {
+        if (_obstacle != null) return true;
+
         if (_occupant == null) return true; //not occupied at all
         if (_occupant.Commander != unit.Commander) return false; //cannot walk through enemy space
         if (_occupant is Card_Structure structure && !structure.canBeTraversed) return false; //no unit can enter this space
@@ -179,26 +195,3 @@ public class GridNode : MonoBehaviour, IInteractable
     }
     #endregion
 }
-
-/* Old Methods
- * 
-    public void SetOccupant(Card_Permanent occupant)
-    {
-        if (_occupant != null) throw new System.Exception("Node " + gridX + "," + gridZ + "is already occupied by " + _occupant.name);
-        _occupant = occupant;
-        UpdateOccupantPower();
-        _occupant.onValueChanged += UpdateOccupantPower;
-
-        onNodeValueChanged?.Invoke(this);
-    }
-
-    public void ClearOccupant()
-    {
-        if (_occupant != null) _occupant.onValueChanged -= UpdateOccupantPower;
-        _occupant = null;
-        UpdateOccupantPower();
-
-        onNodeValueChanged?.Invoke(this);
-    }
- * 
- */
