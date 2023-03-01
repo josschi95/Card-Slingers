@@ -117,8 +117,10 @@ public class Card_Permanent : Card
         //Trigger any relevant abilities
     }
 
-    //This method is called by the Commander when removing the card from the field, to place it in another pile
-    public void OnRemoveFromField() //Maybe change this to a method in the base Card class for OnEnterDiscard which will also set location
+    /// <summary>
+    /// Call this method when the card is destroyed. Abandons node, re-enables card GFX and collider
+    /// </summary>
+    protected void OnRemoveFromField() //Maybe change this to a method in the base Card class for OnEnterDiscard which will also set location
     {
         OnAbandonNode(); //I think I'm just going to move this stuff into OnPermanentDestroyed
         cardGFX.SetActive(true); //Disable the physical card display

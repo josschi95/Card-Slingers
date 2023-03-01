@@ -20,7 +20,7 @@ public class BattlefieldManager : MonoBehaviour
     [SerializeField] private GridNode node; //Move this to being pooled
 
     public Transform Center => _center;
-    private Vector3 _origin; //The [0,0] position of the grid
+    private Vector3 _origin; //The center of the [0,0] node on the grid
 
     #region - Properties -
     public int Width => _dimensions.x; //These are currently only being used for early testing
@@ -236,11 +236,9 @@ public class BattlefieldManager : MonoBehaviour
     private List<GridNode> closedList; //already searched
 
     //Returns a list of nodes that can be travelled to reach a target destination
-    public List<GridNode> FindNodePath(Card_Unit unit, GridNode endNode, bool ignoreEndNode = false, bool stopWithinRange = false)
+    public List<GridNode> FindNodePath(Card_Unit unit, GridNode endNode, bool ignoreEndNode = false, bool stopInRange = false)
     {
         GridNode startNode = unit.Node;
-        //Debug.Log("Start: " + startNode.x + "," + startNode.y);
-        //Debug.Log("End: " + endNode.x + "," + endNode.y);
 
         openList = new List<GridNode> { startNode };
         closedList = new List<GridNode>();
@@ -264,18 +262,15 @@ public class BattlefieldManager : MonoBehaviour
         {
             GridNode currentNode = GetLowestFCostNode(openList);
 
-            if (stopWithinRange && GetDistanceInNodes(currentNode, endNode) <= unit.Range && currentNode.CanBeOccupied(unit))
+            if (stopInRange && GetDistanceInNodes(currentNode, endNode) <= unit.Range && currentNode.CanBeOccupied(unit))
             {
                 //Don't need to move any further
                 //Debug.Log("Found closest node within range, located at " + currentNode.gridX + "," + currentNode.gridZ);
                 return CalculatePath(currentNode);
             }
 
-            if (currentNode == endNode)
-            {
-                //Reached final node
-                return CalculatePath(endNode);
-            }
+            //Reached final node
+            if (currentNode == endNode) return CalculatePath(endNode);
 
             openList.Remove(currentNode);
             closedList.Add(currentNode);
@@ -313,16 +308,9 @@ public class BattlefieldManager : MonoBehaviour
         }
 
         //Out of nodes on the openList
-        Debug.Log("Path could not be found");
+        Debug.Log("Path could not be found from " + unit.Node.gridX + "," + unit.Node.gridZ + " to " + endNode.gridX + "," + endNode.gridZ);
         return null;
     }
-
-    //Issue 1. When finding a nodepath to an enemy, I'm only looking to get next to that unit, not just within range
-
-
-    //
-    //Add a method in here for something like FindPartialPath that allows the unit to at least move towards their intended target
-    //
 
     //Return a list of nodes which can be reached given the available number of moves
     public List<GridNode> FindReachableNodes(Card_Unit unit)
@@ -353,10 +341,31 @@ public class BattlefieldManager : MonoBehaviour
             if (temp == null) nodes.RemoveAt(i);
             //The path requires more moves than are available
             else if (temp.Count > unit.Speed + 1) nodes.RemoveAt(i);
-
         }
 
         return nodes;
+    }
+
+    public ReachableNodes FindNodesWithinReach(Card_Unit unit)
+    {
+        List<GridNode> walkNodes = new List<GridNode>();
+        List<GridNode> attackNodes = new List<GridNode>();
+        GridNode startNode = unit.Node;
+
+        //Get all nodes in the grid within range that can be occupied
+        for (int x = 0; x < Width; x++)
+        {
+            for (int y = 0; y < Depth; y++)
+            {
+                GridNode pathNode = GetNode(x, y);
+                var dist = GetDistanceInNodes(startNode, pathNode);
+                if (dist <= unit.Speed + unit.Range && pathNode.CanBeAttacked(unit)) attackNodes.Add(pathNode);
+                if (dist <= unit.Speed && pathNode.CanBeOccupied(unit)) walkNodes.Add(pathNode);
+            }
+        }
+
+
+        return new ReachableNodes(walkNodes, attackNodes);
     }
 
     //Grab all nodes within speed + range distance, and if there is a target there, add it to the list
@@ -386,35 +395,25 @@ public class BattlefieldManager : MonoBehaviour
 
         for (int i = nodes.Count - 1; i >= 0; i--)
         {
-            var temp = FindNodePath(unit, nodes[i], true, true);
+            if (GetDistanceInNodes(unit.Node, nodes[i]) <= range) continue;
 
-            /*Debug.Log("__________NEW PATH__________");
-            string txt = "";
-            for (int g = 0; g < temp.Count; g++)
-            {
-                txt += "_" + temp[g].gridX + "," + temp[g].gridZ + "_";
-            }
-            Debug.Log(txt);*/
+            //Find a node path to that node, ignoring the final node, and only needing to move within range
+            var path = FindNodePath(unit, nodes[i], true, true);
 
             //There is no available path to that node
-            if (temp == null) nodes.RemoveAt(i);
+            if (path == null) nodes.RemoveAt(i);
 
             //The path requires more moves than are available
-            //else if (temp.Count > range + unit.Speed + 1) //+1 because it counts the unit's occupied node as the first node
-            else if (temp.Count > unit.Speed + 1) //+1 because it counts the unit's occupied node as the first node
-            {
-                //Debug.Log("Removing path, number of nodes is greater than " + (range + unit.Speed + 1).ToString() + "(including own node)");
-                nodes.RemoveAt(i);
-            }
+            else if (path.Count > unit.Speed + 1) nodes.RemoveAt(i); //+1 because it counts the unit's occupied node as the first node
+
             //The node path has at least two nodes in it - Checking this to not throw an error for the next check
-            //The node next to the target cannot be occupied
-            //The node next to the target is not where the attacking unit currently is located
-            else if (temp.Count >= 2 && !temp[temp.Count - 2].CanBeOccupied(unit) && temp[temp.Count - 2] != unit.Node)
+            //The final node in the path can be occupied
+            else if (path.Count >= 2 && !path[path.Count - 1].CanBeOccupied(unit))
             {
-                //Debug.Log("Cannot occupy node needed to move to");
+                //Ok this is where I'm running into an issue
+                Debug.Log("Cannot occupy node needed to move to");
                 nodes.RemoveAt(i);
             }
-            //else Debug.Log("-----Valid Path-----");
         }
 
         return nodes;
@@ -432,30 +431,6 @@ public class BattlefieldManager : MonoBehaviour
             currentNode = currentNode.cameFromNode;
         }
         path.Reverse();
-        return path;
-    }
-
-    private List<GridNode> CalculateShortestPathWithinRange(Card_Unit unit, GridNode endNode)
-    {
-        List<GridNode> path = new List<GridNode>();
-        path.Add(endNode);
-        GridNode currentNode = endNode;
-        while (currentNode.cameFromNode != null)
-        {
-            //Start at the end and work backwards
-            path.Add(currentNode.cameFromNode);
-            currentNode = currentNode.cameFromNode;
-        }
-        path.Reverse();
-
-        //I now have a list of nodes from start to end leading the unit to the target
-        //Starting from the second to last node, check if it is within range of the endnode
-        //if it is, remove the node above it
-        for (int i = path.Count - 2; i >= 0; i--)
-        {
-            if (GetDistanceInNodes(path[i], endNode) <= unit.Range) path.RemoveAt(i + 1);
-        }
-
         return path;
     }
 
@@ -505,97 +480,39 @@ public class BattlefieldManager : MonoBehaviour
     }
     #endregion
 
-    #region - Obsolete -
-    //Return a list of nodes which can be targeted given the range, used for attacks
-    /*public List<GridNode> FindTargetableNodes(Card_Unit unit, int range)
+    private List<GridNode> CalculateShortestPathWithinRange(Card_Unit unit, GridNode endNode)
     {
-        List<GridNode> nodes = new List<GridNode>();
-        GridNode startNode = unit.Node;
-
-        //Get all nodes in the grid
-        for (int x = 0; x < Width; x++)
+        List<GridNode> path = new List<GridNode>();
+        path.Add(endNode);
+        GridNode currentNode = endNode;
+        while (currentNode.cameFromNode != null)
         {
-            for (int y = 0; y < Depth; y++)
-            {
-                GridNode pathNode = GetNode(x, y);
-                //Add all walkable nodes which can be accessed via a straight line path
-                if (pathNode.CanBeTraversed(unit) && GetDistanceInNodes(startNode, pathNode) <= range)
-                {
-                    //Note that this doesn't eliminate diagonals
-                    nodes.Add(pathNode);
-                    //Debug.Log(pathNode.x + "," + pathNode.y);
-                }
-            }
+            //Start at the end and work backwards
+            path.Add(currentNode.cameFromNode);
+            currentNode = currentNode.cameFromNode;
+        }
+        path.Reverse();
+
+        //I now have a list of nodes from start to end leading the unit to the target
+        //Starting from the second to last node, check if it is within range of the endnode
+        //if it is, remove the node above it
+        for (int i = path.Count - 2; i >= 0; i--)
+        {
+            if (GetDistanceInNodes(path[i], endNode) <= unit.Range) path.RemoveAt(i + 1);
         }
 
-        for (int i = nodes.Count - 1; i >= 0; i--)
-        {
-            var temp = FindNodePath(unit, nodes[i]);
+        return path;
+    }
+}
 
-            //There is no available path to that node
-            if (temp == null) nodes.RemoveAt(i);
-            //The path requires more moves than are available
-            else if (temp.Count > range) nodes.RemoveAt(i);
-        }
+public struct ReachableNodes
+{
+    public List<GridNode> walkNodes;
+    public List<GridNode> attackNodes;
 
-        return nodes;
-    }*/
-
-    //Replaced by FindNodePath
-    /*public GridNode[] GetNodePath(GridNode startNode, GridNode endNode)
+    public ReachableNodes(List<GridNode> walk, List<GridNode> attack)
     {
-        if (endNode.Occupant != null) return null;
-
-        int length = Mathf.Abs(startNode.gridZ - endNode.gridZ) + 1;
-        var nodePath = new GridNode[length];
-        int mod = 1;
-        if (startNode.gridZ > endNode.gridZ) mod = -1;
-
-        for (int i = 0; i < nodePath.Length; i++)
-        {
-            //get the node in the same lane, with the gridZ increasing/decreasing based on direction
-            var nextNode = GetNode(startNode.gridX, startNode.gridZ + i * mod);
-            nodePath[i] = nextNode;
-        }
-
-        return nodePath;
-    }*/
-
-    /*public GridNode GetUnoccupiedNodeInRange(GridNode fromNode, GridNode toNode, int range)
-    {
-        int modifier = 1; //run up or down the lane based on toNode relative position
-        if (fromNode.gridZ > toNode.gridZ) modifier = -1;
-
-        for (int i = fromNode.gridZ + modifier; i != toNode.gridZ; i += modifier)
-        {
-            //Debug.Log("Looking for unoccupied node at gridZ: " + i);
-            var node = GetNode(fromNode.gridX, i);
-            if (node.Occupant != null) continue; //node is occupied
-            if (Mathf.Abs(node.gridZ - toNode.gridZ) > range) continue; //node not within range
-            return node;
-        }
-        return null;
-    }*/
-
-    /*public GridNode[] GetAllNodesInLane(int laneX)
-    {
-        var tempArray = new GridNode[Depth];
-
-        for (int i = 0; i < tempArray.Length; i++)
-        {
-            tempArray[i] = gridArray[laneX, i];
-        }
-
-        return tempArray;
-    }*/
-
-    /*public int GetFrontRow(CommanderController commander)
-    {
-        float f = Depth;
-        int playerFront = Mathf.RoundToInt(f * 0.5f);
-
-        if (commander is PlayerCommander) return playerFront;
-        else return playerFront + 1;
-    }*/
-    #endregion
+        walkNodes = walk;
+        attackNodes = attack;
+    }
 }

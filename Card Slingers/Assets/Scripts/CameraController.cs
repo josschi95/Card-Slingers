@@ -36,6 +36,7 @@ public class CameraController : MonoBehaviour
     private float zoomInput;
 
     private Vector3 homePosition, homeRotation = new Vector3(35, 0, 0);
+    private float boundsX, boundsZ; //limit the movement of the free cam to the current room
 
     #region - Unity Methods -
     private void Start()
@@ -70,11 +71,7 @@ public class CameraController : MonoBehaviour
     {
         if (_currentView == CameraView.Free)
         {
-            freeCamMoveDirection = cam.transform.forward * cameraDelta.z + cam.transform.right * cameraDelta.x;
-            freeCamMoveDirection.y = 0;
-            freeCam.transform.position += freeCamMoveDirection * inputSensitivity * Time.deltaTime;
-
-            freeCam.transform.localEulerAngles += freeCamRotation * inputSensitivity * 4 * Time.deltaTime;
+            HandleFreeCamPosition();
             HandleFreeCameraZoom();
         }
         else if (_currentView == CameraView.Aerial)
@@ -82,6 +79,38 @@ public class CameraController : MonoBehaviour
             aerialCam.transform.position += cameraDelta * inputSensitivity * Time.deltaTime;
             HandleAerialCameraFOV();
         }
+    }
+
+    private void HandleFreeCamPosition()
+    {
+        freeCamMoveDirection = cam.transform.forward * cameraDelta.z + cam.transform.right * cameraDelta.x;
+        freeCamMoveDirection.y = 0;
+        freeCam.transform.position += freeCamMoveDirection * inputSensitivity * Time.deltaTime;
+        
+        var camPos = freeCam.transform.position;
+        camPos.x = Mathf.Clamp(camPos.x, _battlefieldCenter.position.x - boundsX, _battlefieldCenter.position.x + boundsX);
+        camPos.y = Mathf.Clamp(camPos.y, _battlefieldCenter.position.y + 5, _battlefieldCenter.position.y + 15);
+        camPos.z = Mathf.Clamp(camPos.z, _battlefieldCenter.position.z - boundsZ, _battlefieldCenter.position.z + boundsZ);
+        freeCam.transform.position = camPos;
+
+        freeCam.transform.localEulerAngles += freeCamRotation * inputSensitivity * 4 * Time.deltaTime;
+    }
+
+    private void HandleFreeCameraZoom()
+    {
+        if (freeCam.transform.position.y <= _battlefieldCenter.position.y + 5 && zoomInput > 0) return;
+        else if (freeCam.transform.position.y >= _battlefieldCenter.position.y + 10 && zoomInput < 0) return;
+
+        //var camForward = cam.transform.forward * zoomInput + cam.transform.right * cameraDelta.x;
+        var camForward = Vector3.down * zoomInput; //move camera up/down
+        freeCam.transform.position += camForward * _zoomSensitivity * Time.deltaTime;
+    }
+
+    private void HandleAerialCameraFOV()
+    {
+        aerialCam.m_Lens.FieldOfView -= zoomInput * inputSensitivity * Time.deltaTime;
+        if (aerialCam.m_Lens.FieldOfView < aerialCamMinFOV) aerialCam.m_Lens.FieldOfView = aerialCamMinFOV;
+        else if (aerialCam.m_Lens.FieldOfView > aerialCamMaxFOV) aerialCam.m_Lens.FieldOfView = aerialCamMaxFOV;
     }
 
     public void SetHome(Vector3 position, float rotation)
@@ -147,32 +176,17 @@ public class CameraController : MonoBehaviour
     {
         SetActiveCamera(CameraView.Free);
         ReturnHome();
+
+        var room = PlayerController.instance.currentRoom;
+        boundsX = room.RoomDimensions.x * 0.5f;
+        boundsZ = room.RoomDimensions.y * 0.5f;
+
+        aerialCam.transform.eulerAngles = new Vector3(90, _battlefieldCenter.eulerAngles.x, 0);
     }
 
     public void OnCombatEnd()
     {
         SetActiveCamera(CameraView.Follow);
-    }
-
-    private void HandleFreeCameraZoom()
-    {
-        var battlefieldHeight = _battlefieldCenter.position.y + 5;
-        if (freeCam.transform.position.y <= battlefieldHeight && zoomInput > 0) return; //prevent camera from sliding forward
-
-        //Don't change FOV, but actually move the camera in/out 
-        //So right now this is actually moving the camera in/out based on where it's facing, but just changing the heigh may be better
-        var camForward = cam.transform.forward * zoomInput + cam.transform.right * cameraDelta.x;
-        freeCam.transform.position += camForward * _zoomSensitivity * Time.deltaTime;
-
-        if (freeCam.transform.position.y < battlefieldHeight)
-            freeCam.transform.position = new Vector3(freeCam.transform.position.x, battlefieldHeight, freeCam.transform.position.z);
-    }
-
-    private void HandleAerialCameraFOV()
-    {
-        aerialCam.m_Lens.FieldOfView -= zoomInput * inputSensitivity * Time.deltaTime;
-        if (aerialCam.m_Lens.FieldOfView < aerialCamMinFOV) aerialCam.m_Lens.FieldOfView = aerialCamMinFOV;
-        else if (aerialCam.m_Lens.FieldOfView > aerialCamMaxFOV) aerialCam.m_Lens.FieldOfView = aerialCamMaxFOV;
     }
 }
 

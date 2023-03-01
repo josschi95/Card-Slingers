@@ -7,6 +7,7 @@ public class MonsterManager : OpponentCommander
     private MonsterEncounter _encounter;
 
     public PermanentSO[] startingPermanents;
+    private List<MonsterController> _monsters;
 
     //gives a weighted chance for the number of monsters in a match to lean towards 4
     //Will likely need a cleaner and more modifiable way to do this in the future
@@ -28,12 +29,15 @@ public class MonsterManager : OpponentCommander
 
     public override void OnAssignCommander(CommanderSO commanderInfo)
     {
+        Debug.Log("Is this being called?");
         //Do Nothing, these variables don't exist
     }
 
+    #region - Match Start -
     public void OnNewMatchStart(MonsterEncounter encounter)
     {
         _permanentsOnField = new List<Card_Permanent>();
+        _monsters = new List<MonsterController>();
         SubscribeToMatchEvents();
 
         _encounter = encounter;
@@ -63,11 +67,13 @@ public class MonsterManager : OpponentCommander
         //Get node from Battlefield
         var nodes = duelManager.Battlefield.GetSummonableNodes(this);
 
-
         var node = GetNode(nodes);
         if (node == null) return;
 
         unit.OnSummoned(node);
+        var controller = unit.gameObject.AddComponent<MonsterController>();
+        _monsters.Add(controller);
+
         var rot = duelManager.Battlefield.Center.eulerAngles;
         rot.y -= 180;
         unit.transform.eulerAngles = rot;
@@ -92,7 +98,9 @@ public class MonsterManager : OpponentCommander
 
         return nodes[Random.Range(0, nodes.Count)];
     }
+    #endregion
 
+    #region - Phases -
     protected override void OnBeginPhase()
     {
         //For each card on the field, invoke an OnBeginPhase event
@@ -103,30 +111,51 @@ public class MonsterManager : OpponentCommander
 
     protected override void OnSummoningPhase()
     {
+        //Cannot summon, no cards
         duelManager.OnCurrentPhaseFinished();
     }
 
     protected override void OnAttackPhase()
     {
         if (duelManager.TurnCount == 1) duelManager.OnCurrentPhaseFinished();
-        else
-        {
-            //Run through all permanents on field
-        }
+        else StartCoroutine(HandleMonsterActions());
     }
 
     protected override void OnEndPhase()
     {
+        //Nothing to do on end phase
         duelManager.OnCurrentPhaseFinished();
+    }
+    #endregion
+
+    //Down the line I should probably switch this from a single master controller to delegating the decisions to the monsters
+    //That will allow for a bit more versatility and variety in how they act
+    private IEnumerator HandleMonsterActions()
+    {
+        for (int i = 0; i < _monsters.Count; i++)
+        {
+            var monster = _monsters[i];
+            monster.SelectAction();
+
+            while (monster.unit.IsActing)
+            {
+                //Debug.Log("Waiting for unit to finish acting");
+                yield return null;
+            }
+            yield return new WaitForSeconds(1f);
+        }
+
+        duelManager.OnCurrentPhaseFinished(); //End phase
     }
 
     private void OnPermanentDestroyed(Card_Permanent permanent)
     {
-        //Trigger any exit effects
-        permanent.OnRemoveFromField();
-
         //Remove from list
         _permanentsOnField.Remove(permanent);
+
+        if (permanent.TryGetComponent(out MonsterController monster)) _monsters.Remove(monster);
+
+        Destroy(permanent.gameObject);
 
         //All monsters on the field have been defeated, player victory
         if (_permanentsOnField.Count == 0) DuelManager.instance.onPlayerVictory?.Invoke();

@@ -16,6 +16,7 @@ public class Card_Unit : Card_Permanent
 
     [SerializeField] private int[] _statModifiers = new int[System.Enum.GetNames(typeof(UnitStat)).Length];
 
+    private bool _canUseAbility;
     private bool _isMoving;
     private bool _isAttacking;
     protected Card_Permanent _attackTarget;
@@ -36,6 +37,7 @@ public class Card_Unit : Card_Permanent
     public bool CanAct => UnitCanAct();
     public bool CanMove => UnitCanMove();
     public bool CanAttack => UnitCanAttack();
+    public bool CanUseAbility => UnitCanUseAbility();
     #endregion
 
     #region - Override Methods -
@@ -170,6 +172,19 @@ public class Card_Unit : Card_Permanent
         if (_attackTarget == null) return false;
         if (DuelManager.instance.Battlefield.GetDistanceInNodes(Node, _attackTarget.Node) > Range) return false;
         return true;
+    }
+
+    private bool UnitCanUseAbility()
+    {
+        if (!CanAct) return false;
+
+        //if within a cooldown window
+
+        //if there is no valid target
+
+        //if cannot act
+
+        return false;
     }
     #endregion
 
@@ -342,6 +357,8 @@ public class Card_Unit : Card_Permanent
         if (_isDestroyed) return;
         _isDestroyed = true;
 
+        OnRemoveFromField();
+
         //Debug.Log("unit has been destroyed");
         _animator.SetTrigger("death");
         DuelManager.instance.onCardMovementStarted?.Invoke(this);
@@ -363,7 +380,6 @@ public class Card_Unit : Card_Permanent
             yield return null;
         }
 
-        cardGFX.SetActive(true); //Re-enable card GFX
         Destroy(PermanentObject); //Destroy unit
 
         //Invoke an event for the commander to listen to

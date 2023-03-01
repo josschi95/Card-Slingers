@@ -56,4 +56,26 @@ public class Card_Trap : Card_Permanent
 
         Commander.onPermanentDestroyed?.Invoke(this);
     }
+
+    protected override void OnCommanderVictory()
+    {
+        if (_location != CardLocation.OnField) return;
+        StartCoroutine(WaitToRemove());
+    }
+
+    protected override void OnCommanderDefeat()
+    {
+        if (_location != CardLocation.OnField) return;
+        OnPermanentDestroyed();
+    }
+
+    private IEnumerator WaitToRemove()
+    {
+        yield return new WaitForSeconds(2);
+        //include a part where the gameObject sinks beneath the battlefield
+        Destroy(PermanentObject); //Destroy unit
+
+        //Invoke an event for the commander to listen to
+        Commander.onPermanentDestroyed?.Invoke(this);
+    }
 }

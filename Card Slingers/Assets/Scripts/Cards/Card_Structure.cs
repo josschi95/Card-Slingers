@@ -62,6 +62,8 @@ public class Card_Structure : Card_Permanent
     {
         Debug.Log("unit has been destroyed");
 
+        OnRemoveFromField();
+
         //explosions or something
 
         //start a coroutine to wait until anim is finished playing
@@ -95,7 +97,6 @@ public class Card_Structure : Card_Permanent
     {
         yield return new WaitForSeconds(2);
         //include a part where the gameObject sinks beneath the battlefield
-        cardGFX.SetActive(true); //Re-enable card
         Destroy(PermanentObject); //Destroy unit
 
         //Invoke an event for the commander to listen to

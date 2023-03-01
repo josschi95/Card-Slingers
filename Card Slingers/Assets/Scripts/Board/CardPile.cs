@@ -81,7 +81,7 @@ public class CardPile : MonoBehaviour
         _cardsInHand = cardCount;
 
         float width = cardCount * (CARD_WIDTH + cardSpacing);
-        float cardXPos = -(width * 0.5f);
+        float cardXPos = -(width * 0.5f) + (CARD_WIDTH + cardSpacing) * 0.5f;
 
         for (int i = 0; i < transform.childCount; i++)
         {
@@ -89,8 +89,8 @@ public class CardPile : MonoBehaviour
             var child = transform.GetChild(i);
 
             if (addedNewCard && i == transform.childCount - 1) //move card in parabola
-                StartCoroutine(SmoothCardMovement(child.gameObject, new Vector3(cardXPos, 0, 0), true));
-            else StartCoroutine(SmoothCardMovement(child.gameObject, new Vector3(cardXPos, 0, 0), false));
+                StartCoroutine(SmoothCardMovement(child.gameObject, Vector3.right * cardXPos, true));
+            else StartCoroutine(SmoothCardMovement(child.gameObject, Vector3.right * cardXPos, false));
             cardXPos += CARD_WIDTH + cardSpacing;
         }
     }

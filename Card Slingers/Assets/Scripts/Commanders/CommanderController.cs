@@ -238,9 +238,6 @@ public class CommanderController : MonoBehaviour
 
     private void SendPermanentToDiscard(Card_Permanent permanent)
     {
-        //Trigger any exit effects
-        permanent.OnRemoveFromField();
-
         //Remove from list
         _permanentsOnField.Remove(permanent);
 

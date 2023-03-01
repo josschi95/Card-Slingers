@@ -21,11 +21,11 @@ MonoBehaviour:
   description: 
   flavorText: 
   _permanentPrefab: {fileID: 1125088666059422, guid: 252a512dd98766344a3e98962ce240d7, type: 3}
-  _maxHealth: 20
+  _maxHealth: 15
   _attack: 5
   _range: 3
   _defense: 0
-  _speed: 3
+  _speed: 2
   _deck:
     cards:
     - {fileID: 11400000, guid: 2a2440b92237a3946850eac39366bea5, type: 2}

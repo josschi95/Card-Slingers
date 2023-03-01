@@ -157,7 +157,8 @@ public class DuelManager : MonoBehaviour
         monsterManager.OnNewMatchStart(encounter);
 
         _isPlayerTurn = true;
-        onPhaseChange?.Invoke(_currentPhase);
+        Invoke("NewMatchEvents", 5f);
+        //onPhaseChange?.Invoke(_currentPhase);
     }
 
     private void SetCommanderStartingNode(CommanderController commander)
@@ -183,19 +184,17 @@ public class DuelManager : MonoBehaviour
 
     private IEnumerator SetCommanderCardMat(CommanderController commander)
     {
-        var dist = battleField.Depth * battleField.CellSize * 0.5f + 3.5f;
+        var dist = battleField.Depth * battleField.CellSize * 0.5f + 1f;
         if (commander is PlayerCommander) dist *= -1;
-        //var matPos = new Vector3(battleField.Center.position.x, battleField.Center.position.y - 2, battleField.Center.position.z + dist);
 
-        //var cardMat = Instantiate(_cardHolderPrefab, matPos, battleField.Center.rotation);
         var cardMat = Instantiate(_cardHolderPrefab, battleField.Center);
         cardMat.transform.localPosition += new Vector3(0, -1, dist);
         cardMat.transform.SetParent(null);
 
         var matPos = cardMat.transform.position;
-        matPos.y += 2;
+        matPos.y += 1.5f;
 
-        yield return new WaitForSeconds(1.5f); //Let the commander move past their cardholder first
+        //yield return new WaitForSeconds(1f); //Let the commander move past their cardholder first
 
         float timeElapsed = 0, timeToMove = 3f;
         while (timeElapsed < timeToMove)
@@ -205,10 +204,11 @@ public class DuelManager : MonoBehaviour
             timeElapsed += Time.deltaTime;
             yield return null;
         }
+        cardMat.transform.position = matPos;
 
         commander.OnMatchStart(cardMat);
     }
-    
+
     private void NewMatchEvents()
     {
         onPhaseChange?.Invoke(_currentPhase);
