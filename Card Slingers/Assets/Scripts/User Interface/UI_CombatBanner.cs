@@ -6,7 +6,7 @@ using TMPro;
 
 public class UI_CombatBanner : MonoBehaviour
 {
-    private UIManager UI;
+    private DungeonUIManager UI;
     private DuelManager duelManager;
     private PlayerCommander player;
     private OpponentCommander enemy;
@@ -40,7 +40,7 @@ public class UI_CombatBanner : MonoBehaviour
 
     private void Start()
     {
-        UI = UIManager.instance;
+        UI = DungeonUIManager.instance;
         player = PlayerController.instance.GetComponent<PlayerCommander>();
         duelManager = DuelManager.instance;
         duelManager.onMatchStarted += OnMatchStart;

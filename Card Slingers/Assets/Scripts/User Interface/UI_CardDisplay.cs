@@ -31,7 +31,7 @@ public class UI_CardDisplay : MonoBehaviour
     public void HideCardDisplay()
     {
         if (lerpCardDisplayCoroutine != null) StopCoroutine(lerpCardDisplayCoroutine);
-        lerpCardDisplayCoroutine = StartCoroutine(UIManager.instance.LerpRectTransform(cardDisplayRect, cardDisplayHiddenPos));
+        lerpCardDisplayCoroutine = StartCoroutine(DungeonUIManager.instance.LerpRectTransform(cardDisplayRect, cardDisplayHiddenPos));
     }
 
     public void ShowCardDisplay(CardSO card)
@@ -54,7 +54,7 @@ public class UI_CardDisplay : MonoBehaviour
         //stat tokens
 
         if (lerpCardDisplayCoroutine != null) StopCoroutine(lerpCardDisplayCoroutine);
-        lerpCardDisplayCoroutine = StartCoroutine(UIManager.instance.LerpRectTransform(cardDisplayRect, cardDisplayShownPos));
+        lerpCardDisplayCoroutine = StartCoroutine(DungeonUIManager.instance.LerpRectTransform(cardDisplayRect, cardDisplayShownPos));
     }
 
     private void HideStats()

@@ -136,7 +136,7 @@ public class Card : MonoBehaviour, IInteractable
 
     private void OnDisplayCardInfo()
     {
-        if (isRevealed) UIManager.instance.ShowCardDisplay(_cardInfo);
+        if (isRevealed) DungeonUIManager.instance.ShowCardDisplay(_cardInfo);
     }
 
     public void OnDeSelectCard()

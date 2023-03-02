@@ -317,7 +317,7 @@ public class DuelManager : MonoBehaviour
         for (int i = 0; i < _validTargetNodes.Count; i++) _validTargetNodes[i].UnlockDisplay();
         _validTargetNodes.Clear();
 
-        UIManager.instance.HideCardDisplay();
+        DungeonUIManager.instance.HideCardDisplay();
         ClearLineArc();
     }
 

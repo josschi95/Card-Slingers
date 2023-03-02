@@ -6,7 +6,7 @@ using TMPro;
 
 //NOTE: Split this all up into a central UI Manager and what is in here now put into a CombatHUD script
 
-public class UIManager : MonoBehaviour
+public class DungeonUIManager : MonoBehaviour
 {
     #region - TESTING -
     public RectTransform testPanelRect;
@@ -27,7 +27,7 @@ public class UIManager : MonoBehaviour
     }
     #endregion
 
-    public static UIManager instance;
+    public static DungeonUIManager instance;
     private void Awake()
     {
         instance = this;
@@ -35,8 +35,6 @@ public class UIManager : MonoBehaviour
 
     private DuelManager duelManager;
     [SerializeField] private UI_CardDisplay _cardDisplay;
-
-    [SerializeField] private Button endPhaseButton, cancelActionButton;
 
     private Vector2 closeOutPanelPos = new Vector2(0, -1000);
 

@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.17276844, g: 0.21589245, b: 0.2978263, a: 1}
+  m_IndirectSpecularColor: {r: 0.172768, g: 0.21589169, b: 0.29782546, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1931,7 +1931,7 @@ GameObject:
   - component: {fileID: 408324870}
   - component: {fileID: 408324874}
   m_Layer: 5
-  m_Name: Canvas
+  m_Name: Dungeon Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2041,8 +2041,6 @@ MonoBehaviour:
   TEST_PANEL_BUTTON: {fileID: 1288740355}
   TEST_END_PHASE_BUTTON: {fileID: 1185206920}
   _cardDisplay: {fileID: 437518131}
-  endPhaseButton: {fileID: 1806959045}
-  cancelActionButton: {fileID: 581004311}
   victoryPanel: {fileID: 335741395}
   continueButton: {fileID: 1882298935}
   gameOverPanel: {fileID: 2016703689}

@@ -122,7 +122,7 @@ public class GridNode : MonoBehaviour, IInteractable
 
     public void OnRightClick()
     {
-        if (Occupant != null) UIManager.instance.ShowCardDisplay(_occupant.CardInfo);
+        if (Occupant != null) DungeonUIManager.instance.ShowCardDisplay(_occupant.CardInfo);
     }
 
     public void OnMouseEnter()
