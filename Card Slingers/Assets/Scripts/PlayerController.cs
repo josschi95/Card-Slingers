@@ -45,20 +45,14 @@ public class PlayerController : MonoBehaviour
         onRoomEntered += (room) => currentRoom = room;
     }
 
-    float _speed;
-    RaycastHit hit;
-
     private void Update()
     {
         rotationInput.y = InputHandler.GetRotationInput();
-        //_speed = InputHandler.GetMoveInput().y;
     }
 
     private void LateUpdate()
     {
         RotatePlayer();
-
-        //_animator.SetFloat("speed", _speed);
     }
 
     private void RotatePlayer()
@@ -80,7 +74,8 @@ public class PlayerController : MonoBehaviour
         player.OnAssignCommander(playerCommander);
         player.CommanderCard.OnCommanderSummon();
         _animator = player.CommanderCard.PermanentObject.GetComponent<Animator>();
-        //_animator.speed = 2;
+
+        _animator.speed = 2;
     }
 
     #region - Movement -

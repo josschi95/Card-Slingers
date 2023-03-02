@@ -83,7 +83,8 @@ public class MonsterManager : OpponentCommander
     {
         for (int i = nodes.Count - 1; i >= 0; i--)
         {
-            if (nodes[i].Occupant != null) nodes.RemoveAt(i);
+            if (nodes[i].Obstacle != null) nodes.RemoveAt(i);
+            else if (nodes[i].Occupant != null) nodes.RemoveAt(i);
         }
 
         if (nodes.Count == 0) return null;

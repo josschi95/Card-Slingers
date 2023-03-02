@@ -76,7 +76,6 @@ public class DuelManager : MonoBehaviour
     private GridNode highlightedNode; //the node that the mouse is currently over
     private List<GridNode> _validTargetNodes = new List<GridNode>(); //used to hold valid nodes for summons and instants
 
-
     #region - Action Declaration Fields -
     public bool canDeclareNewAction { get; private set; }
     private bool _waitForTargetNode; //waitinf for a node to be selected to perform an action
@@ -133,11 +132,10 @@ public class DuelManager : MonoBehaviour
         var room = playerController.currentRoom;
 
         battleField.CreateGrid(room.Transform.position, room.Orientation, room.BoardDimensions);
+        Physics.SyncTransforms();
         for (int i = 0; i < room.Obstacles.Count; i++)
         {
-            var obstacle = room.Obstacles[i];
-
-            battleField.GetNode(obstacle.x, obstacle.z).Obstacle = obstacle;
+            room.Obstacles[i].OnOccupyNode();
         }
 
         CameraController.instance.OnCombatStart();
@@ -154,7 +152,6 @@ public class DuelManager : MonoBehaviour
 
         _isPlayerTurn = true;
         Invoke("NewMatchEvents", 5f);
-        //onPhaseChange?.Invoke(_currentPhase);
     }
 
     private void OnMonsterMatchStart(MonsterEncounter encounter)
@@ -164,7 +161,6 @@ public class DuelManager : MonoBehaviour
 
         _isPlayerTurn = true;
         Invoke("NewMatchEvents", 5f);
-        //onPhaseChange?.Invoke(_currentPhase);
     }
 
     private void SetCommanderStartingNode(CommanderController commander)
@@ -312,6 +308,8 @@ public class DuelManager : MonoBehaviour
     //The player cancels an action or completes it
     public void OnClearAction()
     {
+        _cardToPlay?.OnDeSelectCard();
+
         _cardToPlay = null;
         _waitForValidNode = false;
         _waitForTargetNode = false; //stop coroutine
@@ -380,6 +378,8 @@ public class DuelManager : MonoBehaviour
 
     private void OnCardInHandSelected(Card card)
     {
+        OnClearAction();
+
         if (PlayerCanPlayCard(card))
         {
             _cardToPlay = card;

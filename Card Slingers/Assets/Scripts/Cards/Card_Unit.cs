@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class Card_Unit : Card_Permanent
 {
@@ -11,6 +12,13 @@ public class Card_Unit : Card_Permanent
     protected Animator _animator;
 
     [Header("Unit Info")]
+    [SerializeField] private TMP_Text _healthText;
+    [SerializeField] private TMP_Text _defenseText;
+    [SerializeField] private TMP_Text _attackText;
+    [SerializeField] private TMP_Text _speedText;
+
+    [Space]
+
     [SerializeField] protected int _currentHealth;
     [SerializeField] private List<Card_Permanent> _equipment;
 
@@ -45,11 +53,15 @@ public class Card_Unit : Card_Permanent
     {
         base.SetCardDisplay();
 
-        //Also show indicator for all stats
+        var unit = CardInfo as UnitSO;
+        if (CardInfo == null) Debug.Log("Fuck");
+        if (_healthText == null) Debug.Log("Health");
 
-        //An indicator for current equipment
-
-        //stat tokens
+        _healthText.text = unit.MaxHealth.ToString();
+        _defenseText.text = unit.Defense.ToString();
+        _attackText.text = unit.Attack.ToString();
+        if (unit.Range > 1) _attackText.text += " (" + unit.Range.ToString() + ")";
+        _speedText.text = unit.Speed.ToString();
     }
 
     public override void OnSummoned(GridNode node)
@@ -90,6 +102,18 @@ public class Card_Unit : Card_Permanent
     #endregion
 
     #region - Unit Stats -
+    private void ResetAllStats()
+    {
+        var unit = CardInfo as UnitSO;
+        _currentHealth = unit.MaxHealth;
+
+        for (int i = 0; i < _statModifiers.Length; i++)
+        {
+            _statModifiers[i] = 0;
+        }
+
+    }
+
     public void AddModifier(UnitStat stat, int modifier = 1)
     {
         _statModifiers[(int)stat] += modifier;
@@ -380,6 +404,7 @@ public class Card_Unit : Card_Permanent
             yield return null;
         }
 
+        OnRemoveFromField();
         Destroy(PermanentObject); //Destroy unit
 
         //Invoke an event for the commander to listen to

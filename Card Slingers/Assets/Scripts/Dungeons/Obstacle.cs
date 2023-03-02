@@ -11,17 +11,14 @@ public class Obstacle : MonoBehaviour
     [SerializeField] private int _maxHealth;
     [SerializeField] private int _currentHealth;
 
-    public int x { get; private set; }
-    public int z { get; private set; }
-
-    public void OnInitialPlacement(int x, int z)
+    public void OnOccupyNode()
     {
-        this.x = x;
-        this.z = z;
-    }
+        var colls = Physics.OverlapSphere(transform.position, 0.5f);
+        var node = colls[0].GetComponent<GridNode>();
 
-    public void OnOccupyNode(GridNode node)
-    {
+        if (node == null || node.transform.position != transform.position) Debug.LogWarning("Fuck off.");
+
         Node = node;
+        node.Obstacle = this;
     }
 }

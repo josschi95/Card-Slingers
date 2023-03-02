@@ -75,10 +75,10 @@ public class GridNode : MonoBehaviour, IInteractable
     public int gridZ { get; private set; }
     public bool isPlayerNode { get; private set; } //located on player half of the grid
 
-    public int gCost; //the movement cost to move from the start node to this node, following the existing path
-    public int hCost; //the estimated movement cost to move from this node to the end node
-    public int fCost; //the current best guess as to the cost of the path
-    public GridNode cameFromNode;
+    [HideInInspector] public int gCost; //the movement cost to move from the start node to this node, following the existing path
+    [HideInInspector] public int hCost; //the estimated movement cost to move from this node to the end node
+    [HideInInspector] public int fCost; //the current best guess as to the cost of the path
+    [HideInInspector] public GridNode cameFromNode;
     #endregion
 
     #region - Pooling -
@@ -147,6 +147,8 @@ public class GridNode : MonoBehaviour, IInteractable
     #region - Display -
     private void SetColor(MaterialType type)
     {
+        if (meshRenderer == null) return;
+
         meshRenderer.material = highlightMats[(int)type];
     }
 

@@ -158,21 +158,19 @@ public class BattlefieldManager : MonoBehaviour
             //Goes lane by lane from 0 to width
             for (int x = 0; x < Width; x++)
             {
-                string lanes = "Lane " + x + ": ";
                 for (int z = 0; z < halfDepth; z++)
                 {
                     var node = GetNode(x, z);
 
+                    if (node.Obstacle != null) continue;
                     if (node.Occupant != null)
                     {
                         if (node.Occupant.Commander != commander) break;
                         else continue;
                     }
 
-                    lanes += z + ", ";
                     tempList.Add(node);
                 }
-                //Debug.Log(lanes);
             }
         }
         else
@@ -180,21 +178,19 @@ public class BattlefieldManager : MonoBehaviour
             //Goes lane by lane from 0 to width
             for (int x = 0; x < Width; x++)
             {
-                string lanes = "Lane " + x + ": ";
                 for (int z = Depth - 1; z >= halfDepth; z--)
                 {
                     var node = GetNode(x, z);
 
+                    if (node.Obstacle != null) continue;
                     if (node.Occupant != null)
                     {
                         if (node.Occupant.Commander != commander) break;
                         else continue;
                     }
 
-                    lanes += z + ", ";
                     tempList.Add(node);
                 }
-                //Debug.Log(lanes);
             }
         }
 
@@ -411,7 +407,7 @@ public class BattlefieldManager : MonoBehaviour
             else if (path.Count >= 2 && !path[path.Count - 1].CanBeOccupied(unit))
             {
                 //Ok this is where I'm running into an issue
-                Debug.Log("Cannot occupy node needed to move to");
+                //Debug.Log("Cannot occupy node needed to move to");
                 nodes.RemoveAt(i);
             }
         }
