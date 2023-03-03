@@ -77,7 +77,11 @@ public class MonsterController : MonoBehaviour
 
     public void SelectAction()
     {
-        if (!unit.CanAct) return;
+        if (!unit.CanAct)
+        {
+            Debug.Log("Unit cannot act. Skipping.");
+            return;
+        }
 
         //check all targets within range, and prioritize higher value targets
         //but also prioritize action over nothing
@@ -88,7 +92,7 @@ public class MonsterController : MonoBehaviour
         if (unit.CanUseAbility) //will ahve to figure out how to delegate this
         {
             //use ability
-            Debug.Log("using ability");
+            Debug.Log("Using ability.");
         }
         else if (targets.Count > 0) //Attack the nearest target
         {
@@ -98,6 +102,7 @@ public class MonsterController : MonoBehaviour
             {
                 if (targets.Contains(priorityList[i].target.Node))
                 {
+                    Debug.Log("Monster selecting attack.");
                     DuelManager.instance.OnAttackActionConfirmed(unit, priorityList[i].target.Node);
                     break;
                 }
@@ -122,7 +127,7 @@ public class MonsterController : MonoBehaviour
                     }
                 }
                 if (path.Count == 1) continue; //path only contains start node
-
+                Debug.Log("Monster selecting move.");
                 DuelManager.instance.OnMoveActionConfirmed(unit, path[path.Count - 1]);
                 break;
             }

@@ -32,13 +32,10 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
+        if (_unlockedDungeonLevels[0] < 1) _unlockedDungeonLevels[0] = 1; //the first dungeon is always unlocked at the start
     }
 
-    private void OnSceneLoaded(Scene arg0, LoadSceneMode arg1)
-    {
-        //Fade from black to clear on scene loaded
-        StartCoroutine(Fade(Color.black, Color.clear));
-    }
+
 
     #region - Effects -
     //This can very likel just be moved to its own script to not clog up this one
@@ -67,6 +64,45 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region - Scene Loading -
+    private void OnSceneLoaded(Scene arg0, LoadSceneMode arg1)
+    {
+        if (DungeonManager.instance != null)
+        {
+            DungeonManager.instance.CreateDungeon(_dungeonLevelToLoad);
+            StartCoroutine(WaitForDungeonToLoad());
+        }
+        else
+        {
+            //Fade from black to clear on scene loaded
+            StartCoroutine(Fade(Color.black, Color.clear));
+            _dungeonLevelToLoad = 0;
+        }
+    }
+
+    //Wait until the dungeon is complete to show view
+    private IEnumerator WaitForDungeonToLoad()
+    {
+        Debug.LogWarning("It froze here once. Need to figure out why.");
+        yield return new WaitForSeconds(2.5f);
+        /*while (!DungeonManager.instance.DungeonIsReady)
+        {
+            Debug.Log("Waiting for dungeon to generate.");
+            yield return null;
+        }*/
+        StartCoroutine(Fade(Color.black, Color.clear));
+    }
+
+    public static void LoadDungeon(Dungeons dungeon, int floor)
+    {
+        instance.LoadDungeonLevel(dungeon, floor);
+    }
+
+    private void LoadDungeonLevel(Dungeons dungeon, int floor)
+    {
+        _dungeonLevelToLoad = floor;
+        LoadScene(dungeon.ToString());
+    }
+
     public static void OnLoadScene(string sceneName)
     {
         instance.LoadScene(sceneName);
@@ -98,12 +134,23 @@ public class GameManager : MonoBehaviour
         screenFade.color = end;
     }
     #endregion
+
+    #region - Save File Info -
+    private int[] _unlockedDungeonLevels = new int[2]; //A value of zero means that the dungeon is not available
+    public int[] UnlockedDungeonLevels => _unlockedDungeonLevels;
+    private int _dungeonLevelToLoad;
+
+    #endregion
 }
+
+#region - Enums -
 public enum Phase { Begin, Summoning, Attack, End }
 public enum CardFocus { Offense, Defense, Utility }
 public enum ActionType { Move, Attack, Ability }
 public enum CardType { Unit, Structure, Trap, Equipment, Terrain, Spell, Commander }
 public enum Faction { Arcane, Kingdom, Goblins, Coven, Undead, Demons}
+public enum Dungeons { Catacombs, Woodland_Ruins }
 public enum DungeonSize { Small, Medium, Large }
 
 public enum Effects { Damage, Halt, StatModifier }
+#endregion

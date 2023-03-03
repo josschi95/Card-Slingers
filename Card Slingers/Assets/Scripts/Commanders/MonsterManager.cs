@@ -6,7 +6,6 @@ public class MonsterManager : OpponentCommander
 {
     private MonsterEncounter _encounter;
 
-    public PermanentSO[] startingPermanents;
     private List<MonsterController> _monsters;
 
     //gives a weighted chance for the number of monsters in a match to lean towards 4
@@ -140,7 +139,10 @@ public class MonsterManager : OpponentCommander
         {
             var monster = _monsters[i];
             monster.SelectAction();
-
+            if (!monster.unit.IsActing)
+            {
+                Debug.Log("Unit did not declare an action. Missing something.");
+            }
             while (monster.unit.IsActing)
             {
                 //Debug.Log("Waiting for unit to finish acting");

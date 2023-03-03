@@ -433,7 +433,7 @@ public class DuelManager : MonoBehaviour
     //The player selects a unit to perfor an action during the attack phase
     private void OnBeginDeclareAction(Card_Unit unit)
     {
-        if (!unit.CanAct || unit.HasActed) return;
+        if (unit.HasActed && !unit.CanMove) return;
 
         if (declareActionCoroutine != null) StopCoroutine(declareActionCoroutine);
         declareActionCoroutine = StartCoroutine(DisplayAvailableNodes(unit));
@@ -444,7 +444,10 @@ public class DuelManager : MonoBehaviour
     {
         _waitForTargetNode = true;
         var walkNodes = battleField.FindReachableNodes(unit);
-        var atkNodes = battleField.FindTargetableNodes(unit, unit.Range);
+        int range = unit.Range;
+        if (unit.HasActed) range = 0;
+        var atkNodes = battleField.FindTargetableNodes(unit, range);
+
         for (int i = 0; i < walkNodes.Count; i++) walkNodes[i].SetLockedDisplay(GridNode.MaterialType.Yellow);
         for (int i = 0; i < atkNodes.Count; i++) atkNodes[i].SetLockedDisplay(GridNode.MaterialType.Red);
 

@@ -4,9 +4,20 @@ using UnityEngine;
 
 public class LevelSelection : MonoBehaviour
 {
-    [SerializeField] private string levelName;
+    public delegate void OnLevelSelectedCallback(Dungeons dungeon);
+    public OnLevelSelectedCallback onLevelSelected;
+
+    [SerializeField] private Dungeons _dungeon;
     [SerializeField] private GameObject _highlightEffect;
     [SerializeField] private bool _isUnlocked;
+    public bool IsUnlocked
+    {
+        get => _isUnlocked;
+        set
+        {
+            _isUnlocked = value;
+        }
+    }
 
     private void Start()
     {
@@ -15,7 +26,7 @@ public class LevelSelection : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if (_isUnlocked) GameManager.OnLoadScene(levelName);
+        if (_isUnlocked) onLevelSelected?.Invoke(_dungeon);
     }
 
     private void OnMouseEnter()

@@ -27,8 +27,6 @@ public class DungeonGenerator : MonoBehaviour
     [SerializeField] private GameObject _hallwayHorizontal;
     [Tooltip("Up/Left, Up/Right, Down/Left, Down/Right")]
 
-    public bool _isComplete { get; private set; }
-
     [Space]
 
     [SerializeField] private List<DungeonRoom> dungeonRooms;
@@ -60,8 +58,6 @@ public class DungeonGenerator : MonoBehaviour
 
     public void BeginGeneration(DungeonSize dungeonSize)
     {
-        _isComplete = false;
-
         dungeonRooms = new List<DungeonRoom>();
         tentativePieces = new List<GameObject>();
 
@@ -431,8 +427,8 @@ public class DungeonGenerator : MonoBehaviour
         else if (dungeonRooms[0].ConnectedRooms[3] != null) player.eulerAngles = new Vector3(0, 90, 0);
         
         dungeonRooms[0].OnRoomEntered(Direction.Up);
-        Debug.Log("Complete.");
-        _isComplete = true;
+
+        DungeonManager.instance.DungeonIsReady = true;
     }
 
     private void PurgeAttempts()

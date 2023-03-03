@@ -320,7 +320,7 @@ public class BattlefieldManager : MonoBehaviour
             for (int y = 0; y < Depth; y++)
             {
                 GridNode pathNode = GetNode(x, y);
-                if (pathNode.CanBeTraversed(unit) && pathNode.CanBeOccupied(unit) && GetDistanceInNodes(startNode, pathNode) <= unit.Speed + 1)
+                if (pathNode.CanBeTraversed(unit) && pathNode.CanBeOccupied(unit) && GetDistanceInNodes(startNode, pathNode) <= unit.MovesLeft + 1)
                 {
                     nodes.Add(pathNode);
                     //Debug.Log(pathNode.x + "," + pathNode.y);
@@ -336,7 +336,7 @@ public class BattlefieldManager : MonoBehaviour
             //There is no available path to that node
             if (temp == null) nodes.RemoveAt(i);
             //The path requires more moves than are available
-            else if (temp.Count > unit.Speed + 1) nodes.RemoveAt(i);
+            else if (temp.Count > unit.MovesLeft + 1) nodes.RemoveAt(i);
         }
 
         return nodes;
@@ -355,8 +355,8 @@ public class BattlefieldManager : MonoBehaviour
             {
                 GridNode pathNode = GetNode(x, y);
                 var dist = GetDistanceInNodes(startNode, pathNode);
-                if (dist <= unit.Speed + unit.Range && pathNode.CanBeAttacked(unit)) attackNodes.Add(pathNode);
-                if (dist <= unit.Speed && pathNode.CanBeOccupied(unit)) walkNodes.Add(pathNode);
+                if (dist <= unit.MovesLeft + unit.Range && pathNode.CanBeAttacked(unit)) attackNodes.Add(pathNode);
+                if (dist <= unit.MovesLeft && pathNode.CanBeOccupied(unit)) walkNodes.Add(pathNode);
             }
         }
 
@@ -377,7 +377,7 @@ public class BattlefieldManager : MonoBehaviour
             {
                 GridNode pathNode = GetNode(x, y);
                 //Add all walkable nodes which can be accessed 
-                if (pathNode.CanBeAttacked(unit) && GetDistanceInNodes(startNode, pathNode) <= range + unit.Speed)
+                if (pathNode.CanBeAttacked(unit) && GetDistanceInNodes(startNode, pathNode) <= range + unit.MovesLeft)
                 {
                     nodes.Add(pathNode);
                     //Debug.Log(pathNode.gridX + "," + pathNode.gridZ + " can be attacked");
@@ -400,7 +400,7 @@ public class BattlefieldManager : MonoBehaviour
             if (path == null) nodes.RemoveAt(i);
 
             //The path requires more moves than are available
-            else if (path.Count > unit.Speed + 1) nodes.RemoveAt(i); //+1 because it counts the unit's occupied node as the first node
+            else if (path.Count > unit.MovesLeft + 1) nodes.RemoveAt(i); //+1 because it counts the unit's occupied node as the first node
 
             //The node path has at least two nodes in it - Checking this to not throw an error for the next check
             //The final node in the path can be occupied

@@ -4,6 +4,22 @@ using UnityEngine;
 
 public class DungeonManager : MonoBehaviour
 {
+    public static DungeonManager instance;
+    private void Awake()
+    {
+        instance = this;
+    }
+
+    private bool _dungeonIsReady = false;
+    public bool DungeonIsReady
+    {
+        get => _dungeonIsReady;
+        set
+        {
+            _dungeonIsReady = value;
+        }
+    }
+
     [SerializeField] private DungeonGenerator _generator;
 
     [Space]
@@ -16,8 +32,16 @@ public class DungeonManager : MonoBehaviour
 
     private void Start()
     {
-        _generator.BeginGeneration(_dungeonSize);
         DuelManager.instance.onMatchStarted += WatchMatch;
+    }
+
+    public void CreateDungeon(int floor)
+    {
+        _dungeonIsReady = false;
+        Debug.Log("Floor set to " + floor);
+        Debug.Log("Floor not setting anything yet.");
+        _generator.BeginGeneration(_dungeonSize);
+
     }
 
     public void SetEncounters(List<CombatEncounter> encounters)

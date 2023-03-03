@@ -27,10 +27,15 @@ public class Card_Unit : Card_Permanent
     private bool _canUseAbility;
     private bool _isMoving;
     private bool _isAttacking;
+
     protected Card_Permanent _attackTarget;
+
     protected bool _canRetaliate;
-    private bool _actedThisTurn;
     private bool _isDestroyed;
+
+    private int _movesLeft; //
+    public int MovesLeft => _movesLeft;
+    private bool _hasTakenAction;
 
     #region - Properties -
     public int MaxHealth => NetMaxHealth();
@@ -68,6 +73,9 @@ public class Card_Unit : Card_Permanent
     {
         //set max health before occupying node
         _isDestroyed = false;
+        _movesLeft = Speed;
+        _hasTakenAction = false;
+
         _currentHealth = NetMaxHealth();
 
         base.OnSummoned(node);
@@ -178,6 +186,7 @@ public class Card_Unit : Card_Permanent
     private bool UnitCanMove()
     {
         if (!CanAct) return false;
+        if (_movesLeft <= 0) return false;
         if (Speed == 0) return false;
 
         return true;
@@ -251,6 +260,9 @@ public class Card_Unit : Card_Permanent
                 yield return null;
             }
 
+            _movesLeft--;
+            Debug.Log("Unit has " + _movesLeft + " left.");
+
             transform.position = nodePath[0].transform.position;
             nodePath[0].onNodeEntered?.Invoke(this);
             currentNode = nodePath[0];
@@ -293,15 +305,17 @@ public class Card_Unit : Card_Permanent
     protected override void OnBeginPhase()
     {
         base.OnBeginPhase();
-        _actedThisTurn = false;
+
+        _movesLeft = Speed;
+        _hasTakenAction = false;
     }
 
     public bool HasActed
     {
-        get => _actedThisTurn;
+        get => _hasTakenAction;
         set
         {
-            _actedThisTurn = value;
+            _hasTakenAction = value;
         }
     }
 
@@ -328,6 +342,7 @@ public class Card_Unit : Card_Permanent
         
         _attackTarget = node.Occupant;
         _animator.SetTrigger("attack");
+        _hasTakenAction = true;
     }
 
     protected void OnAttackAnimationTrigger()
