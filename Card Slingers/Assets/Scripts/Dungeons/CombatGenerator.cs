@@ -4,47 +4,30 @@ using UnityEngine;
 
 public class CombatGenerator : MonoBehaviour
 {
-    private DungeonManager dungeonManager;
     [SerializeField] private CombatEncounter[] _encounters;
     private List<CombatEncounter> encounterList;
 
-    [SerializeField] private int minCombats;
-    [SerializeField] private int maxCombats;
-
-    public bool isComplete { get; private set; }
-
-    private void Awake()
+    /*public IEnumerator PlaceCombats(DungeonRoom[] dungeonRooms, int combats)
     {
-        dungeonManager = GameObject.Find("DungeonManager").GetComponent<DungeonManager>();
-    }
-
-    public void GenerateCombats(DungeonRoom[] dungeonRooms, DungeonFeatures features)
-    {
-        StartCoroutine(PlaceCombats(dungeonRooms, features));
-    }
-
-    public void GenerateCombats(DungeonRoom[] dungeonRooms)
-    {
-        StartCoroutine(PlaceCombats(dungeonRooms));
-    }
-
-    public IEnumerator PlaceCombats(DungeonRoom[] dungeonRooms, DungeonFeatures features)
-    {
-        isComplete = false;
+        //Debug.LogWarning("There is a bug in this method.");
         encounterList = new List<CombatEncounter>();
 
-        int combats = Random.Range(features.minCombats, features.maxCombats + 1);
-        combats = Mathf.Clamp(combats, 0, Mathf.RoundToInt((dungeonRooms.Length - 1) * 0.65f));
+        var availableRooms = new List<DungeonRoom>(dungeonRooms);
+        availableRooms.RemoveAt(0); //Get rid of the starting room
+        combats = Mathf.Clamp(combats, 0, availableRooms.Count); //Cannot have more combats than there are rooms
 
-        while (combats > 0)
+        int allowedAttempts = combats + 5;
+        while (combats > 0 && allowedAttempts > 0) //Exits while loop if either combats or attempts run out
         {
-            var room = dungeonRooms[Random.Range(1, dungeonRooms.Length)];
+            allowedAttempts--; //Decrease attempts at start
+
+            var room = availableRooms[Random.Range(1, availableRooms.Count)];
             if (room.Encounter != null) continue;
 
             var encounter = _encounters[Random.Range(0, _encounters.Length)];
             room.Encounter = encounter;
-            encounterList.Add(encounter);
-
+            encounterList.Add(encounter); //Add to list of generated encounters
+            availableRooms.Remove(room); //Remove room from list of rooms to select from
 
             DrawDebugBox(room.Transform.position + Vector3.up * 3f, Quaternion.identity, new Vector3(room.RoomDimensions.x + 1, 6f, room.RoomDimensions.y + 1), Color.yellow);
 
@@ -52,24 +35,33 @@ public class CombatGenerator : MonoBehaviour
             yield return null;
         }
 
-        dungeonManager.SetEncounters(encounterList);
-        isComplete = true;
-    }
+        if (combats > 0)
+        {
+            Debug.LogWarning("Was unable to place all combat before allowed attempts ran out.");
+        }
+        DungeonManager.instance.SetEncounters(encounterList); //Pass generated encounters to DungeonManager
+    }*/
 
-    public IEnumerator PlaceCombats(DungeonRoom[] dungeonRooms, int combats)
+    public IEnumerator PlaceCombats(CombatEncounter[] encounters, DungeonRoom[] dungeonRooms, int combats)
     {
-        isComplete = false;
         encounterList = new List<CombatEncounter>();
 
-        while (combats > 0)
+        var availableRooms = new List<DungeonRoom>(dungeonRooms);
+        availableRooms.RemoveAt(0); //Get rid of the starting room
+        combats = Mathf.Clamp(combats, 0, availableRooms.Count); //Cannot have more combats than there are rooms
+
+        int allowedAttempts = combats + 5;
+        while (combats > 0 && allowedAttempts > 0) //Exits while loop if either combats or attempts run out
         {
-            var room = dungeonRooms[Random.Range(1, dungeonRooms.Length)];
+            allowedAttempts--; //Decrease attempts at start
+
+            var room = availableRooms[Random.Range(1, availableRooms.Count)];
             if (room.Encounter != null) continue;
 
-            var encounter = _encounters[Random.Range(0, _encounters.Length)];
+            var encounter = encounters[Random.Range(0, encounters.Length)];
             room.Encounter = encounter;
-            encounterList.Add(encounter);
-
+            encounterList.Add(encounter); //Add to list of generated encounters
+            availableRooms.Remove(room); //Remove room from list of rooms to select from
 
             DrawDebugBox(room.Transform.position + Vector3.up * 3f, Quaternion.identity, new Vector3(room.RoomDimensions.x + 1, 6f, room.RoomDimensions.y + 1), Color.yellow);
 
@@ -77,34 +69,11 @@ public class CombatGenerator : MonoBehaviour
             yield return null;
         }
 
-        dungeonManager.SetEncounters(encounterList);
-        isComplete = true;
-    }
-
-    private IEnumerator PlaceCombats(DungeonRoom[] dungeonRooms)
-    {
-        isComplete = false;
-
-        int combats = Random.Range(minCombats, maxCombats + 1);
-        combats = Mathf.Clamp(combats, 0, Mathf.RoundToInt((dungeonRooms.Length - 1) * 0.65f));
-
-        while (combats > 0)
+        if (combats > 0)
         {
-            var room = dungeonRooms[Random.Range(1, dungeonRooms.Length)];
-            if (room.Encounter != null) continue;
-
-            var encounter = _encounters[Random.Range(0, _encounters.Length)];
-            room.Encounter = encounter;
-            encounterList.Add(encounter);
-            
-            DrawDebugBox(room.Transform.position + Vector3.up * 3f, Quaternion.identity, new Vector3(room.RoomDimensions.x + 1, 6f, room.RoomDimensions.y + 1), Color.yellow);
-
-            combats--;
-            yield return null;
+            Debug.LogWarning("Was unable to place all combat before allowed attempts ran out.");
         }
-
-        dungeonManager.SetEncounters(encounterList);
-        isComplete = true;
+        DungeonManager.instance.SetEncounters(encounterList);
     }
 
     private void DrawDebugBox(Vector3 pos, Quaternion rot, Vector3 scale, Color c, float duration = 15f)

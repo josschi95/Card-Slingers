@@ -35,8 +35,6 @@ public class GameManager : MonoBehaviour
         if (_unlockedDungeonLevels[0] < 1) _unlockedDungeonLevels[0] = 1; //the first dungeon is always unlocked at the start
     }
 
-
-
     #region - Effects -
     //This can very likel just be moved to its own script to not clog up this one
     public static void OnApplyEffect(Card_Permanent card, Effects effect, int magnitude = 1, UnitStat stat = UnitStat.Health)
@@ -64,11 +62,15 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region - Scene Loading -
+    private Dungeons _dungeonToLoad;
+    private int _dungeonLevelToLoad;
+
     private void OnSceneLoaded(Scene arg0, LoadSceneMode arg1)
     {
         if (DungeonManager.instance != null)
         {
-            DungeonManager.instance.CreateDungeon(_dungeonLevelToLoad);
+            Debug.LogWarning("It froze here once. Need to figure out why.");
+            DungeonManager.instance.CreateDungeon(_dungeonToLoad, _dungeonLevelToLoad);
             StartCoroutine(WaitForDungeonToLoad());
         }
         else
@@ -82,13 +84,12 @@ public class GameManager : MonoBehaviour
     //Wait until the dungeon is complete to show view
     private IEnumerator WaitForDungeonToLoad()
     {
-        Debug.LogWarning("It froze here once. Need to figure out why.");
-        yield return new WaitForSeconds(2.5f);
-        /*while (!DungeonManager.instance.DungeonIsReady)
+        //yield return new WaitForSeconds(2.5f);
+        while (!DungeonManager.instance.DungeonIsReady)
         {
             Debug.Log("Waiting for dungeon to generate.");
             yield return null;
-        }*/
+        }
         StartCoroutine(Fade(Color.black, Color.clear));
     }
 
@@ -99,6 +100,7 @@ public class GameManager : MonoBehaviour
 
     private void LoadDungeonLevel(Dungeons dungeon, int floor)
     {
+        _dungeonToLoad = dungeon;
         _dungeonLevelToLoad = floor;
         LoadScene(dungeon.ToString());
     }
@@ -138,7 +140,16 @@ public class GameManager : MonoBehaviour
     #region - Save File Info -
     private int[] _unlockedDungeonLevels = new int[2]; //A value of zero means that the dungeon is not available
     public int[] UnlockedDungeonLevels => _unlockedDungeonLevels;
-    private int _dungeonLevelToLoad;
+    private int _playerGold;
+    public int PlayerGold
+    {
+        get => _playerGold;
+        set
+        {
+            _playerGold = Mathf.Clamp(value, 0, int.MaxValue);            
+        }
+    }
+
 
     #endregion
 }

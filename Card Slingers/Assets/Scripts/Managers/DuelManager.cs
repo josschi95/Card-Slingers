@@ -23,12 +23,12 @@ public class DuelManager : MonoBehaviour
     #endregion
 
     #region - Callbacks -
-    public delegate void OnNewEncounterCallback(CombatEncounter encounter);
-    public OnNewEncounterCallback onMatchStarted;
+    public delegate void OnEncounterStartCallback(CombatEncounter encounter);
+    public OnEncounterStartCallback onMatchStarted;
 
-    public delegate void OnEncounterFinishedCallback();
-    public OnEncounterFinishedCallback onPlayerVictory;
-    public OnEncounterFinishedCallback onPlayerDefeat;
+    public delegate void OnEncounterEndCallback();
+    public OnEncounterEndCallback onPlayerVictory;
+    public OnEncounterEndCallback onPlayerDefeat;
 
     public delegate void OnCardMovementCallback(Card card); //used to prevent phase transitions while cards are moving
     public OnCardMovementCallback onCardMovementStarted;
@@ -444,9 +444,9 @@ public class DuelManager : MonoBehaviour
     {
         _waitForTargetNode = true;
         var walkNodes = battleField.FindReachableNodes(unit);
-        int range = unit.Range;
-        if (unit.HasActed) range = 0;
-        var atkNodes = battleField.FindTargetableNodes(unit, range);
+        
+        var atkNodes = new List<GridNode>(); //Don't populate list if the unit has already attacked
+        if (!unit.HasActed) atkNodes = battleField.FindTargetableNodes(unit, unit.Range);
 
         for (int i = 0; i < walkNodes.Count; i++) walkNodes[i].SetLockedDisplay(GridNode.MaterialType.Yellow);
         for (int i = 0; i < atkNodes.Count; i++) atkNodes[i].SetLockedDisplay(GridNode.MaterialType.Red);

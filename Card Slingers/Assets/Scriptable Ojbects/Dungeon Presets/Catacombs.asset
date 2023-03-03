@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a82a75c3856d1342abaab3aebba9fa7, type: 3}
+  m_Name: Catacombs
+  m_EditorClassIdentifier: 
+  _dungeon: 0
+  _encounters:
+  - {fileID: 11400000, guid: 942b5ef3d31fb5f409b6fd5738493701, type: 2}
+  _roomPrefabs:
+  - {fileID: 4552987423566128105, guid: fbe80236396fb68498aea4f3e459d2dc, type: 3}
+  - {fileID: 4552987423566128105, guid: fbe80236396fb68498aea4f3e459d2dc, type: 3}
+  - {fileID: 4552987423566128105, guid: fbe80236396fb68498aea4f3e459d2dc, type: 3}
+  - {fileID: 4552987423566128105, guid: 6820ef99f1748c449bedfe77581b0ded, type: 3}
+  _corners:
+  - {fileID: 8104045512107636186, guid: 48793899618ceff429344f66efe888a2, type: 3}
+  - {fileID: 8104045512107636186, guid: 3106366dcd2687545bae7658912613ba, type: 3}
+  - {fileID: 8104045512107636186, guid: cfdfe5230a37d6a44855c77f348028d2, type: 3}
+  - {fileID: 8104045512107636186, guid: 19efe416e530af649a1d1362c73e86e2, type: 3}
+  _startRoomPrefab: {fileID: 4552987423566128105, guid: 2d92463f53cb07943801ebd72f23abc9, type: 3}
+  _hallwayVertical: {fileID: 3098107058568356514, guid: 74e16b1c12a5f4349a4802d27c9ea6ca, type: 3}
+  _hallwayHorizontal: {fileID: 8505325516101539096, guid: 3dfc48b2fc6040a4e974890fde9c1acf, type: 3}
+  _obstacles:
+  - {fileID: -3097254296148762690, guid: 2a755289263242443842c2951bc668ab, type: 3}
+  - {fileID: 108166747122655980, guid: b68609c9c45bfc84ca7b4af4feab7d84, type: 3}
+  - {fileID: -4241413614913125802, guid: 51e254adee22b4d40bca863a6138e8af, type: 3}

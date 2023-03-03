@@ -68,7 +68,14 @@ public class DungeonUIManager : MonoBehaviour
 
     private void OnPlayerVictory()
     {
-        StartCoroutine(LerpRectTransform(victoryPanel, Vector2.zero, 2f));
+        if (DungeonManager.instance.AllEncountersComplete())
+        {
+            Debug.Log("All Encounters complete! Return to town.");
+        }
+        else
+        {
+            StartCoroutine(LerpRectTransform(victoryPanel, Vector2.zero, 2f));
+        }
     }
 
     private void OnPlayerDefeat()

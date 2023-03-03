@@ -12,6 +12,8 @@ public class Card_Commander : Card_Unit
     public void OnCommanderSummon()
     {
         _currentHealth = NetMaxHealth();
+        _movesLeft = Speed;
+        _hasTakenAction = false;
 
         onAttackAnimation += OnAttackAnimationTrigger;
         onDeathAnimation += OnUnitDeathAnimationComplete;
@@ -25,6 +27,8 @@ public class Card_Commander : Card_Unit
         cardGFX.SetActive(false); //Disable the physical card display
         var coll = GetComponent<Collider>();
         if (coll != null) coll.enabled = false;
+
+        _commander.onNewPhase += OnPhaseChange;
     }
 
     public override void OnTakeDamage(int damage)

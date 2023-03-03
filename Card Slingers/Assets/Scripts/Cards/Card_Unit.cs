@@ -33,9 +33,9 @@ public class Card_Unit : Card_Permanent
     protected bool _canRetaliate;
     private bool _isDestroyed;
 
-    private int _movesLeft; //
+    protected int _movesLeft; //
     public int MovesLeft => _movesLeft;
-    private bool _hasTakenAction;
+    protected bool _hasTakenAction;
 
     #region - Properties -
     public int MaxHealth => NetMaxHealth();
@@ -324,9 +324,7 @@ public class Card_Unit : Card_Permanent
     public void OnAttack(GridNode node)
     {
         if (!CanAttack) return; //shouldn't have gotten here if this is already false, but worth checking
-
         //out of range, movement was likely stopped before getting within range
-        //if (Mathf.Abs(Node.gridZ - node.gridZ) > Range)
         if (DuelManager.instance.Battlefield.GetDistanceInNodes(Node, node) > Range)
         {
             Debug.Log("Target located at " + node.gridX + "," + node.gridZ + " is further than " 

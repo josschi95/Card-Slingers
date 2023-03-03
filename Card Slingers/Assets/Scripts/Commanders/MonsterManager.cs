@@ -135,20 +135,34 @@ public class MonsterManager : OpponentCommander
     //That will allow for a bit more versatility and variety in how they act
     private IEnumerator HandleMonsterActions()
     {
+        Debug.Log(_monsters.Count + " units to act.");
         for (int i = 0; i < _monsters.Count; i++)
         {
-            var monster = _monsters[i];
-            monster.SelectAction();
-            if (!monster.unit.IsActing)
-            {
-                Debug.Log("Unit did not declare an action. Missing something.");
-            }
-            while (monster.unit.IsActing)
-            {
-                //Debug.Log("Waiting for unit to finish acting");
-                yield return null;
-            }
-            yield return new WaitForSeconds(1f);
+            Debug.Log("Selecting Action.");
+            _monsters[i].PrioritizeTargets();
+            _monsters[i].SelectAction();
+
+            while (!duelManager.canDeclareNewAction) yield return null;
+            //while (_monsters[i].unit.IsActing) yield return null;
+            yield return new WaitForSeconds(0.5f);
+        }
+
+        while (!duelManager.canDeclareNewAction) yield return null;
+        yield return new WaitForSeconds(0.5f);
+
+        //A unit did not decalre an action because all movement was blocked by another unit
+        //Circle back to them and try to move again
+        for (int i = 0; i < _monsters.Count; i++)
+        {
+            var unit = _monsters[i].unit;
+            if (unit.HasActed && unit.MovesLeft <= 0) continue; //There is nothing more that the unit can do this turn
+
+            Debug.Log("Selecting New Action.");
+            _monsters[i].PrioritizeTargets();
+            _monsters[i].SelectAction();
+
+            while (!duelManager.canDeclareNewAction) yield return null;
+            yield return new WaitForSeconds(0.5f);
         }
 
         duelManager.OnCurrentPhaseFinished(); //End phase

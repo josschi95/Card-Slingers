@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028331, g: 0.2257133, b: 0.3069217, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -270,7 +270,7 @@ GameObject:
   - component: {fileID: 82585684}
   - component: {fileID: 82585683}
   m_Layer: 5
-  m_Name: Gold
+  m_Name: Gold Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3759,6 +3759,7 @@ MonoBehaviour:
   _tavernViewPanel: {fileID: 1378241650}
   _generalLocationPanel: {fileID: 974591426}
   _locationText: {fileID: 509193180}
+  _playerGoldText: {fileID: 1344860608}
 --- !u!1001 &1869736299
 PrefabInstance:
   m_ObjectHideFlags: 0

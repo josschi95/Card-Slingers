@@ -59,6 +59,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21c4e3ff3958a524fb63312c00532dcd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _transform: {fileID: 3777873372622269366}
   meshRenderer: {fileID: 373168746641418158}
   highlightMats:
   - {fileID: 2100000, guid: b1b96d1609dd59e4aac568520db70399, type: 2}
@@ -69,6 +70,7 @@ MonoBehaviour:
   _occupant: {fileID: 0}
   _trap: {fileID: 0}
   _terrain: {fileID: 0}
+  _obstacle: {fileID: 0}
   gCost: 0
   hCost: 0
   fCost: 0

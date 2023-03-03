@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.17276844, g: 0.21589245, b: 0.2978263, a: 1}
+  m_IndirectSpecularColor: {r: 0.172768, g: 0.21589169, b: 0.29782546, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -312,6 +312,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 225bc11ca7c7f2b43b71d02b458c3d3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _dungeonPresets:
+  - {fileID: 11400000, guid: 1c3f7caf582c53d4d8c6f6d868a15309, type: 2}
   _generator: {fileID: 1695420355}
   _dungeonSize: 0
   _encounters: []
@@ -7135,19 +7137,6 @@ MonoBehaviour:
   combatGenerator: {fileID: 1695420357}
   obstacleGenerator: {fileID: 1695420358}
   miniMap: {fileID: 1553595695}
-  dungeonRoomPrefabs:
-  - {fileID: 4552987423566128105, guid: 6820ef99f1748c449bedfe77581b0ded, type: 3}
-  - {fileID: 4552987423566128105, guid: fbe80236396fb68498aea4f3e459d2dc, type: 3}
-  - {fileID: 4552987423566128105, guid: fbe80236396fb68498aea4f3e459d2dc, type: 3}
-  - {fileID: 4552987423566128105, guid: fbe80236396fb68498aea4f3e459d2dc, type: 3}
-  _corners:
-  - {fileID: 8104045512107636186, guid: 48793899618ceff429344f66efe888a2, type: 3}
-  - {fileID: 8104045512107636186, guid: 3106366dcd2687545bae7658912613ba, type: 3}
-  - {fileID: 8104045512107636186, guid: cfdfe5230a37d6a44855c77f348028d2, type: 3}
-  - {fileID: 8104045512107636186, guid: 19efe416e530af649a1d1362c73e86e2, type: 3}
-  startRoomPrefab: {fileID: 4552987423566128105, guid: 2d92463f53cb07943801ebd72f23abc9, type: 3}
-  _hallwayVertical: {fileID: 3098107058568356514, guid: 74e16b1c12a5f4349a4802d27c9ea6ca, type: 3}
-  _hallwayHorizontal: {fileID: 8505325516101539096, guid: 3dfc48b2fc6040a4e974890fde9c1acf, type: 3}
   dungeonRooms: []
 --- !u!4 &1695420356
 Transform:
@@ -7178,8 +7167,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _encounters:
   - {fileID: 11400000, guid: 942b5ef3d31fb5f409b6fd5738493701, type: 2}
-  minCombats: 5
-  maxCombats: 5
 --- !u!114 &1695420358
 MonoBehaviour:
   m_ObjectHideFlags: 0

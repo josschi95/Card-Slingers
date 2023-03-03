@@ -11,21 +11,11 @@ public class MonsterController : MonoBehaviour
     private void Awake()
     {
         unit = GetComponent<Card_Unit>();
-        unit.Commander.onNewPhase += OnPhaseChange;
         priorityList = new List<TargetPriority>();
     }
 
-    private void OnDestroy()
-    {
-        unit.Commander.onNewPhase -= OnPhaseChange;
-    }
-
-    private void OnPhaseChange(Phase phase)
-    {
-        if (phase == Phase.Begin) PrioritizeTargets();
-    }
-
-    private void PrioritizeTargets()
+    //Prioritize targets based on multiple variables before selecting an action
+    public void PrioritizeTargets()
     {
         priorityList.Clear(); //I could probably also just loop through and check if any perms are null and remove those
         //then just add any new perms, rather than clearing the list every round... we'll see
@@ -75,40 +65,42 @@ public class MonsterController : MonoBehaviour
         }
     }
 
+    //Select an action available to the unit based on positions
     public void SelectAction()
     {
         if (!unit.CanAct)
         {
-            Debug.Log("Unit cannot act. Skipping.");
+            Debug.LogWarning("Unit cannot act. Skipping.");
             return;
         }
 
-        //check all targets within range, and prioritize higher value targets
-        //but also prioritize action over nothing
-        //If unit CAN attack, attack, else, move towards highest value target
-
         var targets = DuelManager.instance.Battlefield.FindTargetableNodes(unit, unit.Range);
 
+        //Use ability if able and there is a valid target within range
         if (unit.CanUseAbility) //will ahve to figure out how to delegate this
         {
             //use ability
-            Debug.Log("Using ability.");
+            Debug.LogWarning("Using ability.");
+            return;
         }
-        else if (targets.Count > 0) //Attack the nearest target
+
+        //Attack a target if able and there is a valid target within range
+        if (!unit.HasActed && targets.Count > 0) //Attack the nearest target
         {
             //loop through available targets in order of highest priority to lowest
-            //If can attack any, do so 
             for (int i = 0; i < priorityList.Count; i++)
             {
                 if (targets.Contains(priorityList[i].target.Node))
                 {
                     Debug.Log("Monster selecting attack.");
                     DuelManager.instance.OnAttackActionConfirmed(unit, priorityList[i].target.Node);
-                    break;
+                    return;
                 }
             }
         }
-        else
+
+        //Else move towards the highest priority target
+        if (unit.MovesLeft > 0) //Unit can move at least one space
         {
             //Move towards highest priority target
             for (int i = 0; i < priorityList.Count; i++)
@@ -118,7 +110,7 @@ public class MonsterController : MonoBehaviour
 
                 for (int p = path.Count - 1; p >= 0; p--)
                 {
-                    if (p > unit.Speed) path.RemoveAt(p);
+                    if (p > unit.MovesLeft) path.RemoveAt(p);
                     else //able to reach these nodes
                     {
                         //Find the furthest node that can be occupied
@@ -126,12 +118,11 @@ public class MonsterController : MonoBehaviour
                         else path.RemoveAt(p);
                     }
                 }
-                if (path.Count == 1) continue; //path only contains start node
+                if (path.Count <= 1) continue; //path only contains start node or no nodes
                 Debug.Log("Monster selecting move.");
                 DuelManager.instance.OnMoveActionConfirmed(unit, path[path.Count - 1]);
                 break;
             }
-
         }
     }
 }

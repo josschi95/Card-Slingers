@@ -24,6 +24,7 @@ public class TownUIManager : MonoBehaviour
     [SerializeField] private GameObject _generalLocationPanel;
 
     [SerializeField] private TMP_Text _locationText;
+    [SerializeField] private TMP_Text _playerGoldText;
 
     /*Include a display for the following
      * 
@@ -47,6 +48,7 @@ public class TownUIManager : MonoBehaviour
     private void ToggleTownPanels(Location location)
     {
         _locationText.text = location.ToString();
+        _playerGoldText.text = GameManager.instance.PlayerGold.ToString();
 
         switch (location)
         {
@@ -105,6 +107,7 @@ public class TownUIManager : MonoBehaviour
             t += Time.deltaTime;
             yield return null;
         }
+        _fade.color = Color.black;
 
         yield return new WaitForSeconds(timeToFade * 0.5f);
         t = 0;
@@ -115,5 +118,6 @@ public class TownUIManager : MonoBehaviour
             t += Time.deltaTime;
             yield return null;
         }
+        _fade.color = Color.clear;
     }
 }

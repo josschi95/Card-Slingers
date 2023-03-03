@@ -7,6 +7,8 @@ public class GridNode : MonoBehaviour, IInteractable
 {
     private IObjectPool<GridNode> _pool;
 
+    [SerializeField] private Transform _transform;
+    public Transform Transform => _transform;
     #region - Callbacks -
     public delegate void OnGridNodeValueChanged(GridNode node);
     public OnGridNodeValueChanged onNodeValueChanged;
