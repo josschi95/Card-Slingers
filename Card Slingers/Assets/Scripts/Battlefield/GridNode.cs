@@ -188,7 +188,7 @@ public class GridNode : MonoBehaviour, IInteractable
 
     public bool CanBeTraversed(Card_Unit unit)
     {
-        if (_obstacle != null) return true;
+        if (_obstacle != null) return false;
 
         if (_occupant == null) return true; //not occupied at all
         if (_occupant.Commander != unit.Commander) return false; //cannot walk through enemy space

@@ -304,7 +304,7 @@ public class BattlefieldManager : MonoBehaviour
         }
 
         //Out of nodes on the openList
-        Debug.Log("Path could not be found from " + unit.Node.gridX + "," + unit.Node.gridZ + " to " + endNode.gridX + "," + endNode.gridZ);
+        //Debug.Log("Path could not be found from " + unit.Node.gridX + "," + unit.Node.gridZ + " to " + endNode.gridX + "," + endNode.gridZ);
         return null;
     }
 

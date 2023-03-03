@@ -75,7 +75,7 @@ public class PlayerController : MonoBehaviour
         player.CommanderCard.OnCommanderSummon();
         _animator = player.CommanderCard.PermanentObject.GetComponent<Animator>();
 
-        _animator.speed = 2;
+        //_animator.speed = 2;
     }
 
     #region - Movement -

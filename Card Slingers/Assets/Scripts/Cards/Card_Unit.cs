@@ -382,6 +382,7 @@ public class Card_Unit : Card_Permanent
         _isDestroyed = true;
 
         OnRemoveFromField();
+        Commander.onPermanentDestroyed?.Invoke(this);
 
         //Debug.Log("unit has been destroyed");
         _animator.SetTrigger("death");
@@ -408,7 +409,7 @@ public class Card_Unit : Card_Permanent
         Destroy(PermanentObject); //Destroy unit
 
         //Invoke an event for the commander to listen to
-        Commander.onPermanentDestroyed?.Invoke(this);
+        Commander.onSendToDiscard?.Invoke(this);
         DuelManager.instance.onCardMovementEnded?.Invoke(this);
     }
     #endregion

@@ -5,6 +5,7 @@ using UnityEngine;
 public class Card_Trap : Card_Permanent
 {
     private TrapSO _trapInfo => CardInfo as TrapSO;
+    private Animator _trapAnim;
 
     public override void OnSummoned(GridNode node)
     {
@@ -15,12 +16,15 @@ public class Card_Trap : Card_Permanent
         OnOccupyNode(node); //Occupy the given node
 
         _permanentObject = Instantiate(_trapInfo.Prefab, node.transform.position, Quaternion.identity);
+        _trapAnim = _permanentObject.GetComponent<Animator>();
     }
 
     private void OnTrapTriggered(Card_Unit unit)
     {
         //same commander, trap doesn't trigger
         if (unit.Commander == Commander) return;
+        _trapAnim.SetTrigger("trigger");
+
         Debug.Log("Trap has been activated!");
 
         //apply effects of trap
@@ -28,8 +32,6 @@ public class Card_Trap : Card_Permanent
         {
             GameManager.OnApplyEffect(unit, _trapInfo.Effects[i]);
         }
-
-        //Will likely have some animations in here, in that event, I'll add an OnAnimationComplete method similar to units
 
         //Invoke after 1 second delay
         Invoke("OnPermanentDestroyed", 1f);
@@ -76,6 +78,6 @@ public class Card_Trap : Card_Permanent
         Destroy(PermanentObject); //Destroy unit
 
         //Invoke an event for the commander to listen to
-        Commander.onPermanentDestroyed?.Invoke(this);
+        Commander.onSendToDiscard?.Invoke(this);
     }
 }

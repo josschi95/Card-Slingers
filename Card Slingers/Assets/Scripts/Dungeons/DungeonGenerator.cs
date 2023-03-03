@@ -94,7 +94,7 @@ public class DungeonGenerator : MonoBehaviour
         while (roomsToSpawn > 0)
         {
             tentativePieces.Clear();
-            yield return new WaitForSeconds(0.25f);
+            //yield return new WaitForSeconds(0.25f);
 
             var roomPrefab = dungeonRoomPrefabs[Random.Range(0, dungeonRoomPrefabs.Length)];
 
@@ -127,14 +127,6 @@ public class DungeonGenerator : MonoBehaviour
         }
 
         TryConnectLoops();
-
-        //else combatGenerator.GenerateCombats(dungeonRooms.ToArray(), _dungeonPreset);
-
-        //while (!combatGenerator.isComplete) yield return null;
-
-        //GetComponent<ObstacleGenerator>().GenerateObstacles(dungeonRooms);
-
-        //OnDungeonComplete();
     }
 
     //connect waypoints and build out hallways

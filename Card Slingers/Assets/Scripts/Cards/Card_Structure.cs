@@ -61,6 +61,7 @@ public class Card_Structure : Card_Permanent
     protected override void OnPermanentDestroyed()
     {
         Debug.Log("unit has been destroyed");
+        Commander.onPermanentDestroyed?.Invoke(this);
 
         OnRemoveFromField();
 
@@ -100,7 +101,7 @@ public class Card_Structure : Card_Permanent
         Destroy(PermanentObject); //Destroy unit
 
         //Invoke an event for the commander to listen to
-        Commander.onPermanentDestroyed?.Invoke(this);
+        Commander.onSendToDiscard?.Invoke(this);
     }
 
     protected override void OnCommanderVictory()

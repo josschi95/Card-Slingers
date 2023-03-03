@@ -71,8 +71,8 @@ public class CameraController : MonoBehaviour
     {
         if (_currentView == CameraView.Free)
         {
-            HandleFreeCamPosition();
             HandleFreeCameraZoom();
+            HandleFreeCamPosition();
         }
         else if (_currentView == CameraView.Aerial)
         {
@@ -99,7 +99,7 @@ public class CameraController : MonoBehaviour
     private void HandleFreeCameraZoom()
     {
         if (freeCam.transform.position.y <= _battlefieldCenter.position.y + 5 && zoomInput > 0) return;
-        else if (freeCam.transform.position.y >= _battlefieldCenter.position.y + 10 && zoomInput < 0) return;
+        else if (freeCam.transform.position.y >= _battlefieldCenter.position.y + 15 && zoomInput < 0) return;
 
         //var camForward = cam.transform.forward * zoomInput + cam.transform.right * cameraDelta.x;
         var camForward = Vector3.down * zoomInput; //move camera up/down

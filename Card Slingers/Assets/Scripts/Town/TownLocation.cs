@@ -25,5 +25,3 @@ public class TownLocation : MonoBehaviour
         _townManager.onLocationSelected?.Invoke(_location);
     }
 }
-
-public enum Location { Merchant, Armorer, Tavern, QuestBoard }

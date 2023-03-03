@@ -11,13 +11,19 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
     private void Awake()
     {
+        if (instance != null)
+        {
+            Debug.LogWarning("More than one instance of GameManager found.");
+            Destroy(gameObject);
+            return;
+        }
+
         instance = this;
+        DontDestroyOnLoad(gameObject);
     }
     #endregion
 
     [SerializeField] private Image screenFade;
-    private Color fadeEmpty = Color.clear;
-    private Color fadeFull = Color.black;
 
     [SerializeField] private EffectManager effectManager;
     [SerializeField] private ParticlePool _bloodParticlePool;
@@ -30,6 +36,7 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene arg0, LoadSceneMode arg1)
     {
+        //Fade from black to clear on scene loaded
         StartCoroutine(Fade(Color.black, Color.clear));
     }
 
@@ -72,14 +79,15 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator FadeOutAndLoadScene(string sceneName)
     {
-        StartCoroutine(Fade(Color.clear, Color.black));
-        yield return new WaitForSeconds(1f);
+        //Fade to black and then load next scene
+        yield return StartCoroutine(Fade(Color.clear, Color.black));
+
         SceneManager.LoadScene(sceneName);
     }
 
     private IEnumerator Fade(Color start, Color end)
     {
-        float t = 0, timeToFade = 0.5f;
+        float t = 0, timeToFade = 1f;
         screenFade.color = start;
         while (t < timeToFade)
         {
@@ -88,7 +96,6 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
         screenFade.color = end;
-
     }
     #endregion
 }

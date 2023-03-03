@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 614a5a7bf186647468151d14b3311506, type: 3}
-  m_Name: Black Knight
+  m_Name: The Black Knight
   m_EditorClassIdentifier: 
-  name: Black Knight
+  name: The Black Knight
   cardPrefab: {fileID: 5835411494563231940, guid: 325c52135d74aa64bab77db000ae8436, type: 3}
-  cost: 1
+  cost: 4
   icon: {fileID: 21300000, guid: e2e59673159616c44b546b4a66992a4f, type: 3}
   type: 0
   faction: 1
-  description: 'HP:5 ATK:1 DEF: 0 SPD: 2'
+  description: 
   flavorText: A noble knight
   _permanentPrefab: {fileID: 1772587093756804, guid: f96fa216d8859434fb29ff7cc4930724, type: 3}
   _maxHealth: 15

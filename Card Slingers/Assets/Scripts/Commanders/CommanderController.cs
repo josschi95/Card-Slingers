@@ -12,7 +12,9 @@ public class CommanderController : MonoBehaviour
     public OnStatValueChangedCallback onManaChange;
 
     public delegate void OnPermanentDestroyedCallback(Card_Permanent card);
-    public OnPermanentDestroyedCallback onPermanentDestroyed;
+    public OnPermanentDestroyedCallback onPermanentDestroyed; //the perm has been destroyed
+    public OnPermanentDestroyedCallback onSendToDiscard; //the perm has been removed from the field
+    //I'm separating these two so that the card is removed from _permanentsOnField list immediately, but not immediately sent to discard
 
     protected DuelManager duelManager;
     private CardHolder _cardHolder;
@@ -48,7 +50,8 @@ public class CommanderController : MonoBehaviour
     {
         duelManager = DuelManager.instance;
 
-        onPermanentDestroyed += SendPermanentToDiscard;
+        onPermanentDestroyed += RemovePermanentFromField;
+        onSendToDiscard += SendPermanentToDiscard;
         healthDisplay = GetComponentInChildren<HealthDisplay>();
         healthDisplay.gameObject.SetActive(false);
 
@@ -236,11 +239,14 @@ public class CommanderController : MonoBehaviour
         PlaceCardInDiscard(cardToDiscard);
     }
 
-    private void SendPermanentToDiscard(Card_Permanent permanent)
+    private void RemovePermanentFromField(Card_Permanent permanent)
     {
         //Remove from list
         _permanentsOnField.Remove(permanent);
+    }
 
+    private void SendPermanentToDiscard(Card_Permanent permanent)
+    {
         //Moves the card to the discard pile
         PlaceCardInDiscard(permanent);
     }

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ad9f45906d504fd458cc1d3248c4f965, type: 3}
-  m_Name: _Player
+  m_Name: _Player_Merlinus Beardicus
   m_EditorClassIdentifier: 
   name: Merlinus Beardicus
   cardPrefab: {fileID: 1569306437134555641, guid: ce928bac281b5944ca19a2d1b05636dc, type: 3}
@@ -22,12 +22,16 @@ MonoBehaviour:
   flavorText: 
   _permanentPrefab: {fileID: 1125088666059422, guid: 252a512dd98766344a3e98962ce240d7, type: 3}
   _maxHealth: 15
-  _attack: 5
+  _attack: 2
   _range: 3
   _defense: 0
   _speed: 2
   _deck:
     cards:
+    - {fileID: 11400000, guid: af80179235cffd24c8a4580183160e8a, type: 2}
+    - {fileID: 11400000, guid: af80179235cffd24c8a4580183160e8a, type: 2}
+    - {fileID: 11400000, guid: af80179235cffd24c8a4580183160e8a, type: 2}
+    - {fileID: 11400000, guid: af80179235cffd24c8a4580183160e8a, type: 2}
     - {fileID: 11400000, guid: 2a2440b92237a3946850eac39366bea5, type: 2}
     - {fileID: 11400000, guid: 2a2440b92237a3946850eac39366bea5, type: 2}
     - {fileID: 11400000, guid: 2a2440b92237a3946850eac39366bea5, type: 2}
@@ -35,13 +39,11 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 43dd21e76e676904a9c2ccf3956835a4, type: 2}
     - {fileID: 11400000, guid: 43dd21e76e676904a9c2ccf3956835a4, type: 2}
     - {fileID: 11400000, guid: 43dd21e76e676904a9c2ccf3956835a4, type: 2}
-    - {fileID: 11400000, guid: e58b42a42374c974e807c74199f3fd2c, type: 2}
-    - {fileID: 11400000, guid: e58b42a42374c974e807c74199f3fd2c, type: 2}
-    - {fileID: 11400000, guid: b2cd241f6d8a5694c86213af315b891c, type: 2}
     - {fileID: 11400000, guid: b2cd241f6d8a5694c86213af315b891c, type: 2}
     - {fileID: 11400000, guid: b2cd241f6d8a5694c86213af315b891c, type: 2}
     - {fileID: 11400000, guid: 8698ae1d4970f3c4a8265064b8a425d9, type: 2}
     - {fileID: 11400000, guid: 8698ae1d4970f3c4a8265064b8a425d9, type: 2}
+    - {fileID: 11400000, guid: e58b42a42374c974e807c74199f3fd2c, type: 2}
     - {fileID: 11400000, guid: 1e70f0fb14780b841b1c2936f8818452, type: 2}
     - {fileID: 11400000, guid: 1e70f0fb14780b841b1c2936f8818452, type: 2}
     - {fileID: 11400000, guid: 1e70f0fb14780b841b1c2936f8818452, type: 2}

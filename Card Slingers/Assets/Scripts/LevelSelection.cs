@@ -5,16 +5,12 @@ using UnityEngine;
 public class LevelSelection : MonoBehaviour
 {
     [SerializeField] private string levelName;
+    [SerializeField] private GameObject _highlightEffect;
     [SerializeField] private bool _isUnlocked;
-    [SerializeField] private Material highlightMat;
-
-    private Material normalMat;
-    private MeshRenderer meshRenderer;
 
     private void Start()
     {
-        meshRenderer = GetComponent<MeshRenderer>();
-        normalMat = meshRenderer.material;
+        //Check with gameManager to see if it is unlocked
     }
 
     private void OnMouseDown()
@@ -24,11 +20,11 @@ public class LevelSelection : MonoBehaviour
 
     private void OnMouseEnter()
     {
-        if (_isUnlocked) meshRenderer.material = highlightMat;
+        if (_isUnlocked) _highlightEffect.SetActive(true);
     }
 
     private void OnMouseExit()
     {
-        meshRenderer.material = normalMat;
+        _highlightEffect.SetActive(false);
     }
 }

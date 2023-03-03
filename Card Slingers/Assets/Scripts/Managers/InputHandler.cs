@@ -1,8 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Interactions;
+using UnityEngine.SceneManagement;
 
 public class InputHandler : MonoBehaviour
 {
@@ -11,7 +9,6 @@ public class InputHandler : MonoBehaviour
     private void Awake()
     {
         instance = this;
-        cam = Camera.main;
     }
     #endregion
 
@@ -20,6 +17,18 @@ public class InputHandler : MonoBehaviour
 
     Ray ray;
     RaycastHit hit;
+
+    private void Start()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        if (cam == null) cam = Camera.main;
+    }
+
+    //Grab the camera for each scene
+    private void OnSceneLoaded(Scene arg0, LoadSceneMode arg1)
+    {
+        cam = Camera.main;
+    }
 
     public void OnEnable()
     {
@@ -39,6 +48,8 @@ public class InputHandler : MonoBehaviour
         playerInput.actions["Camera Home"].performed -= i => CameraController.instance.ReturnHome();
         playerInput.actions["Change View"].performed -= i => CameraController.instance.SwitchView();
     }
+
+
 
     private void OnLeftClick()
     {

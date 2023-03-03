@@ -11,7 +11,9 @@ public class MonsterManager : OpponentCommander
 
     //gives a weighted chance for the number of monsters in a match to lean towards 4
     //Will likely need a cleaner and more modifiable way to do this in the future
-    private int[] monsterCount = { 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6 };
+    private int[] monsterCount = { 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6 };
+    //I'd say it should depend on the dungeon as well, some value that's held in the dungeon manager
+    //take into account... board size, the dungeon, and the level. 2 should be rare in all, uncommon in first floors
 
     //No CommanderSO _commanderInfo
     //No Card_Commander _commanderCard
@@ -25,6 +27,7 @@ public class MonsterManager : OpponentCommander
     {
         duelManager = DuelManager.instance;
         onPermanentDestroyed += OnPermanentDestroyed;
+        onSendToDiscard += DestroyPermanent;
     }
 
     public override void OnAssignCommander(CommanderSO commanderInfo)
@@ -156,10 +159,13 @@ public class MonsterManager : OpponentCommander
 
         if (permanent.TryGetComponent(out MonsterController monster)) _monsters.Remove(monster);
 
-        Destroy(permanent.gameObject);
-
         //All monsters on the field have been defeated, player victory
         if (_permanentsOnField.Count == 0) DuelManager.instance.onPlayerVictory?.Invoke();
+    }
+
+    private void DestroyPermanent(Card_Permanent card)
+    {
+        Destroy(card.gameObject);
     }
 
     protected override void OnPlayerVictory()
