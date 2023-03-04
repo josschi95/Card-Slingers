@@ -45,7 +45,7 @@ public class UI_CombatBanner : MonoBehaviour
         duelManager = DuelManager.instance;
         duelManager.onMatchStarted += OnMatchStart;
         duelManager.onPhaseChange += OnPhaseChange;
-        duelManager.onNewTurn += delegate { OnNewTurn(); };
+        duelManager.onNewTurn += OnNewTurn;
 
         duelManager.onPlayerVictory += OnPlayerVictory;
         duelManager.onPlayerDefeat += OnPlayerDefeat;
@@ -107,9 +107,9 @@ public class UI_CombatBanner : MonoBehaviour
         if (playerTurn) duelManager.OnCurrentPhaseFinished();
     }
 
-    private void OnNewTurn()
+    private void OnNewTurn(bool isPlayerTurn)
     {
-        playerTurn = !playerTurn;
+        playerTurn = isPlayerTurn;
 
         var endPos = phaseBannerPos;
         if (playerTurn) endPos *= Vector2.left;

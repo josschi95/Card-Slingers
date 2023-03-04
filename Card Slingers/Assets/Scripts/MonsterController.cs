@@ -92,7 +92,6 @@ public class MonsterController : MonoBehaviour
             {
                 if (targets.Contains(priorityList[i].target.Node))
                 {
-                    Debug.Log("Monster selecting attack.");
                     DuelManager.instance.OnAttackActionConfirmed(unit, priorityList[i].target.Node);
                     return;
                 }
@@ -119,7 +118,6 @@ public class MonsterController : MonoBehaviour
                     }
                 }
                 if (path.Count <= 1) continue; //path only contains start node or no nodes
-                Debug.Log("Monster selecting move.");
                 DuelManager.instance.OnMoveActionConfirmed(unit, path[path.Count - 1]);
                 break;
             }

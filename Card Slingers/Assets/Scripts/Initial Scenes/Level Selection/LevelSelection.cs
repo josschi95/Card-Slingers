@@ -19,6 +19,8 @@ public class LevelSelection : MonoBehaviour
         }
     }
 
+    private bool _highlightLocked;
+
     private void Start()
     {
         //Check with gameManager to see if it is unlocked
@@ -26,7 +28,7 @@ public class LevelSelection : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if (_isUnlocked) onLevelSelected?.Invoke(_dungeon);
+        if (_isUnlocked) OnDungeonSelected();
     }
 
     private void OnMouseEnter()
@@ -36,6 +38,18 @@ public class LevelSelection : MonoBehaviour
 
     private void OnMouseExit()
     {
+        if (!_highlightLocked) _highlightEffect.SetActive(false);
+    }
+
+    private void OnDungeonSelected()
+    {
+        onLevelSelected?.Invoke(_dungeon);
+        _highlightLocked = true;
+    }
+
+    public void OnDungeonDeselected()
+    {
+        _highlightLocked = false;
         _highlightEffect.SetActive(false);
     }
 }

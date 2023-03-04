@@ -49,6 +49,7 @@ public class LevelSelectionManager : MonoBehaviour
     private void OnDungeonCancelled()
     {
         _levelSelectionPanel.SetActive(false);
+        _dungeons[(int)_currentlySelectedDungeon].OnDungeonDeselected();
         _currentlySelectedDungeon = Dungeons.Catacombs; //Or whatever the first is
     }
 

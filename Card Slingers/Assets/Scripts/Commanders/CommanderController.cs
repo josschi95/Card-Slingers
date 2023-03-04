@@ -103,6 +103,11 @@ public class CommanderController : MonoBehaviour
     #endregion
 
     #region - Phases -
+    protected virtual void OnNewTurn(bool isPlayerTurn)
+    {
+        //Meant to be overwritten
+    }
+
     private void SetPhase(Phase phase)
     {
         if (!isTurn) return;
@@ -159,6 +164,8 @@ public class CommanderController : MonoBehaviour
     {
         isDrawingCards = true;
         duelManager.onCardMovementStarted?.Invoke(null);
+
+        Debug.Log("Cards to draw: " + (_handSize - _cardsInHand.Count).ToString());
 
         while (_cardsInHand.Count < _handSize)
         {
@@ -452,7 +459,7 @@ public class CommanderController : MonoBehaviour
     protected void SubscribeToMatchEvents()
     {
         duelManager.onPhaseChange += SetPhase;
-        duelManager.onNewTurn += delegate { isTurn = !isTurn; };
+        duelManager.onNewTurn += OnNewTurn;
 
         duelManager.onPlayerDefeat += OnPlayerDefeat;
         duelManager.onPlayerVictory += OnPlayerVictory;
@@ -461,7 +468,7 @@ public class CommanderController : MonoBehaviour
     protected void MatcheEnd()
     {
         duelManager.onPhaseChange -= SetPhase;
-        duelManager.onNewTurn -= delegate { isTurn = !isTurn; };
+        duelManager.onNewTurn -= OnNewTurn;
 
         duelManager.onPlayerVictory -= OnPlayerVictory;
         duelManager.onPlayerDefeat -= OnPlayerDefeat;

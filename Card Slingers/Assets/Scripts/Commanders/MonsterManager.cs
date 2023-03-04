@@ -31,13 +31,15 @@ public class MonsterManager : OpponentCommander
 
     public override void OnAssignCommander(CommanderSO commanderInfo)
     {
-        Debug.Log("Is this being called?");
+        Debug.LogWarning("Is this being called?");
         //Do Nothing, these variables don't exist
     }
 
     #region - Match Start -
     public void OnNewMatchStart(MonsterEncounter encounter)
     {
+        currentPhase = Phase.Begin;
+
         _permanentsOnField = new List<Card_Permanent>();
         _monsters = new List<MonsterController>();
         SubscribeToMatchEvents();
@@ -106,6 +108,7 @@ public class MonsterManager : OpponentCommander
     #region - Phases -
     protected override void OnBeginPhase()
     {
+        Debug.Log("OnBeginPhase");
         //For each card on the field, invoke an OnBeginPhase event
         onNewPhase?.Invoke(Phase.Begin);
 
@@ -114,18 +117,24 @@ public class MonsterManager : OpponentCommander
 
     protected override void OnSummoningPhase()
     {
+        Debug.Log("OnSummoningPhase");
+
         //Cannot summon, no cards
         duelManager.OnCurrentPhaseFinished();
     }
 
     protected override void OnAttackPhase()
     {
+        Debug.Log("OnAttackPhase");
+
         if (duelManager.TurnCount == 1) duelManager.OnCurrentPhaseFinished();
         else StartCoroutine(HandleMonsterActions());
     }
 
     protected override void OnEndPhase()
     {
+        Debug.Log("OnEndPhase");
+
         //Nothing to do on end phase
         duelManager.OnCurrentPhaseFinished();
     }
@@ -135,10 +144,8 @@ public class MonsterManager : OpponentCommander
     //That will allow for a bit more versatility and variety in how they act
     private IEnumerator HandleMonsterActions()
     {
-        Debug.Log(_monsters.Count + " units to act.");
         for (int i = 0; i < _monsters.Count; i++)
         {
-            Debug.Log("Selecting Action.");
             _monsters[i].PrioritizeTargets();
             _monsters[i].SelectAction();
 
@@ -157,7 +164,6 @@ public class MonsterManager : OpponentCommander
             var unit = _monsters[i].unit;
             if (unit.HasActed && unit.MovesLeft <= 0) continue; //There is nothing more that the unit can do this turn
 
-            Debug.Log("Selecting New Action.");
             _monsters[i].PrioritizeTargets();
             _monsters[i].SelectAction();
 

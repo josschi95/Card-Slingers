@@ -25,8 +25,6 @@ public class Card_Trap : Card_Permanent
         if (unit.Commander == Commander) return;
         _trapAnim.SetTrigger("trigger");
 
-        Debug.Log("Trap has been activated!");
-
         //apply effects of trap
         for (int i = 0; i < _trapInfo.Effects.Length; i++)
         {
@@ -53,9 +51,9 @@ public class Card_Trap : Card_Permanent
 
     protected override void OnPermanentDestroyed()
     {
+        OnAbandonNode();
         cardGFX.SetActive(true); //Re-enable card
         Destroy(PermanentObject); //Destroy trap
-
         Commander.onPermanentDestroyed?.Invoke(this);
     }
 
@@ -74,8 +72,10 @@ public class Card_Trap : Card_Permanent
     private IEnumerator WaitToRemove()
     {
         yield return new WaitForSeconds(2);
-        //include a part where the gameObject sinks beneath the battlefield
-        Destroy(PermanentObject); //Destroy unit
+
+        OnAbandonNode();
+        cardGFX.SetActive(true); //Re-enable card
+        Destroy(PermanentObject); //Destroy trap
 
         //Invoke an event for the commander to listen to
         Commander.onSendToDiscard?.Invoke(this);

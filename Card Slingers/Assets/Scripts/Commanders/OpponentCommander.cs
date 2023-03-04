@@ -26,6 +26,11 @@ public class OpponentCommander : CommanderController
         invadesLanes = new bool[duelManager.Battlefield.Width];
     }
 
+    protected override void OnNewTurn(bool isPlayerTurn)
+    {
+        isTurn = !isPlayerTurn;
+    }
+
     protected override void OnPlayerVictory()
     {
         base.OnPlayerVictory();

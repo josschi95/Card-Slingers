@@ -69,7 +69,6 @@ public class GameManager : MonoBehaviour
     {
         if (DungeonManager.instance != null)
         {
-            Debug.LogWarning("It froze here once. Need to figure out why.");
             DungeonManager.instance.CreateDungeon(_dungeonToLoad, _dungeonLevelToLoad);
             StartCoroutine(WaitForDungeonToLoad());
         }
@@ -84,12 +83,7 @@ public class GameManager : MonoBehaviour
     //Wait until the dungeon is complete to show view
     private IEnumerator WaitForDungeonToLoad()
     {
-        //yield return new WaitForSeconds(2.5f);
-        while (!DungeonManager.instance.DungeonIsReady)
-        {
-            Debug.Log("Waiting for dungeon to generate.");
-            yield return null;
-        }
+        while (!DungeonManager.instance.DungeonIsReady) yield return null;
         StartCoroutine(Fade(Color.black, Color.clear));
     }
 

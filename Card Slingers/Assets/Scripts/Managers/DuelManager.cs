@@ -40,7 +40,9 @@ public class DuelManager : MonoBehaviour
 
     public delegate void OnPhaseChangeCallback(Phase newPhase);
     public OnPhaseChangeCallback onPhaseChange;
-    public OnPhaseChangeCallback onNewTurn;
+
+    public delegate void OnNewTurnCallback(bool isPlayerTurn);
+    public OnNewTurnCallback onNewTurn;
 
     public delegate void OnNodeFocusChangeCallback(GridNode node);
     public OnNodeFocusChangeCallback onNodeSelected;
@@ -119,7 +121,6 @@ public class DuelManager : MonoBehaviour
         onCardEndAction += delegate { _cardsInAction--; };
 
         onCardInHandSelected += OnCardInHandSelected;
-
     }
 
     #region - Match Start -
@@ -129,9 +130,10 @@ public class DuelManager : MonoBehaviour
 
         _turnCount = 1;
         _currentPhase = Phase.Begin;
-        var room = playerController.currentRoom;
 
+        var room = playerController.currentRoom;
         battleField.CreateGrid(room.Transform.position, room.Orientation, room.BoardDimensions);
+
         Physics.SyncTransforms();
         for (int i = 0; i < room.Obstacles.Count; i++)
         {
@@ -140,24 +142,9 @@ public class DuelManager : MonoBehaviour
 
         CameraController.instance.OnCombatStart();
 
-        if (encounter is CommanderEncounter commander) OnCommanderMatchStart(commander.Commander);
-        else OnMonsterMatchStart(encounter as MonsterEncounter);
-    }
-
-    //Initiate a new match //This will also likely take in the battlefield later
-    private void OnCommanderMatchStart(OpponentCommander opponent)
-    {
         SetCommanderStartingNode(playerCommander);
-        SetCommanderStartingNode(opponent);
-
-        _isPlayerTurn = true;
-        Invoke("NewMatchEvents", 5f);
-    }
-
-    private void OnMonsterMatchStart(MonsterEncounter encounter)
-    {
-        SetCommanderStartingNode(playerCommander);
-        monsterManager.OnNewMatchStart(encounter);
+        if (encounter is CommanderEncounter opponent) SetCommanderStartingNode(opponent.Commander);
+        else monsterManager.OnNewMatchStart(encounter as MonsterEncounter);
 
         _isPlayerTurn = true;
         Invoke("NewMatchEvents", 5f);
@@ -271,7 +258,7 @@ public class DuelManager : MonoBehaviour
     private void OnBeginPhase()
     {
         _isPlayerTurn = !_isPlayerTurn;
-        onNewTurn?.Invoke(Phase.Begin);
+        onNewTurn?.Invoke(_isPlayerTurn);
         _turnCount++;
     }
 
@@ -512,15 +499,24 @@ public class DuelManager : MonoBehaviour
     {
         canDeclareNewAction = false;
 
-        while (_cardsInAction > 0) yield return null;
-
-        //while (unit.IsActing) yield return null;
+        float maxDelay = 3f; //Prevent this loop from never ending
+        while (unit.IsActing || _cardsInAction > 0)
+        {
+            maxDelay -= Time.deltaTime; //This is just a patch on a larger issue, so fix this problem
+            if (maxDelay <= 0) break;
+            yield return null;
+        }
 
         if (secondaryAction == ActionType.Attack) unit.OnAttack(targetNode);
         else if (secondaryAction == ActionType.Ability) Debug.LogWarning("Not Implemented");
 
-        while (_cardsInAction > 0) yield return null;
-        //while (unit.IsActing) yield return null;
+        maxDelay = 3f; //Prevent this loop from never ending
+        while (unit.IsActing || _cardsInAction > 0)
+        {
+            maxDelay -= Time.deltaTime; //This is just a patch on a larger issue, so fix this problem
+            if (maxDelay <= 0) break;
+            yield return null;
+        }
 
         canDeclareNewAction = true;
     }
@@ -548,7 +544,7 @@ public class DuelManager : MonoBehaviour
     #region - Match End -
     private void OnMatchEnd()
     {
-        StopAllCoroutines(); //exit out of any coroutines going, likely the action resolution one
+        ClearLineArc();
         battleField.DestroyGrid();
         monsterManager.ClearEncounter(); //Clears all cards and wipes board
     }
@@ -559,16 +555,12 @@ public class DuelManager : MonoBehaviour
         OnMatchEnd();
 
         //Add reward
-
-        //Unlock player to continue through dungeon
     }
 
     //The player was defeated
     private void OnPlayerDefeat()
     {
         OnMatchEnd();
-
-        //Remove all cards that were added to their deck during this run
 
         //Fade to black, Defeat scene
 

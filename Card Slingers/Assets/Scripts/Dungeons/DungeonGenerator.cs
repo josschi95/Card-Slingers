@@ -71,40 +71,17 @@ public class DungeonGenerator : MonoBehaviour
         var startRoom = Instantiate(_preset.StartRoomPrefab, Vector3.zero, Quaternion.identity, gameObject.transform);
         dungeonRooms.Add(startRoom);
 
-        Debug.Log("Starting GenerateDungeon in DungeonGenerator.");
         //Will have to switch out the references for all of the ones in the preset
         StartCoroutine(GenerateDungeon(rooms, combats));
     }
-
-    /*public void BeginGeneration(DungeonSize dungeonSize)
-    {
-        dungeonRooms = new List<DungeonRoom>();
-        tentativePieces = new List<GameObject>();
-
-        _currentDungeonFeature = _dungeonFeatures[(int)dungeonSize];
-
-        int rooms = Random.Range(_currentDungeonFeature.minRooms, _currentDungeonFeature.maxRooms + 1);
-        int combats = Random.Range(_currentDungeonFeature.minCombats, _currentDungeonFeature.maxCombats + 1);
-
-        var startRoom = Instantiate(startRoomPrefab, Vector3.zero, Quaternion.identity, gameObject.transform);
-        dungeonRooms.Add(startRoom);
-
-        StartCoroutine(GenerateDungeon(rooms, combats));
-    }*/
     
     private IEnumerator GenerateDungeon(int rooms, int combats)
     {
-        Debug.Log("Starting SpawnRooms in DungeonGenerator.");
         yield return StartCoroutine(SpawnRooms(rooms));
 
-        Debug.Log("Starting PlaceCombats in CombatGenerator.");
         yield return StartCoroutine(combatGenerator.PlaceCombats(_preset.Encounters, dungeonRooms.ToArray(), combats)); 
-        //yield return StartCoroutine(combatGenerator.PlaceCombats(dungeonRooms.ToArray(), combats));
 
-
-        Debug.Log("Starting GenerateObstacles in ObstacleGenerator.");
         obstacleGenerator.GenerateObstacles(_preset.Obstacles, dungeonRooms);
-        //obstacleGenerator.GenerateObstacles(dungeonRooms);
 
         OnDungeonComplete();
     }

@@ -261,7 +261,6 @@ public class Card_Unit : Card_Permanent
             }
 
             _movesLeft--;
-            Debug.Log("Unit has " + _movesLeft + " left.");
 
             transform.position = nodePath[0].transform.position;
             nodePath[0].onNodeEntered?.Invoke(this);
@@ -347,6 +346,7 @@ public class Card_Unit : Card_Permanent
     {
         _attackTarget.OnTakeDamage(Damage);
         _isAttacking = false;
+        _attackTarget = null;
         DuelManager.instance.onCardEndAction?.Invoke(this);
     }
 
@@ -361,7 +361,7 @@ public class Card_Unit : Card_Permanent
         else
         {
             _animator.SetTrigger("damage");
-            if (UnitCanRetaliate())
+            if (UnitCanRetaliate() && _attackTarget != null)
             {
                 //Debug.Log("Unit can retaliate");
                 DuelManager.instance.onCardBeginAction?.Invoke(this);

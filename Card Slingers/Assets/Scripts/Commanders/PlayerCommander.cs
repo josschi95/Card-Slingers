@@ -14,6 +14,11 @@ public class PlayerCommander : CommanderController
         isTurn = true;
     }
 
+    protected override void OnNewTurn(bool isPlayerTurn)
+    {
+        isTurn = isPlayerTurn;
+    }
+
     protected override void GenerateNewDeck()
     {
         if (_deckIsCreated)

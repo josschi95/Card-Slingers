@@ -54,18 +54,20 @@ public class CombatGenerator : MonoBehaviour
         while (combats > 0 && allowedAttempts > 0) //Exits while loop if either combats or attempts run out
         {
             allowedAttempts--; //Decrease attempts at start
+            if (availableRooms.Count <= 0) break; //all available rooms have been filled with a combat
 
-            var room = availableRooms[Random.Range(1, availableRooms.Count)];
-            if (room.Encounter != null) continue;
+            var room = availableRooms[Random.Range(0, availableRooms.Count)];
+            if (room.Encounter != null) continue; //This really shouldn't happen... but to be sure
 
             var encounter = encounters[Random.Range(0, encounters.Length)];
-            room.Encounter = encounter;
+
+            room.Encounter = encounter; //Set room encounter
             encounterList.Add(encounter); //Add to list of generated encounters
             availableRooms.Remove(room); //Remove room from list of rooms to select from
+            combats--;
 
             DrawDebugBox(room.Transform.position + Vector3.up * 3f, Quaternion.identity, new Vector3(room.RoomDimensions.x + 1, 6f, room.RoomDimensions.y + 1), Color.yellow);
 
-            combats--;
             yield return null;
         }
 
