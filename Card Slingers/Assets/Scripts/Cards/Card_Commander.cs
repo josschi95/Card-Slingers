@@ -15,9 +15,6 @@ public class Card_Commander : Card_Unit
         _movesLeft = Speed;
         _hasTakenAction = false;
 
-        onAttackAnimation += OnAttackAnimationTrigger;
-        onDeathAnimation += OnUnitDeathAnimationComplete;
-
         //Instantiate permanent
         var permanent = CardInfo as PermanentSO;
         _permanentObject = Instantiate(permanent.Prefab, transform.position, transform.rotation, gameObject.transform);
@@ -52,7 +49,7 @@ public class Card_Commander : Card_Unit
         onValueChanged?.Invoke();
     }
 
-    protected override void OnUnitDeathAnimationComplete()
+    public override void OnUnitDeathAnimationComplete()
     {
         if (isPlayerCard) DuelManager.instance.onPlayerDefeat?.Invoke();
         else DuelManager.instance.onPlayerVictory?.Invoke();

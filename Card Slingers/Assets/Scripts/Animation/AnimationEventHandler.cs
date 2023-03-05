@@ -14,11 +14,11 @@ public class AnimationEventHandler : MonoBehaviour
         unit = GetComponentInParent<Card_Unit>();
     }
 
-    public void OnAttackAnimationTrigger() => unit.onAttackAnimation?.Invoke();
-
+    public void OnAttackAnimationTrigger() => unit.OnAttackAnimationTrigger();
+   
     public void OnAbilityAnimationTrigger() => unit.onAbilityAnimation?.Invoke();
 
-    public void OnDeathAnimationCompleted() => unit.onDeathAnimation?.Invoke();
+    public void OnDeathAnimationCompleted() => unit.OnUnitDeathAnimationComplete();
 
     public void OnUnsummon() => GameManager.instance.GetUnsummonParticles(transform.position);
 }

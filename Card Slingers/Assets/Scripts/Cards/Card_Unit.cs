@@ -6,9 +6,7 @@ using TMPro;
 public class Card_Unit : Card_Permanent
 {
     public delegate void OnAnimatorEventCallback();
-    public OnAnimatorEventCallback onAttackAnimation;
     public OnAnimatorEventCallback onAbilityAnimation;
-    public OnAnimatorEventCallback onDeathAnimation;
     protected Animator _animator;
 
     [Space]
@@ -63,9 +61,6 @@ public class Card_Unit : Card_Permanent
         _animator = PermanentObject.GetComponent<Animator>();
 
         _equipment = new List<Card_Permanent>();
-
-        onAttackAnimation += OnAttackAnimationTrigger;
-        onDeathAnimation += OnUnitDeathAnimationComplete;
     }
 
     protected override int GetThreatLevel()
@@ -309,7 +304,6 @@ public class Card_Unit : Card_Permanent
     //resolve an attack action which has been declared 
     public void OnAttack(GridNode node)
     {
-        Debug.Log("OnAttack being called at " + Node.gridX + "," + Node.gridZ);
         if (!CanAttack) return; //shouldn't have gotten here if this is already false, but worth checking
         //out of range, movement was likely stopped before getting within range
         if (DuelManager.instance.Battlefield.GetDistanceInNodes(Node, node) > Range)
@@ -330,7 +324,7 @@ public class Card_Unit : Card_Permanent
         _hasTakenAction = true;
     }
 
-    protected void OnAttackAnimationTrigger()
+    public void OnAttackAnimationTrigger()
     {
         if (_attackTarget == null)
         {
@@ -354,14 +348,20 @@ public class Card_Unit : Card_Permanent
         else
         {
             _animator.SetTrigger("damage");
-            if (UnitCanRetaliate() && _attackTarget != null)
+            if (_attackTarget != null)
             {
-                //Debug.Log("Unit can retaliate");
-                DuelManager.instance.onCardBeginAction?.Invoke(this);
-                StartCoroutine(TurnToFaceTarget(_attackTarget.transform.position));
-                _animator.SetTrigger("attack");
-                Debug.Log("Retaliating at " + Node.gridX + "," + Node.gridZ);
-                _canRetaliate = false;
+                if (UnitCanRetaliate())
+                {
+                    DuelManager.instance.onCardBeginAction?.Invoke(this);
+                    StartCoroutine(TurnToFaceTarget(_attackTarget.transform.position));
+                    _animator.SetTrigger("attack");
+                    _canRetaliate = false;
+                }
+                else
+                {
+                    _attackTarget = null;
+                    _canRetaliate = false;
+                }
             }
         }
 
@@ -395,7 +395,7 @@ public class Card_Unit : Card_Permanent
         DuelManager.instance.onCardMovementStarted?.Invoke(this);
     }
 
-    protected virtual void OnUnitDeathAnimationComplete()
+    public virtual void OnUnitDeathAnimationComplete()
     {
         StartCoroutine(OnRemoveUnit());
     }
