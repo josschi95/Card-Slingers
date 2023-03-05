@@ -9,9 +9,8 @@ public class PlayerCommander : CommanderController
 
     public override void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
     {
-        base.OnMatchStart(holder, startingHandSize, mana);
-        
         isTurn = true;
+        base.OnMatchStart(holder, startingHandSize, mana);
     }
 
     protected override void OnNewTurn(bool isPlayerTurn)
@@ -38,6 +37,17 @@ public class PlayerCommander : CommanderController
 
     private void HideDeck()
     {
+        for (int i = 0; i < _existingDeck.Count; i++)
+        {
+            _existingDeck[i].SetCardLocation(CardLocation.InDeck);
+        }
+        
+        _cardsInDeck.Clear();
+        _cardsInHand.Clear();
+        _cardsInDiscardPile.Clear();
+        _cardsInExile.Clear();
+        _permanentsOnField.Clear();
+
         PlayerController.PlaceDeckInPocket(_existingDeck);
     }
 

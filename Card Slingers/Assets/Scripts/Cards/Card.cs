@@ -5,51 +5,28 @@ using TMPro;
 
 public class Card : MonoBehaviour, IInteractable
 {
-    [Header("Card Display")]
-    [SerializeField] protected GameObject cardGFX;
-    [SerializeField] private TMP_Text title;
-    [SerializeField] private TMP_Text description, flavorText;
-    [SerializeField] private Image display;
-    [SerializeField] private GameObject[] costMarkers;
+    [SerializeField] protected CardDisplay _display;
 
     [Header("Card Info")]
-    [SerializeField] protected CommanderController _commander;
     [SerializeField] protected CardSO _cardInfo;
+    public bool isPlayerCard { get; protected set; }
+
     protected CardLocation _location; //If the card is in the deck, discard, hand, or on the field
     protected bool _isSelected;
     private Coroutine lerpCardUpCoroutine;
 
     #region - Properties -
     public bool isRevealed { get; protected set;}//If the player is able to see the card
-    public CommanderController Commander => _commander;
     public CardSO CardInfo => _cardInfo; //Scriptable object to hold the card stats 
     public CardLocation Location => _location;
-
-    public object Current => throw new System.NotImplementedException();
     #endregion
 
     //Assign the card its information and its owner
-    public virtual void AssignCard(CardSO card, CommanderController commander)
+    public virtual void AssignCardInfo(CardSO card, bool isPlayerCard)
     {
         _cardInfo = card;
-        _commander = commander;
-
-        SetCardDisplay();
-    }
-
-    //Update the display for the assigned card
-    protected virtual void SetCardDisplay()
-    {
-        display.sprite = CardInfo.icon;
-        title.text = CardInfo.name;
-        description.text = CardInfo.description;
-        flavorText.text = CardInfo.flavorText;
-
-        for (int i = 0; i < costMarkers.Length; i++)
-        {
-            if (i < CardInfo.cost) costMarkers[i].SetActive(true);
-            else costMarkers[i].SetActive(false);
-        }
+        this.isPlayerCard = isPlayerCard;
+        _display.SetDisplay(card);
     }
 
     //Set the location of the card, for reference when selecting it
@@ -60,7 +37,7 @@ public class Card : MonoBehaviour, IInteractable
         switch (_location)
         {
             case CardLocation.InHand:
-                isRevealed = _commander is PlayerCommander;
+                isRevealed = isPlayerCard;
                 break;
             case CardLocation.InDeck:
                 isRevealed = false;
@@ -80,22 +57,25 @@ public class Card : MonoBehaviour, IInteractable
     #region - IInteractable -
     public void OnMouseEnter()
     {
-        if (!_commander.isDrawingCards && _commander is PlayerCommander && _location == CardLocation.InHand)
+        if (_location != CardLocation.InHand || !isPlayerCard) return;
+
+        /*if (!_commander.isDrawingCards)
         {
             if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
             lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(true));
-        }
+        }*/
     }
 
     public void OnMouseExit()
     {
-        if (_isSelected) return;
+        if (_isSelected || !isPlayerCard) return;
+        if (_location != CardLocation.InHand) return;
 
-        if (!_commander.isDrawingCards && _commander is PlayerCommander && _location == CardLocation.InHand)
+        /*if (!_commander.isDrawingCards)
         {
             if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
             lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(false));
-        }
+        }*/
     }
 
     public void OnLeftClick() => OnCardSelected();

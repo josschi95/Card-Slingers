@@ -4,17 +4,9 @@ using UnityEngine;
 
 public class CommanderController : MonoBehaviour
 {
-    public delegate void OnCommanderPhaseChangeCallback(Phase phase);
-    public OnCommanderPhaseChangeCallback onNewPhase;
-
     public delegate void OnStatValueChangedCallback();
     public OnStatValueChangedCallback onHealthChange;
     public OnStatValueChangedCallback onManaChange;
-
-    public delegate void OnPermanentDestroyedCallback(Card_Permanent card);
-    public OnPermanentDestroyedCallback onPermanentDestroyed; //the perm has been destroyed
-    public OnPermanentDestroyedCallback onSendToDiscard; //the perm has been removed from the field
-    //I'm separating these two so that the card is removed from _permanentsOnField list immediately, but not immediately sent to discard
 
     protected DuelManager duelManager;
     private CardHolder _cardHolder;
@@ -27,8 +19,8 @@ public class CommanderController : MonoBehaviour
     [Space]
     [SerializeField] protected List<Card> _cardsInHand;
     [SerializeField] protected List<Card> _cardsInDeck;
-    [SerializeField] private List<Card> _cardsInDiscardPile;
-    [SerializeField] private List<Card> _cardsInExile;
+    [SerializeField] protected List<Card> _cardsInDiscardPile;
+    [SerializeField] protected List<Card> _cardsInExile;
     [Space]
     [SerializeField] protected List<Card_Permanent> _permanentsOnField;
     protected HealthDisplay healthDisplay;
@@ -50,8 +42,6 @@ public class CommanderController : MonoBehaviour
     {
         duelManager = DuelManager.instance;
 
-        onPermanentDestroyed += RemovePermanentFromField;
-        onSendToDiscard += SendPermanentToDiscard;
         healthDisplay = GetComponentInChildren<HealthDisplay>();
         healthDisplay.gameObject.SetActive(false);
 
@@ -61,7 +51,7 @@ public class CommanderController : MonoBehaviour
     public virtual void OnAssignCommander(CommanderSO commanderInfo)
     {
         _commanderInfo = commanderInfo;
-        _commanderCard.AssignCard(commanderInfo, this);
+        _commanderCard.AssignCardInfo(commanderInfo, this is PlayerCommander);
     }
 
     public virtual void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
@@ -87,16 +77,12 @@ public class CommanderController : MonoBehaviour
 
     protected virtual void GenerateNewDeck()
     {
-        if (_commanderInfo == null)
-        {
-            Debug.Log("CommanderSO is null");
-            return;
-        }
+        if (_commanderInfo == null) throw new UnityException("CommanderSO is null. Cannot Generate Deck.");
 
         foreach (CardSO cardSO in _commanderInfo.Deck.cards)
         {
             Card newCard = Instantiate(cardSO.cardPrefab);
-            newCard.AssignCard(cardSO, this);
+            newCard.AssignCardInfo(cardSO, this is PlayerCommander);
             PlaceCardInDeck(newCard);
         }
     }
@@ -138,7 +124,10 @@ public class CommanderController : MonoBehaviour
         if (!isDrawingCards) StartCoroutine(DrawCards());
 
         //For each card on the field, invoke an OnBeginPhase event
-        onNewPhase?.Invoke(Phase.Begin);
+        for (int i = 0; i < _permanentsOnField.Count; i++)
+        {
+            _permanentsOnField[i].OnBeginPhase();
+        }
 
         duelManager.OnCurrentPhaseFinished();
     }
@@ -164,8 +153,6 @@ public class CommanderController : MonoBehaviour
     {
         isDrawingCards = true;
         duelManager.onCardMovementStarted?.Invoke(null);
-
-        Debug.Log("Cards to draw: " + (_handSize - _cardsInHand.Count).ToString());
 
         while (_cardsInHand.Count < _handSize)
         {
@@ -246,14 +233,16 @@ public class CommanderController : MonoBehaviour
         PlaceCardInDiscard(cardToDiscard);
     }
 
-    private void RemovePermanentFromField(Card_Permanent permanent)
+    private void OnPermanentDestroyed(Card_Permanent permanent)
     {
+        permanent.onPermanentDestroyed -= OnPermanentDestroyed;
         //Remove from list
         _permanentsOnField.Remove(permanent);
     }
 
-    private void SendPermanentToDiscard(Card_Permanent permanent)
+    private void OnPermanentRemoved(Card_Permanent permanent)
     {
+        permanent.onRemovedFromField -= OnPermanentRemoved;
         //Moves the card to the discard pile
         PlaceCardInDiscard(permanent);
     }
@@ -276,18 +265,23 @@ public class CommanderController : MonoBehaviour
 
     private void OnInstantPlayed(Card_Spell spell, GridNode node)
     {
+        _cardsInHand.Remove(spell);
         OnSpendMana(spell.CardInfo.cost);
 
         //Commander play casting animation
-        _commanderCard.PermanentObject.GetComponent<Animator>().SetTrigger("ability");
-        _commanderCard.onAbilityAnimation += delegate { OnInstantResolved(spell, node); };
+        //_commanderCard.PermanentObject.GetComponent<Animator>().SetTrigger("ability");
+        animator.SetTrigger("ability");
+
+        StartCoroutine(ResolveInstantDelay(spell, node));
 
         //This works for now but I should have the card go to a sort of limbo position
     }
 
-    private void OnInstantResolved(Card_Spell spell, GridNode node)
+    private IEnumerator ResolveInstantDelay(Card_Spell spell, GridNode node)
     {
-        Instantiate(spell.FX, node.transform.position + spell.StartPos, Quaternion.identity);
+        yield return new WaitForSeconds(1f);
+
+        Instantiate(spell.FX, node.Transform.position + spell.StartPos, Quaternion.identity);
 
         if (node.Occupant != null)
         {
@@ -297,9 +291,6 @@ public class CommanderController : MonoBehaviour
             }
         }
 
-        _commanderCard.onAbilityAnimation -= delegate { OnInstantResolved(spell, node); };
-
-        //Send to discard pile
         PlaceCardInDiscard(spell);
     }
 
@@ -314,6 +305,9 @@ public class CommanderController : MonoBehaviour
         //Remove from hand
         _cardsInHand.Remove(card);
         _permanentsOnField.Add(card);
+
+        card.onPermanentDestroyed += OnPermanentDestroyed;
+        card.onRemovedFromField += OnPermanentRemoved;
 
         if (card is Card_Trap trap)
         {
@@ -399,6 +393,11 @@ public class CommanderController : MonoBehaviour
     
     public void SetStartingNode(GridNode node, Vector3 front)
     {
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
+
         StartCoroutine(MoveToPosition(node, front));
     }
 

@@ -38,30 +38,38 @@ public class DungeonUIManager : MonoBehaviour
 
     private Vector2 closeOutPanelPos = new Vector2(0, -1000);
 
-    [Header("Victory")]
-    [SerializeField] private RectTransform victoryPanel;
-    [SerializeField] private Button continueButton;
+    [Header("Dungeon Victory")]
+    [SerializeField] private RectTransform _victoryPanel;
+    [SerializeField] private Button _returnToTownButton; //Returns player to town
+    [SerializeField] private Button _continueExploringButton; //Allows player to continue exploring
+    //Currently this has no purpose, but once all 
+
+    [Header("Battle Victory")]
+    [SerializeField] private RectTransform _battleSummaryPanel;
+    [SerializeField] private Button _continueButton;
 
     [Header("Game Over")]
-    [SerializeField] private RectTransform gameOverPanel;
-    [SerializeField] private Button retreatButton;
+    [SerializeField] private RectTransform _gameOverPanel;
+    [SerializeField] private Button _retreatButton;
 
     private void Start()
     {
         Test();
-        
-        victoryPanel.anchoredPosition = closeOutPanelPos;
-        gameOverPanel.anchoredPosition = closeOutPanelPos;
+
+        _victoryPanel.anchoredPosition = closeOutPanelPos;
+        _battleSummaryPanel.anchoredPosition = closeOutPanelPos;
+        _gameOverPanel.anchoredPosition = closeOutPanelPos;
 
         duelManager = DuelManager.instance;
         duelManager.onPlayerVictory += OnPlayerVictory;
         duelManager.onPlayerDefeat += OnPlayerDefeat;
 
+        _returnToTownButton.onClick.AddListener(delegate { GameManager.OnLoadScene("Town"); });
 
-        retreatButton.onClick.AddListener(delegate { GameManager.OnLoadScene("Town"); });
-        continueButton.onClick.AddListener(delegate
+        _retreatButton.onClick.AddListener(delegate { GameManager.OnLoadScene("Town"); });
+        _continueButton.onClick.AddListener(delegate
         {
-            StartCoroutine(LerpRectTransform(victoryPanel, closeOutPanelPos, 2f));
+            StartCoroutine(LerpRectTransform(_battleSummaryPanel, closeOutPanelPos, 2f));
             duelManager.CloseOutMatch();
         });
     }
@@ -71,16 +79,17 @@ public class DungeonUIManager : MonoBehaviour
         if (DungeonManager.instance.AllEncountersComplete())
         {
             Debug.Log("All Encounters complete! Return to town.");
+            StartCoroutine(LerpRectTransform(_victoryPanel, Vector2.zero, 2f));
         }
         else
         {
-            StartCoroutine(LerpRectTransform(victoryPanel, Vector2.zero, 2f));
+            StartCoroutine(LerpRectTransform(_battleSummaryPanel, Vector2.zero, 2f));
         }
     }
 
     private void OnPlayerDefeat()
     {
-        StartCoroutine(LerpRectTransform(gameOverPanel, Vector2.zero, 2f));
+        StartCoroutine(LerpRectTransform(_gameOverPanel, Vector2.zero, 2f));
     }
 
     public void ShowCardDisplay(CardSO card)

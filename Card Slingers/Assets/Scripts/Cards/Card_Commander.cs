@@ -22,13 +22,10 @@ public class Card_Commander : Card_Unit
         var permanent = CardInfo as PermanentSO;
         _permanentObject = Instantiate(permanent.Prefab, transform.position, transform.rotation, gameObject.transform);
         _animator = PermanentObject.GetComponent<Animator>();
-        Commander.animator = _animator;
 
-        cardGFX.SetActive(false); //Disable the physical card display
+        _display.gameObject.SetActive(false);
         var coll = GetComponent<Collider>();
         if (coll != null) coll.enabled = false;
-
-        _commander.onNewPhase += OnPhaseChange;
     }
 
     public override void OnTakeDamage(int damage)
@@ -57,7 +54,7 @@ public class Card_Commander : Card_Unit
 
     protected override void OnUnitDeathAnimationComplete()
     {
-        if (Commander is PlayerCommander) DuelManager.instance.onPlayerDefeat?.Invoke();
+        if (isPlayerCard) DuelManager.instance.onPlayerDefeat?.Invoke();
         else DuelManager.instance.onPlayerVictory?.Invoke();
     }
 }

@@ -5,17 +5,21 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Effect Manager", menuName = "Scriptable Objects/Effect Manager")]
 public class EffectManager : ScriptableObject
 {
-    public void OnApplyEffect(Card_Permanent card, Effects effect, int magnitude = 1, UnitStat stat = UnitStat.Health)
+    public void OnApplyEffect(Card_Permanent target, Effects effect, int magnitude = 1, UnitStat stat = UnitStat.Health)
     {
         switch (effect)
         {
             case Effects.Damage:
-                card.OnTakeDamage(magnitude);
+                target.OnTakeDamage(magnitude);
                 break;
             case Effects.Halt:
+                if (target is Card_Unit targetUnit)
+                {
+                    targetUnit.OnHalt();
+                }
                 break;
             case Effects.StatModifier:
-                if (card is Card_Unit unit)
+                if (target is Card_Unit unit)
                 {
                     unit.AddModifier(stat, magnitude);
                 }

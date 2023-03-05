@@ -11,12 +11,6 @@ public class Card_Unit : Card_Permanent
     public OnAnimatorEventCallback onDeathAnimation;
     protected Animator _animator;
 
-    [Header("Unit Info")]
-    [SerializeField] private TMP_Text _healthText;
-    [SerializeField] private TMP_Text _defenseText;
-    [SerializeField] private TMP_Text _attackText;
-    [SerializeField] private TMP_Text _speedText;
-
     [Space]
 
     [SerializeField] protected int _currentHealth;
@@ -54,21 +48,6 @@ public class Card_Unit : Card_Permanent
     #endregion
 
     #region - Override Methods -
-    protected override void SetCardDisplay()
-    {
-        base.SetCardDisplay();
-
-        var unit = CardInfo as UnitSO;
-        if (CardInfo == null) Debug.Log("Fuck");
-        if (_healthText == null) Debug.Log("Health");
-
-        _healthText.text = unit.MaxHealth.ToString();
-        _defenseText.text = unit.Defense.ToString();
-        _attackText.text = unit.Attack.ToString();
-        if (unit.Range > 1) _attackText.text += " (" + unit.Range.ToString() + ")";
-        _speedText.text = unit.Speed.ToString();
-    }
-
     public override void OnSummoned(GridNode node)
     {
         //set max health before occupying node
@@ -91,7 +70,7 @@ public class Card_Unit : Card_Permanent
 
     protected override int GetThreatLevel()
     {
-        if (Commander is PlayerCommander) return _currentHealth + Damage + Defense;
+        if (isPlayerCard) return _currentHealth + Damage + Defense;
         else return -(_currentHealth + Damage + Defense);
     }
 
@@ -221,6 +200,14 @@ public class Card_Unit : Card_Permanent
     }
     #endregion
 
+    #region - Effects -
+    public void OnHalt()
+    {
+        _movesLeft = 0; //Will stop unit from moving anymore
+    }
+
+    #endregion
+
     #region - Movement -
     public void MoveToNode(GridNode newNode)
     {
@@ -301,7 +288,7 @@ public class Card_Unit : Card_Permanent
     }
     #endregion
 
-    protected override void OnBeginPhase()
+    public override void OnBeginPhase()
     {
         base.OnBeginPhase();
 
@@ -322,6 +309,7 @@ public class Card_Unit : Card_Permanent
     //resolve an attack action which has been declared 
     public void OnAttack(GridNode node)
     {
+        Debug.Log("OnAttack being called at " + Node.gridX + "," + Node.gridZ);
         if (!CanAttack) return; //shouldn't have gotten here if this is already false, but worth checking
         //out of range, movement was likely stopped before getting within range
         if (DuelManager.instance.Battlefield.GetDistanceInNodes(Node, node) > Range)
@@ -344,6 +332,11 @@ public class Card_Unit : Card_Permanent
 
     protected void OnAttackAnimationTrigger()
     {
+        if (_attackTarget == null)
+        {
+            Debug.LogWarning("Attack target is null for attacker at " + Node.gridX + "," + Node.gridZ);
+            return;
+        }
         _attackTarget.OnTakeDamage(Damage);
         _isAttacking = false;
         _attackTarget = null;
@@ -367,6 +360,7 @@ public class Card_Unit : Card_Permanent
                 DuelManager.instance.onCardBeginAction?.Invoke(this);
                 StartCoroutine(TurnToFaceTarget(_attackTarget.transform.position));
                 _animator.SetTrigger("attack");
+                Debug.Log("Retaliating at " + Node.gridX + "," + Node.gridZ);
                 _canRetaliate = false;
             }
         }
@@ -395,9 +389,8 @@ public class Card_Unit : Card_Permanent
         _isDestroyed = true;
 
         OnRemoveFromField();
-        Commander.onPermanentDestroyed?.Invoke(this);
+        onPermanentDestroyed?.Invoke(this);
 
-        //Debug.Log("unit has been destroyed");
         _animator.SetTrigger("death");
         DuelManager.instance.onCardMovementStarted?.Invoke(this);
     }
@@ -422,7 +415,7 @@ public class Card_Unit : Card_Permanent
         Destroy(PermanentObject); //Destroy unit
 
         //Invoke an event for the commander to listen to
-        Commander.onSendToDiscard?.Invoke(this);
+        onRemovedFromField?.Invoke(this);
         DuelManager.instance.onCardMovementEnded?.Invoke(this);
     }
     #endregion

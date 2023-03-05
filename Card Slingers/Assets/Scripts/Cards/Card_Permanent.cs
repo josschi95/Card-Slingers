@@ -7,6 +7,10 @@ using UnityEngine;
 /// </summary>
 public class Card_Permanent : Card
 {
+    public delegate void OnPermanentDestroyedCallback(Card_Permanent card);
+    public OnPermanentDestroyedCallback onPermanentDestroyed;
+    public OnPermanentDestroyedCallback onRemovedFromField;
+
     //Invoke this event when a unit's stats change
     public delegate void OnPermanentValueChangedCallback();
     public OnPermanentValueChangedCallback onValueChanged;
@@ -28,11 +32,11 @@ public class Card_Permanent : Card
         }
     }
 
-    public override void AssignCard(CardSO card, CommanderController commander)
+    public override void AssignCardInfo(CardSO card, bool isPlayerCard)
     {
-        base.AssignCard(card, commander);
+        base.AssignCardInfo(card, isPlayerCard);
 
-        if (commander is PlayerCommander)
+        if (isPlayerCard)
         {
             DuelManager.instance.onPlayerVictory += OnCommanderVictory;
             DuelManager.instance.onPlayerDefeat += OnCommanderDefeat;
@@ -46,7 +50,7 @@ public class Card_Permanent : Card
 
     private void OnDestroy()
     {
-        if (_commander is PlayerCommander)
+        if (isPlayerCard)
         {
             DuelManager.instance.onPlayerVictory -= OnCommanderVictory;
             DuelManager.instance.onPlayerDefeat -= OnCommanderDefeat;
@@ -69,23 +73,8 @@ public class Card_Permanent : Card
         var permanent = CardInfo as PermanentSO;
         _permanentObject = Instantiate(permanent.Prefab, transform.position, transform.rotation);
         _permanentObject.transform.SetParent(transform);
-        cardGFX.SetActive(false); //Disable the physical card display
+        _display.gameObject.SetActive(false);
         GetComponent<Collider>().enabled = false; //Disable collider to not interfere with node selection
-
-        if (_commander != null)
-        {
-            _commander.onNewPhase += OnPhaseChange;
-        }
-    }
-
-    public virtual void OnPhaseChange(Phase phase)
-    {
-        switch (phase)
-        {
-            case Phase.Begin:
-                OnBeginPhase();
-                break;
-        }
     }
 
     //Set current node and occupy it
@@ -112,7 +101,7 @@ public class Card_Permanent : Card
         return 0;
     }
 
-    protected virtual void OnBeginPhase()
+    public virtual void OnBeginPhase()
     {
         //Trigger any relevant abilities
     }
@@ -123,7 +112,7 @@ public class Card_Permanent : Card
     protected void OnRemoveFromField() //Maybe change this to a method in the base Card class for OnEnterDiscard which will also set location
     {
         OnAbandonNode(); //I think I'm just going to move this stuff into OnPermanentDestroyed
-        cardGFX.SetActive(true); //Disable the physical card display
+        _display.gameObject.SetActive(true);
         GetComponent<Collider>().enabled = true; //re-enable collider for card selection
     }
 

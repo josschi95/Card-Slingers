@@ -19,15 +19,6 @@ public class Card_Structure : Card_Permanent
     public bool canBeTraversed => CanBeTraversed();
 
     #region - Override Methods -
-    protected override void SetCardDisplay()
-    {
-        base.SetCardDisplay();
-
-        //Also show indicator for current health
-
-        //An indicator for current occupant
-    }
-
     public override void OnSummoned(GridNode node)
     {
         var info = CardInfo as StructureSO;
@@ -47,7 +38,7 @@ public class Card_Structure : Card_Permanent
 
     protected override int GetThreatLevel()
     {
-        if (Commander is PlayerCommander) return _currentHealth;
+        if (isPlayerCard) return _currentHealth;
         else return -_currentHealth;
     }
 
@@ -60,8 +51,8 @@ public class Card_Structure : Card_Permanent
 
     protected override void OnPermanentDestroyed()
     {
-        Debug.Log("unit has been destroyed");
-        Commander.onPermanentDestroyed?.Invoke(this);
+        //Debug.Log("structure has been destroyed");
+        onPermanentDestroyed?.Invoke(this);
 
         OnRemoveFromField();
 
@@ -101,13 +92,13 @@ public class Card_Structure : Card_Permanent
         Destroy(PermanentObject); //Destroy unit
 
         //Invoke an event for the commander to listen to
-        Commander.onSendToDiscard?.Invoke(this);
+        onRemovedFromField?.Invoke(this);
     }
 
     protected override void OnCommanderVictory()
     {
         if (_location != CardLocation.OnField) return;
-        StartCoroutine(WaitToRemove());
+        OnPermanentDestroyed();
     }
 
     protected override void OnCommanderDefeat()

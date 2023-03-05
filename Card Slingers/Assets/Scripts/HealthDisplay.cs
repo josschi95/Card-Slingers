@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -17,7 +15,7 @@ public class HealthDisplay : MonoBehaviour
         permanent = GetComponentInParent<Card_Unit>();
         nameText.text = permanent.CardInfo.name;
 
-        if (permanent.Commander is PlayerCommander) nameText.color = Color.green;
+        if (permanent.isPlayerCard) nameText.color = Color.green;
         else nameText.color = Color.red;
 
         permanent.onValueChanged += UpdateHealth;
@@ -30,6 +28,11 @@ public class HealthDisplay : MonoBehaviour
     {
         float f = permanent.CurrentHealth;
         fill.fillAmount = f / permanent.MaxHealth;
+
+        if (permanent.CurrentHealth <= 0)
+        {
+            Destroy(gameObject, 0.1f);
+        }
     }
 
     private void OnDestroy()

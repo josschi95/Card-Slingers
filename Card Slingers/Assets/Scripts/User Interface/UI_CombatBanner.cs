@@ -6,6 +6,7 @@ using TMPro;
 
 public class UI_CombatBanner : MonoBehaviour
 {
+    #region - Fields -
     private DungeonUIManager UI;
     private DuelManager duelManager;
     private PlayerCommander player;
@@ -31,12 +32,12 @@ public class UI_CombatBanner : MonoBehaviour
     [SerializeField] private Button endPhaseButton;
     [SerializeField] private Button cancelActionButton;
 
-
     private Coroutine lerpBannerCoroutine;
     private Vector3 bannerShownPos = Vector3.zero;
     private Vector3 bannerHiddenPos = new Vector3(0, 150, 0);
     private Vector2 phaseBannerPos = new Vector2(157.5f, 0);
     private bool playerTurn;
+    #endregion
 
     private void Start()
     {

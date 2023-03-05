@@ -16,11 +16,6 @@ public class CommanderEncounter : CombatEncounter
         if (enemyCommander != null) OnCommanderCombatEncounter();
     }
 
-    public void PlaceCommander()
-    {
-
-    }
-
     private void OnCommanderCombatEncounter()
     {
         commander = Instantiate(enemyCommander.cardPrefab).GetComponent<OpponentCommander>();

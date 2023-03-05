@@ -132,7 +132,7 @@ public class GridNode : MonoBehaviour, IInteractable
         DuelManager.instance.onNodeMouseEnter?.Invoke(this);
 
         if (_lockedForDisplay || Occupant == null) return;
-        else if (Occupant.Commander is PlayerCommander) SetColor(MaterialType.Blue);
+        else if (Occupant.isPlayerCard) SetColor(MaterialType.Blue);
         else SetColor(MaterialType.Red);
     }
 
@@ -173,7 +173,7 @@ public class GridNode : MonoBehaviour, IInteractable
         if (_obstacle != null) return false;
 
         if (_occupant == null) return true; //not occupied at all
-        if (_occupant.Commander != card.Commander) return false; //occupied by an enemy unit/structure
+        if (_occupant.isPlayerCard != card.isPlayerCard) return false; //occupied by an enemy unit/structure
         if (_occupant is Card_Structure structure && structure.CanBeOccupied) return true; //can move into structure
 
         return false; //there is an (allied) occupant here
@@ -184,7 +184,7 @@ public class GridNode : MonoBehaviour, IInteractable
         if (_obstacle != null) return true;
 
         if (_occupant == null) return false; //nothing to attack
-        if (_occupant.Commander == attacker.Commander) return false; //same team
+        if (_occupant.isPlayerCard == attacker.isPlayerCard) return false; //same team
         return true; //occupied by enemy
     }
 
@@ -193,7 +193,7 @@ public class GridNode : MonoBehaviour, IInteractable
         if (_obstacle != null) return false;
 
         if (_occupant == null) return true; //not occupied at all
-        if (_occupant.Commander != unit.Commander) return false; //cannot walk through enemy space
+        if (_occupant.isPlayerCard != unit.isPlayerCard) return false; //cannot walk through enemy space
         if (_occupant is Card_Structure structure && !structure.canBeTraversed) return false; //no unit can enter this space
         return true;
     }

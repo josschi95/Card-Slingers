@@ -118,19 +118,20 @@ public class BattlefieldManager : MonoBehaviour
         return nodeList;
     }
 
-    public List<GridNode> GetControlledNodesInLane(CommanderController commander, int lane)
+
+    public List<GridNode> GetControlledNodesInLane(bool isPlayer, int lane)
     {
         var tempList = new List<GridNode>();
         int halfDepth = Mathf.RoundToInt(Depth * 0.5f);
         float half = Depth * 0.5f;
 
-        if (commander is PlayerCommander)
+        if (isPlayer)
         {
             //check all nodes starting from 0, going to halfway point
             for (int i = 0; i < halfDepth; i++)
             {
                 var occupant = gridArray[lane, i].Occupant;
-                if (occupant != null && occupant.Commander != commander) break;
+                if (occupant != null && !occupant.isPlayerCard) break;
                 else tempList.Add(gridArray[lane, i]);
             }
         }
@@ -140,7 +141,7 @@ public class BattlefieldManager : MonoBehaviour
             for (int i = Depth - 1; i >= halfDepth; i--)
             {
                 var occupant = gridArray[lane, i].Occupant;
-                if (occupant != null && occupant.Commander != commander) break;
+                if (occupant != null && occupant.isPlayerCard) break;
                 else tempList.Add(gridArray[lane, i]);
             }
         }
@@ -148,12 +149,14 @@ public class BattlefieldManager : MonoBehaviour
         return tempList;
     }
 
-    public List<GridNode> GetSummonableNodes(CommanderController commander)
+
+
+    public List<GridNode> GetSummonableNodes(bool isplayer)
     {
         var tempList = new List<GridNode>();
         int halfDepth = Mathf.RoundToInt(Depth * 0.5f);
 
-        if (commander is PlayerCommander)
+        if (isplayer)
         {
             //Goes lane by lane from 0 to width
             for (int x = 0; x < Width; x++)
@@ -165,7 +168,7 @@ public class BattlefieldManager : MonoBehaviour
                     if (node.Obstacle != null) continue;
                     if (node.Occupant != null)
                     {
-                        if (node.Occupant.Commander != commander) break;
+                        if (!node.Occupant.isPlayerCard) break;
                         else continue;
                     }
 
@@ -185,7 +188,7 @@ public class BattlefieldManager : MonoBehaviour
                     if (node.Obstacle != null) continue;
                     if (node.Occupant != null)
                     {
-                        if (node.Occupant.Commander != commander) break;
+                        if (node.Occupant.isPlayerCard) break;
                         else continue;
                     }
 
@@ -200,9 +203,9 @@ public class BattlefieldManager : MonoBehaviour
     /// <summary>
     /// Returns a list of unoccupied lane nodes on the commander's side of the field.
     /// </summary>
-    public List<GridNode> GetOpenNodesInLane(CommanderController commander, int lane)
+    public List<GridNode> GetOpenNodesInLane(bool isPlayer, int lane)
     {
-        var tempList = GetControlledNodesInLane(commander, lane);
+        var tempList = GetControlledNodesInLane(isPlayer, lane);
 
         for (int i = tempList.Count - 1; i >= 0; i--)
         {

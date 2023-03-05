@@ -299,13 +299,13 @@ public class OpponentCommander : CommanderController
     /// </summary>
     private bool OpenNodesInLane(int lane)
     {
-        if (duelManager.Battlefield.GetOpenNodesInLane(this, lane).Count > 0) return true;
+        if (duelManager.Battlefield.GetOpenNodesInLane(false, lane).Count > 0) return true;
         return false;
     }
 
     private CardNodeCombo GetSummonCombo(int lane, CardFocus focus)
     {
-        var availablesNodes = duelManager.Battlefield.GetControlledNodesInLane(this, lane);
+        var availablesNodes = duelManager.Battlefield.GetControlledNodesInLane(false, lane);
 
         if (availablesNodes.Count > 0)
         {
@@ -337,8 +337,8 @@ public class OpponentCommander : CommanderController
 
         while (unitsToAct.Count > 0)
         {
-            while (!duelManager.canDeclareNewAction) yield return null;
-            yield return new WaitForSeconds(0.5f);
+            while (!duelManager.CanDeclareNewAction()) yield return null;
+            yield return new WaitForSeconds(0.1f);
 
             var unit = unitsToAct[0];
             var walkNodes = duelManager.Battlefield.FindReachableNodes(unit);

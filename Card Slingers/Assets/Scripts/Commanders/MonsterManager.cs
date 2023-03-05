@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+//I need to make this not inherit from OpponentCommander nor Commander, there's just so little that it actually uses
+//This also means not comparing permanent commanders to determine if they're the same team
+//For right now, a simple bool _playerOwned will do
 public class MonsterManager : OpponentCommander
 {
     private MonsterEncounter _encounter;
@@ -25,20 +28,13 @@ public class MonsterManager : OpponentCommander
     protected override void Start()
     {
         duelManager = DuelManager.instance;
-        onPermanentDestroyed += OnPermanentDestroyed;
-        onSendToDiscard += DestroyPermanent;
-    }
-
-    public override void OnAssignCommander(CommanderSO commanderInfo)
-    {
-        Debug.LogWarning("Is this being called?");
-        //Do Nothing, these variables don't exist
     }
 
     #region - Match Start -
     public void OnNewMatchStart(MonsterEncounter encounter)
     {
         currentPhase = Phase.Begin;
+        isTurn = false;
 
         _permanentsOnField = new List<Card_Permanent>();
         _monsters = new List<MonsterController>();
@@ -58,7 +54,7 @@ public class MonsterManager : OpponentCommander
             var card = _encounter.MonsterPool[Random.Range(0, _encounter.MonsterPool.Length)];
 
             Card newCard = Instantiate(card.cardPrefab);
-            newCard.AssignCard(card, this);
+            newCard.AssignCardInfo(card, false);
             PlaceMonstersAtStart(newCard as Card_Unit);
         }
     }
@@ -69,12 +65,15 @@ public class MonsterManager : OpponentCommander
         unit.SetCardLocation(CardLocation.OnField);
 
         //Get node from Battlefield
-        var nodes = duelManager.Battlefield.GetSummonableNodes(this);
+        var nodes = duelManager.Battlefield.GetSummonableNodes(false);
 
         var node = GetNode(nodes);
         if (node == null) return;
 
         unit.OnSummoned(node);
+        unit.onPermanentDestroyed += OnPermanentDestroyed;
+        unit.onRemovedFromField += DestroyPermanent;
+
         var controller = unit.gameObject.AddComponent<MonsterController>();
         _monsters.Add(controller);
 
@@ -108,33 +107,29 @@ public class MonsterManager : OpponentCommander
     #region - Phases -
     protected override void OnBeginPhase()
     {
-        Debug.Log("OnBeginPhase");
         //For each card on the field, invoke an OnBeginPhase event
-        onNewPhase?.Invoke(Phase.Begin);
+        for (int i = 0; i < _permanentsOnField.Count; i++)
+        {
+            _permanentsOnField[i].OnBeginPhase();
+        }
 
         duelManager.OnCurrentPhaseFinished();
     }
 
     protected override void OnSummoningPhase()
     {
-        Debug.Log("OnSummoningPhase");
-
         //Cannot summon, no cards
         duelManager.OnCurrentPhaseFinished();
     }
 
     protected override void OnAttackPhase()
     {
-        Debug.Log("OnAttackPhase");
-
         if (duelManager.TurnCount == 1) duelManager.OnCurrentPhaseFinished();
         else StartCoroutine(HandleMonsterActions());
     }
 
     protected override void OnEndPhase()
     {
-        Debug.Log("OnEndPhase");
-
         //Nothing to do on end phase
         duelManager.OnCurrentPhaseFinished();
     }
@@ -149,13 +144,13 @@ public class MonsterManager : OpponentCommander
             _monsters[i].PrioritizeTargets();
             _monsters[i].SelectAction();
 
-            while (!duelManager.canDeclareNewAction) yield return null;
+            while (!duelManager.CanDeclareNewAction()) yield return null;
             //while (_monsters[i].unit.IsActing) yield return null;
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.1f);
         }
 
-        while (!duelManager.canDeclareNewAction) yield return null;
-        yield return new WaitForSeconds(0.5f);
+        while (!duelManager.CanDeclareNewAction()) yield return null;
+        //yield return new WaitForSeconds(0.5f);
 
         //A unit did not decalre an action because all movement was blocked by another unit
         //Circle back to them and try to move again
@@ -167,8 +162,8 @@ public class MonsterManager : OpponentCommander
             _monsters[i].PrioritizeTargets();
             _monsters[i].SelectAction();
 
-            while (!duelManager.canDeclareNewAction) yield return null;
-            yield return new WaitForSeconds(0.5f);
+            while (!duelManager.CanDeclareNewAction()) yield return null;
+            yield return new WaitForSeconds(0.1f);
         }
 
         duelManager.OnCurrentPhaseFinished(); //End phase
@@ -176,18 +171,21 @@ public class MonsterManager : OpponentCommander
 
     private void OnPermanentDestroyed(Card_Permanent permanent)
     {
+        permanent.onPermanentDestroyed -= OnPermanentDestroyed;
+
         //Remove from list
         _permanentsOnField.Remove(permanent);
 
         if (permanent.TryGetComponent(out MonsterController monster)) _monsters.Remove(monster);
-
-        //All monsters on the field have been defeated, player victory
-        if (_permanentsOnField.Count == 0) DuelManager.instance.onPlayerVictory?.Invoke();
     }
 
     private void DestroyPermanent(Card_Permanent card)
     {
+        card.onRemovedFromField -= DestroyPermanent;
         Destroy(card.gameObject);
+
+        //All monsters on the field have been defeated, player victory
+        if (_permanentsOnField.Count == 0) DuelManager.instance.onPlayerVictory?.Invoke();
     }
 
     protected override void OnPlayerVictory()

@@ -22,7 +22,7 @@ public class Card_Trap : Card_Permanent
     private void OnTrapTriggered(Card_Unit unit)
     {
         //same commander, trap doesn't trigger
-        if (unit.Commander == Commander) return;
+        if (unit.isPlayerCard == isPlayerCard) return;
         _trapAnim.SetTrigger("trigger");
 
         //apply effects of trap
@@ -52,32 +52,22 @@ public class Card_Trap : Card_Permanent
     protected override void OnPermanentDestroyed()
     {
         OnAbandonNode();
-        cardGFX.SetActive(true); //Re-enable card
+
+        _display.gameObject.SetActive(true);
         Destroy(PermanentObject); //Destroy trap
-        Commander.onPermanentDestroyed?.Invoke(this);
+        onPermanentDestroyed?.Invoke(this);
+        onRemovedFromField?.Invoke(this);
     }
 
     protected override void OnCommanderVictory()
     {
         if (_location != CardLocation.OnField) return;
-        StartCoroutine(WaitToRemove());
+        OnPermanentDestroyed();
     }
 
     protected override void OnCommanderDefeat()
     {
         if (_location != CardLocation.OnField) return;
         OnPermanentDestroyed();
-    }
-
-    private IEnumerator WaitToRemove()
-    {
-        yield return new WaitForSeconds(2);
-
-        OnAbandonNode();
-        cardGFX.SetActive(true); //Re-enable card
-        Destroy(PermanentObject); //Destroy trap
-
-        //Invoke an event for the commander to listen to
-        Commander.onSendToDiscard?.Invoke(this);
     }
 }
