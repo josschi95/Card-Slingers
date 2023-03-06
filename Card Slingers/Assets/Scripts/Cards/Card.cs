@@ -59,11 +59,11 @@ public class Card : MonoBehaviour, IInteractable
     {
         if (_location != CardLocation.InHand || !isPlayerCard) return;
 
-        /*if (!_commander.isDrawingCards)
+        if (!DuelManager.instance.CardsInTransition) //Will prevent the card from moving when cards are in motion
         {
             if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
             lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(true));
-        }*/
+        }
     }
 
     public void OnMouseExit()
@@ -71,11 +71,11 @@ public class Card : MonoBehaviour, IInteractable
         if (_isSelected || !isPlayerCard) return;
         if (_location != CardLocation.InHand) return;
 
-        /*if (!_commander.isDrawingCards)
+        if (!DuelManager.instance.CardsInTransition)
         {
             if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
             lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(false));
-        }*/
+        }
     }
 
     public void OnLeftClick() => OnCardSelected();

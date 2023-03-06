@@ -14,7 +14,6 @@ public class CommanderController : MonoBehaviour
 
     [SerializeField] private CommanderSO _commanderInfo;
     [SerializeField] private Card_Commander _commanderCard;
-    [SerializeField] protected Phase currentPhase;
     [SerializeField] private int _currentMana = 4;
     [Space]
     [SerializeField] protected List<Card> _cardsInHand;
@@ -94,57 +93,18 @@ public class CommanderController : MonoBehaviour
         //Meant to be overwritten
     }
 
-    private void SetPhase(Phase phase)
-    {
-        if (!isTurn) return;
-        currentPhase = phase;
-
-        switch (phase)
-        {
-            case Phase.Begin:
-                OnBeginPhase();
-                break;
-            case Phase.Summoning:
-                OnSummoningPhase();
-                break;
-            case Phase.Attack:
-                OnAttackPhase();
-                break;
-            case Phase.End:
-                OnEndPhase();
-                break;
-        }
-    }
-
-    protected virtual void OnBeginPhase()
+    protected virtual void OnTurnStart()
     {
         RefillMana();
 
         //isDrawingCards should only stop this at the start of the match
         if (!isDrawingCards) StartCoroutine(DrawCards());
 
-        //For each card on the field, invoke an OnBeginPhase event
+        //For each card on the field, trigger OnTurnStart effects
         for (int i = 0; i < _permanentsOnField.Count; i++)
         {
-            _permanentsOnField[i].OnBeginPhase();
+            _permanentsOnField[i].OnTurnStart();
         }
-
-        duelManager.OnCurrentPhaseFinished();
-    }
-
-    protected virtual void OnSummoningPhase()
-    {
-
-    }
-
-    protected virtual void OnAttackPhase()
-    {
-
-    }
-
-    protected virtual void OnEndPhase()
-    {
-        
     }
     #endregion
 
@@ -377,7 +337,6 @@ public class CommanderController : MonoBehaviour
     {
         _currentMana -= points;
         if (_currentMana <= 0) _currentMana = 0; //End phase if all AP has been spent
-        //if (isTurn && currentPhase == Phase.Summoning) duelManager.OnCurrentPhaseFinished();
         onManaChange?.Invoke();
     }
 
@@ -457,7 +416,6 @@ public class CommanderController : MonoBehaviour
 
     protected void SubscribeToMatchEvents()
     {
-        duelManager.onPhaseChange += SetPhase;
         duelManager.onNewTurn += OnNewTurn;
 
         duelManager.onPlayerDefeat += OnPlayerDefeat;
@@ -466,7 +424,6 @@ public class CommanderController : MonoBehaviour
 
     protected void MatcheEnd()
     {
-        duelManager.onPhaseChange -= SetPhase;
         duelManager.onNewTurn -= OnNewTurn;
 
         duelManager.onPlayerVictory -= OnPlayerVictory;

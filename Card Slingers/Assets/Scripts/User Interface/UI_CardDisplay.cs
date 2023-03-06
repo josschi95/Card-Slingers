@@ -36,8 +36,6 @@ public class UI_CardDisplay : MonoBehaviour
 
     public void ShowCardDisplay(CardSO card)
     {
-        Debug.Log("Replace this with the other CardDisplay class");
-
         cardIcon.sprite = card.icon;
         cardTitle.text = card.name;
         cardDescription.text = card.description;

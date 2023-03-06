@@ -2,30 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//I need to make this not inherit from OpponentCommander nor Commander, there's just so little that it actually uses
-//This also means not comparing permanent commanders to determine if they're the same team
-//For right now, a simple bool _playerOwned will do
-public class MonsterManager : OpponentCommander
+public class MonsterManager : MonoBehaviour
 {
+    private DuelManager duelManager;
+
     private MonsterEncounter _encounter;
 
+    protected List<Card_Permanent> _permanentsOnField;
     private List<MonsterController> _monsters;
+    private bool isTurn;
 
     //gives a weighted chance for the number of monsters in a match to lean towards 4
     //Will likely need a cleaner and more modifiable way to do this in the future
-    private int[] monsterCount = { 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6 };
     //I'd say it should depend on the dungeon as well, some value that's held in the dungeon manager
     //take into account... board size, the dungeon, and the level. 2 should be rare in all, uncommon in first floors
+    private int[] monsterCount = { 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6 };
 
-    //No CommanderSO _commanderInfo
-    //No Card_Commander _commanderCard
-    //No int _currentMana
-    //No _cardsInHand, _cardsInDeck, _cardsInDiscard, _cardsInExile
-
-    //Yes _permanentsOnField
-    //Yes isTurn
-
-    protected override void Start()
+    private void Start()
     {
         duelManager = DuelManager.instance;
     }
@@ -33,7 +26,6 @@ public class MonsterManager : OpponentCommander
     #region - Match Start -
     public void OnNewMatchStart(MonsterEncounter encounter)
     {
-        currentPhase = Phase.Begin;
         isTurn = false;
 
         _permanentsOnField = new List<Card_Permanent>();
@@ -42,6 +34,14 @@ public class MonsterManager : OpponentCommander
 
         _encounter = encounter;
         SelectMonstersFromPool();
+    }
+
+    private void SubscribeToMatchEvents()
+    {
+        duelManager.onNewTurn += OnNewTurn;
+
+        duelManager.onPlayerDefeat += OnPlayerDefeat;
+        duelManager.onPlayerVictory += OnPlayerVictory;
     }
 
     private void SelectMonstersFromPool()
@@ -67,7 +67,7 @@ public class MonsterManager : OpponentCommander
         //Get node from Battlefield
         var nodes = duelManager.Battlefield.GetSummonableNodes(false);
 
-        var node = GetNode(nodes);
+        var node = GetNodeToSummon(nodes);
         if (node == null) return;
 
         unit.OnSummoned(node);
@@ -82,7 +82,7 @@ public class MonsterManager : OpponentCommander
         unit.transform.eulerAngles = rot;
     }
 
-    private GridNode GetNode(List<GridNode> nodes)
+    private GridNode GetNodeToSummon(List<GridNode> nodes)
     {
         for (int i = nodes.Count - 1; i >= 0; i--)
         {
@@ -104,39 +104,37 @@ public class MonsterManager : OpponentCommander
     }
     #endregion
 
-    #region - Phases -
-    protected override void OnBeginPhase()
+    #region - Monsters Turn -
+    private void OnNewTurn(bool isPlayerTurn)
     {
-        //For each card on the field, invoke an OnBeginPhase event
+        isTurn = !isPlayerTurn;
+        if (isTurn) OnTurnStart();
+    }
+
+    private void OnTurnStart()
+    {
+        //For each card on the field, trigger OnTurnStart effects
         for (int i = 0; i < _permanentsOnField.Count; i++)
         {
-            _permanentsOnField[i].OnBeginPhase();
+            _permanentsOnField[i].OnTurnStart();
         }
 
-        duelManager.OnCurrentPhaseFinished();
+        StartCoroutine(HandleTurn());
     }
 
-    protected override void OnSummoningPhase()
+    private IEnumerator HandleTurn()
     {
-        //Cannot summon, no cards
-        duelManager.OnCurrentPhaseFinished();
+        //Wait to proceed until all cards have settled
+        while (!duelManager.CanDeclareNewAction()) yield return null;
+        yield return new WaitForSeconds(1f);
+
+        yield return StartCoroutine(HandleMonsterActions());
+
+        while (!duelManager.CanDeclareNewAction()) yield return null;
+        yield return new WaitForSeconds(1f);
+        duelManager.OnEndTurn(); //End Turn
     }
 
-    protected override void OnAttackPhase()
-    {
-        if (duelManager.TurnCount == 1) duelManager.OnCurrentPhaseFinished();
-        else StartCoroutine(HandleMonsterActions());
-    }
-
-    protected override void OnEndPhase()
-    {
-        //Nothing to do on end phase
-        duelManager.OnCurrentPhaseFinished();
-    }
-    #endregion
-
-    //Down the line I should probably switch this from a single master controller to delegating the decisions to the monsters
-    //That will allow for a bit more versatility and variety in how they act
     private IEnumerator HandleMonsterActions()
     {
         for (int i = 0; i < _monsters.Count; i++)
@@ -165,9 +163,8 @@ public class MonsterManager : OpponentCommander
             while (!duelManager.CanDeclareNewAction()) yield return null;
             yield return new WaitForSeconds(0.1f);
         }
-
-        duelManager.OnCurrentPhaseFinished(); //End phase
     }
+    #endregion
 
     private void OnPermanentDestroyed(Card_Permanent permanent)
     {
@@ -188,10 +185,25 @@ public class MonsterManager : OpponentCommander
         if (_permanentsOnField.Count == 0) DuelManager.instance.onPlayerVictory?.Invoke();
     }
 
-    protected override void OnPlayerVictory()
+    #region - Match End -
+    private void OnPlayerVictory()
     {
-        //Base OpponentCommander script destroys the gameObject on death. Don't do that.
         MatcheEnd();
+    }
+
+    private void OnPlayerDefeat()
+    {
+        //pass message to all units to play victory/taunt animation
+
+        MatcheEnd();
+    }
+
+    private void MatcheEnd()
+    {
+        duelManager.onNewTurn -= OnNewTurn;
+
+        duelManager.onPlayerVictory -= OnPlayerVictory;
+        duelManager.onPlayerDefeat -= OnPlayerDefeat;
     }
 
     public void ClearEncounter()
@@ -200,4 +212,5 @@ public class MonsterManager : OpponentCommander
 
         //Destroy all cards.... 
     }
+    #endregion
 }

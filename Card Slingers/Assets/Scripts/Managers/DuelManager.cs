@@ -32,9 +32,6 @@ public class DuelManager : MonoBehaviour
     public OnCardMovementCallback onCardEndAction;
     //Now I can also add another series of these to replace the check for if any unit is acting, for the resolveAction coroutine
 
-    public delegate void OnPhaseChangeCallback(Phase newPhase);
-    public OnPhaseChangeCallback onPhaseChange;
-
     public delegate void OnNewTurnCallback(bool isPlayerTurn);
     public OnNewTurnCallback onNewTurn;
 
@@ -47,11 +44,10 @@ public class DuelManager : MonoBehaviour
     public OnCardSelectedCallback onCardInHandSelected;
     #endregion
 
-    #region - Phase Fields -
-    private Phase _currentPhase;
+    #region - Turn Handling Fields -
     private int _turnCount; //total number of turns taken
     private bool _isPlayerTurn;
-    private bool _inPhaseTransition; //prevent skipping to next phase
+    private bool _inTurnTransition; //prevent skipping to next turn
     private Coroutine phaseDelayCoroutine; //short delay while cards move
     #endregion
 
@@ -74,6 +70,7 @@ public class DuelManager : MonoBehaviour
     private bool _waitForValidNode;
     private int _cardsInAction; //Prevents declaring new actions while one is taking place
     private int _cardsInTransition; //prevents phase transition if cards are moving around
+    public bool CardsInTransition => _cardsInTransition > 0;
     #endregion
 
     #region - Properties -
@@ -115,7 +112,6 @@ public class DuelManager : MonoBehaviour
 
         _turnCount = 1;
         _isPlayerTurn = true;
-        _currentPhase = Phase.Begin;
 
         var room = playerController.currentRoom;
         battleField.CreateGrid(room.Transform.position, room.Orientation, room.BoardDimensions);
@@ -131,7 +127,6 @@ public class DuelManager : MonoBehaviour
         else monsterManager.OnNewMatchStart(encounter as MonsterEncounter);
 
         onNewTurn?.Invoke(_isPlayerTurn);
-        onPhaseChange?.Invoke(_currentPhase);
     }
 
     private void SetCommanderStartingNode(CommanderController commander)
@@ -175,20 +170,20 @@ public class DuelManager : MonoBehaviour
     }
     #endregion
 
-    #region - Phase Control -
-    public void OnCurrentPhaseFinished()
+    #region - Turn Control -
+    public void OnEndTurn()
     {
-        if (_inPhaseTransition) return; //Don't allow the accidental skipping of a phase
+        if (_inTurnTransition) return; //Don't allow the accidental skipping of a turn
 
         OnClearAction(); //Clear any highlighted nodes and unselect any cards
 
         if (phaseDelayCoroutine != null) StopCoroutine(phaseDelayCoroutine);
-        phaseDelayCoroutine = StartCoroutine(PhaseTransitionDelay());
+        phaseDelayCoroutine = StartCoroutine(TurnTransitionDelay());
     }
 
-    private IEnumerator PhaseTransitionDelay()
+    private IEnumerator TurnTransitionDelay()
     {
-        _inPhaseTransition = true;
+        _inTurnTransition = true;
 
         //wait until all cards have moved to their final destination
         while(!CanDeclareNewAction()) yield return null;
@@ -196,27 +191,14 @@ public class DuelManager : MonoBehaviour
         //one more short delay to be sure
         yield return new WaitForSeconds(0.5f);
 
-        _inPhaseTransition = false;
+        _inTurnTransition = false;
 
-        //start next commander's turn
-        if (_currentPhase == Phase.End) SetPhase(Phase.Begin);
-        else SetPhase(_currentPhase + 1); //Begin next phase
+        OnNewTurn();
     }
 
-    private void SetPhase(Phase phase)
-    {
-        //Debug.Log("SetPhase : " + phase.ToString());
-        _currentPhase = phase;
-
-        if (_currentPhase == Phase.Begin) OnBeginPhase();
-
-        onPhaseChange?.Invoke(_currentPhase);
-    }
-
-    private void OnBeginPhase()
+    private void OnNewTurn()
     {
         _isPlayerTurn = !_isPlayerTurn;
-        //Debug.Log("OnBeginPhase : isPlayerTurn: " + _isPlayerTurn);
         onNewTurn?.Invoke(_isPlayerTurn);
         _turnCount++;
     }
@@ -263,44 +245,25 @@ public class DuelManager : MonoBehaviour
 
     private void OnNodeSelected(GridNode node)
     {
-        switch (_currentPhase)
-        {
-            case Phase.Summoning:
-                if (_waitForValidNode && NodeIsValid(node))
-                {
-                    Player_Commander.OnCardPlayed(_cardToPlay, node);
-                    OnClearAction();
-                }
-                break;
-            case Phase.Attack:
-                if (!CanDeclareNewAction()) break;
+        if (!CanDeclareNewAction()) return;
 
-                if (_waitForValidNode && NodeIsValid(node))
-                {
-                    Player_Commander.OnCardPlayed(_cardToPlay, node);
-                    OnClearAction();
-                }
-                else if (_waitForTargetNode) //waiting to target a node to occupy or attack
-                {
-                    _nodeToTarget = node;
-                    _waitForTargetNode = false;
-                }
-                else //not waiting for a node currently, this means there's no selected unit
-                {
-                    var occupant = node.Occupant; //node is not empty and occupant belongs to player
-                    if (_isPlayerTurn && occupant != null && occupant is Card_Unit unit && occupant.isPlayerCard)
-                    {
-                        OnBeginDeclareAction(unit);
-                    }
-                }
-                break;
-            case Phase.End:
-                if (_waitForValidNode && NodeIsValid(node))
-                {
-                    Player_Commander.OnCardPlayed(_cardToPlay, node);
-                    OnClearAction();
-                }
-                break;
+        if (_waitForValidNode && NodeIsValid(node))
+        {
+            Player_Commander.OnCardPlayed(_cardToPlay, node);
+            OnClearAction();
+        }
+        else if (_waitForTargetNode) //waiting to target a node to occupy or attack
+        {
+            _nodeToTarget = node;
+            _waitForTargetNode = false;
+        }
+        else //not waiting for a node currently, this means there's no selected unit or card to play
+        {
+            var occupant = node.Occupant; //node is not empty and occupant belongs to player
+            if (_isPlayerTurn && occupant != null && occupant is Card_Unit unit && occupant.isPlayerCard)
+            {
+                OnBeginDeclareAction(unit);
+            }
         }
     }
 
@@ -323,10 +286,10 @@ public class DuelManager : MonoBehaviour
     #region - Summoning/Casting -
     private bool PlayerCanPlayCard(Card card)
     {
-        if (!_isPlayerTurn || _currentPhase == Phase.Begin) return false; //not their turn
+        if (!_isPlayerTurn) return false; //not their turn
+        //if (!CanDeclareNewAction()) return false;
         if (!card.isPlayerCard) return false; //not their card
         if (!Player_Commander.CanPlayCard(card)) return false; //not enough mana
-        if (card is Card_Permanent && _currentPhase == Phase.Attack) return false;
         return true;
     }
 

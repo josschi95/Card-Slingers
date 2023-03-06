@@ -22,7 +22,7 @@ public class DungeonUIManager : MonoBehaviour
         TEST_END_PHASE_BUTTON.onClick.AddListener(delegate
         {
             Debug.Log("TEST END PHASE");
-            duelManager.OnCurrentPhaseFinished();
+            //duelManager.OnCurrentPhaseFinished();
         });
     }
     #endregion

@@ -45,13 +45,12 @@ public class UI_CombatBanner : MonoBehaviour
         player = PlayerController.instance.GetComponent<PlayerCommander>();
         duelManager = DuelManager.instance;
         duelManager.onMatchStarted += OnMatchStart;
-        duelManager.onPhaseChange += OnPhaseChange;
         duelManager.onNewTurn += OnNewTurn;
 
         duelManager.onPlayerVictory += OnPlayerVictory;
         duelManager.onPlayerDefeat += OnPlayerDefeat;
 
-        endPhaseButton.onClick.AddListener(OnPlayerEndPhase);
+        endPhaseButton.onClick.AddListener(OnPlayerEndTurn);
         cancelActionButton.onClick.AddListener(delegate { duelManager.OnClearAction(); });
 
         bannerParent.anchoredPosition = bannerHiddenPos;
@@ -97,20 +96,18 @@ public class UI_CombatBanner : MonoBehaviour
         }
     }
 
-    private void OnPhaseChange(Phase phase)
-    {
-        phaseText.text = phase.ToString() + " Phase";
-    }
-
     //Player has selected to end their current phase
-    private void OnPlayerEndPhase()
+    private void OnPlayerEndTurn()
     {
-        if (playerTurn) duelManager.OnCurrentPhaseFinished();
+        if (playerTurn) duelManager.OnEndTurn();
     }
 
     private void OnNewTurn(bool isPlayerTurn)
     {
         playerTurn = isPlayerTurn;
+
+        if (playerTurn) phaseText.text = "Player Turn";
+        else phaseText.text = "Enemy Turn";
 
         var endPos = phaseBannerPos;
         if (playerTurn) endPos *= Vector2.left;

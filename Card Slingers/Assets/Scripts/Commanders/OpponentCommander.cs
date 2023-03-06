@@ -12,7 +12,6 @@ public class OpponentCommander : CommanderController
     [Space]
 
     private PlayerCommander playerCommander;
-    private int[] cardTypesInHand = new int[System.Enum.GetNames(typeof(CardType)).Length];
     CardNodeCombo nulledCombo = new CardNodeCombo(null, null);
     //[SerializeField] 
     private bool[] invadesLanes; //true if invaded
@@ -29,83 +28,38 @@ public class OpponentCommander : CommanderController
     protected override void OnNewTurn(bool isPlayerTurn)
     {
         isTurn = !isPlayerTurn;
+        if (isTurn) OnTurnStart();
     }
 
-    protected override void OnPlayerVictory()
+    protected override void OnTurnStart()
     {
-        base.OnPlayerVictory();
-        Destroy(gameObject, 5f); //later also include a method for sinking beneath the groudn
+        base.OnTurnStart();
+
+        StartCoroutine(HandleTurn());
     }
 
-    protected override void OnPlayerDefeat()
+    private IEnumerator HandleTurn()
     {
-        base.OnPlayerDefeat();
-    }
-
-    protected override void OnSummoningPhase()
-    {
-        base.OnSummoningPhase();
-
+        //Wait to proceed until all cards have settled
+        while (!duelManager.CanDeclareNewAction()) yield return null;
+        yield return new WaitForSeconds(1f);
+        
         FindInvadedLanes();
 
         SortThreats();
 
-        StartCoroutine(HandleSummonUnits());
+        yield return StartCoroutine(HandleSummonUnits());
 
-        for (int i = 0; i < cardTypesInHand.Length; i++) cardTypesInHand[i] = 0; //reset array to recalculate it
-        
-        //Find the total mana cost of all cards in hand to determine how many can be played or if all can be played
-        var totalCardManaCost = 0;
-        for (int i = 0; i < _cardsInHand.Count; i++)
-        {
-            totalCardManaCost += _cardsInHand[i].CardInfo.cost;
-            cardTypesInHand[(int)_cardsInHand[i].CardInfo.type]++; 
-        }
+        while (!duelManager.CanDeclareNewAction()) yield return null;
+        yield return new WaitForSeconds(1f);
+        yield return StartCoroutine(HandleUnitActions());
 
-        if (totalCardManaCost <= CurrentMana)
-        {
-            //can play all cards in hand, and should likely do so
-        }
-        else
-        {
-            //will need to decide which cards to play
-        }
-
-        //find the nodes that I should be playing a card in
-        //this will be 100% of the time, a card in front of their commander, to prevent attacks, 
-        //the "vanguard" should be a frontline unit or defensive structure that they play along the front row 
-
-        //If there is not a unit/structure in commander lane, find the tankiest one in hand and play it as the vanguard
-        //mark all structures and units as offensive, defensive, or utility
-
-        //each permanent type should be handled separately
-        //ignore unoccupied lanes? or if there are some quicker units, place them at the front line to quickly block that lane. 
-
-        //take special note of any unit on this side of field
-        //and of course try to deal damage to the enemy commander
-
-        //find some way to compare relative power levels of allies/enemies in the same lane
-
-        //Order all goals, and play in line with those
-
-        //This will probably be done by the Battlefield, or at least kept track there? 
-        //But I should dynamically update the power balance of each lane
-        //Each non-trap permanent will be given some sort of Power Rating based on its stats (static and dynamic)
-        //The advantage for each lane will be calculated by adding the power rating of all player untis, and subtracting power of enemy units
-        //lane advantage = TotalPlayerUnitAdvantage - TotalEnemyUnitAdvantage
-        //this should also take into account how far forward the permanent is.
-            //for instance a building at the back line is less of a concern than one at the front
-
-        //the opponent commander wants their commander to be in the lane with the lowest advantage
-        //and they want to decrease the advantage of all lanes above 0
-
-        //Ok so what is the calculation for a permanent's power level
-        //Unit - currrentHealth + ATK + DEF 
+        while (!duelManager.CanDeclareNewAction()) yield return null;
+        yield return new WaitForSeconds(1f);
+        duelManager.OnEndTurn(); //End Turn
     }
 
-    /// <summary>
-    /// Updates array to determine which lanes are invaded
-    /// </summary>
+    // Updates array to determine which lanes are invaded
     private void FindInvadedLanes()
     {
         //Reset all to false
@@ -125,6 +79,7 @@ public class OpponentCommander : CommanderController
         }
     }
 
+    //Orders player units based on their perceived threat to the commander
     private void SortThreats()
     {
         threats.Clear();
@@ -157,27 +112,7 @@ public class OpponentCommander : CommanderController
         }
     }
 
-    protected override void OnAttackPhase()
-    {
-        base.OnAttackPhase();
-
-        if (duelManager.TurnCount == 1) duelManager.OnCurrentPhaseFinished();
-        else StartCoroutine(HandleUnitAttacks());
-        //if there are spells in the hand, target anyone near their commander
-
-        //Do not attack with whatever guard the commander has
-    }
-
-    protected override void OnEndPhase()
-    {
-        //Same, nothing to add for opponents
-        base.OnEndPhase();
-        if (_cardsInHand.Count == 0 || CurrentMana == 0) duelManager.OnCurrentPhaseFinished();
-    }
-
-    #region - Summon Phase 
-
-
+    #region - Summoning -  
     private IEnumerator HandleSummonUnits()
     {
         //Continue playing cards until out of mana, or no more cards to play
@@ -205,18 +140,17 @@ public class OpponentCommander : CommanderController
             //a valid card and node have not been passed, there are no valid summons
             if (combo.card == null || combo.node == null)
             {
-                //Debug.Log("No More Valid Summons. Ending Phase");
-                duelManager.OnCurrentPhaseFinished();
+                //Debug.Log("No More Valid Summons. Ending Summons");
                 yield break;
             }
 
             yield return null;
         }
 
-        //Debug.Log("No More Mana or Cards In Hand. Ending Phase");
-        duelManager.OnCurrentPhaseFinished();
+        //Debug.Log("No More Mana or Cards In Hand. Ending Summons");
     }
 
+    //Confirm whether a card and a given node are valid
     private bool OnTryValidateSummon(CardNodeCombo combo)
     {
         if (combo.card == null || combo.node == null) return false;
@@ -323,8 +257,8 @@ public class OpponentCommander : CommanderController
     }
     #endregion
 
-    #region - Attack Phase -
-    private IEnumerator HandleUnitAttacks()
+    #region - Action Declaration -
+    private IEnumerator HandleUnitActions()
     {
         //Debug.Log("Starting Attack Declaration");
         var unitsToAct = new List<Card_Unit>();
@@ -358,7 +292,7 @@ public class OpponentCommander : CommanderController
         }
 
         //Debug.Log("Ending Attack Declaration");
-        duelManager.OnCurrentPhaseFinished();
+        //duelManager.OnCurrentPhaseFinished();
     }
 
     private bool UnitCanAttack(Card_Unit unit, List<GridNode> attackNodes)
@@ -485,6 +419,19 @@ public class OpponentCommander : CommanderController
         }
         //if (card == null) Debug.Log("Returning Null");
         return card;
+    }
+    #endregion
+
+    #region - Combat End -
+    protected override void OnPlayerVictory()
+    {
+        base.OnPlayerVictory();
+        Destroy(gameObject, 5f); //later also include a method for sinking beneath the groudn
+    }
+
+    protected override void OnPlayerDefeat()
+    {
+        base.OnPlayerDefeat();
     }
     #endregion
 }

@@ -149,7 +149,6 @@ public class GameManager : MonoBehaviour
 }
 
 #region - Enums -
-public enum Phase { Begin, Summoning, Attack, End }
 public enum CardFocus { Offense, Defense, Utility }
 public enum ActionType { Move, Attack, Ability }
 public enum CardType { Unit, Structure, Trap, Equipment, Terrain, Spell, Commander }

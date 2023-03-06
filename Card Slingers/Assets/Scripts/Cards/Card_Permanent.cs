@@ -101,7 +101,7 @@ public class Card_Permanent : Card
         return 0;
     }
 
-    public virtual void OnBeginPhase()
+    public virtual void OnTurnStart()
     {
         //Trigger any relevant abilities
     }

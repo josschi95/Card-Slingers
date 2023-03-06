@@ -283,9 +283,9 @@ public class Card_Unit : Card_Permanent
     }
     #endregion
 
-    public override void OnBeginPhase()
+    public override void OnTurnStart()
     {
-        base.OnBeginPhase();
+        base.OnTurnStart();
 
         _movesLeft = Speed;
         _hasTakenAction = false;
