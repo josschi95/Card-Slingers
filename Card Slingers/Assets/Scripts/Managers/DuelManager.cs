@@ -126,8 +126,6 @@ public class DuelManager : MonoBehaviour
             room.Obstacles[i].OnOccupyNode();
         }
 
-        CameraController.instance.OnCombatStart();
-
         SetCommanderStartingNode(playerCommander);
         if (encounter is CommanderEncounter opponent) SetCommanderStartingNode(opponent.Commander);
         else monsterManager.OnNewMatchStart(encounter as MonsterEncounter);

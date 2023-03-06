@@ -48,30 +48,58 @@ public class DungeonUIManager : MonoBehaviour
     [SerializeField] private RectTransform _battleSummaryPanel;
     [SerializeField] private Button _continueButton;
 
+    [Header("Retreat")]
+    [SerializeField] private RectTransform _retreatPanel;
+    [SerializeField] private Button _retreatButton;
+    [SerializeField] private Button _confirmRetreatButton;
+    [SerializeField] private Button _cancelRetreatButton;
+    private Coroutine _retreatPanelCoroutine;
+    private bool _retreatPanelShown = false;
+
     [Header("Game Over")]
     [SerializeField] private RectTransform _gameOverPanel;
-    [SerializeField] private Button _retreatButton;
+    [SerializeField] private Button _confirmGameOverButton;
 
     private void Start()
     {
         Test();
 
-        _victoryPanel.anchoredPosition = closeOutPanelPos;
-        _battleSummaryPanel.anchoredPosition = closeOutPanelPos;
-        _gameOverPanel.anchoredPosition = closeOutPanelPos;
-
         duelManager = DuelManager.instance;
         duelManager.onPlayerVictory += OnPlayerVictory;
         duelManager.onPlayerDefeat += OnPlayerDefeat;
 
-        _returnToTownButton.onClick.AddListener(delegate { GameManager.OnLoadScene("Town"); });
+        //Dungeon Victory
+        _victoryPanel.anchoredPosition = closeOutPanelPos;
+        _returnToTownButton.onClick.AddListener(OnReturnToTown);
+        //_continueExploringButton.onClick.AddListener();
 
-        _retreatButton.onClick.AddListener(delegate { GameManager.OnLoadScene("Town"); });
+        //Battle Victory
+        _battleSummaryPanel.anchoredPosition = closeOutPanelPos;
         _continueButton.onClick.AddListener(delegate
         {
             StartCoroutine(LerpRectTransform(_battleSummaryPanel, closeOutPanelPos, 2f));
             duelManager.CloseOutMatch();
         });
+        
+        //Retreat
+        _retreatPanel.anchoredPosition = closeOutPanelPos;
+        _retreatButton.onClick.AddListener(ToggleRetreatPanel);
+        _cancelRetreatButton.onClick.AddListener(ToggleRetreatPanel);
+        _confirmRetreatButton.onClick.AddListener(OnReturnToTown);
+
+        //Game Over
+        _gameOverPanel.anchoredPosition = closeOutPanelPos;
+        _confirmGameOverButton.onClick.AddListener(OnReturnToTown);
+    }
+
+
+    private void ToggleRetreatPanel() //Will also need to edit this so that if the completed the quest, then there's no loss in loot
+    {
+        _retreatPanelShown = !_retreatPanelShown;
+
+        if (_retreatPanelCoroutine != null) StopCoroutine(_retreatPanelCoroutine);
+        if (_retreatPanelShown) _retreatPanelCoroutine = StartCoroutine(LerpRectTransform(_retreatPanel, closeOutPanelPos));
+        else _retreatPanelCoroutine = StartCoroutine(LerpRectTransform(_retreatPanel, Vector2.zero));
     }
 
     private void OnPlayerVictory()
@@ -113,5 +141,10 @@ public class DungeonUIManager : MonoBehaviour
             yield return null;
         }
         rect.anchoredPosition = endPos;
+    }
+
+    private void OnReturnToTown()
+    {
+        GameManager.OnLoadScene("Town");
     }
 }

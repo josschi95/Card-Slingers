@@ -44,7 +44,7 @@ public class CameraController : MonoBehaviour
         SetActiveCamera(CameraView.Follow);
 
          _battlefieldCenter = BattlefieldManager.instance.Center;
-
+        DuelManager.instance.onMatchStarted += delegate { OnMatchStart(); };
     }
 
     private void Update()
@@ -172,7 +172,12 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    public void OnCombatStart()
+    private void OnMatchStart()
+    {
+        Invoke("OnCombatStart", 1.5f);
+    }
+
+    private void OnCombatStart()
     {
         SetActiveCamera(CameraView.Free);
         ReturnHome();
