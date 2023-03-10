@@ -1,19 +1,11 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 
-public class Card : MonoBehaviour, IInteractable
+public class Card
 {
-    [SerializeField] protected CardDisplay _display;
-
-    [Header("Card Info")]
-    [SerializeField] protected CardSO _cardInfo;
+    protected CardSO _cardInfo;
     public bool isPlayerCard { get; protected set; }
-
     protected CardLocation _location; //If the card is in the deck, discard, hand, or on the field
-    protected bool _isSelected;
-    private Coroutine lerpCardUpCoroutine;
 
     #region - Properties -
     public bool isRevealed { get; protected set;}//If the player is able to see the card
@@ -21,12 +13,10 @@ public class Card : MonoBehaviour, IInteractable
     public CardLocation Location => _location;
     #endregion
 
-    //Assign the card its information and its owner
-    public virtual void AssignCardInfo(CardSO card, bool isPlayerCard)
+    public Card(CardSO card, bool isPlayerCard)
     {
         _cardInfo = card;
         this.isPlayerCard = isPlayerCard;
-        _display.SetDisplay(card);
     }
 
     //Set the location of the card, for reference when selecting it
@@ -54,105 +44,10 @@ public class Card : MonoBehaviour, IInteractable
         }
     }
 
-    #region - IInteractable -
-    public void OnMouseEnter()
-    {
-        if (_location != CardLocation.InHand || !isPlayerCard) return;
-
-        if (!DuelManager.instance.CardsInTransition) //Will prevent the card from moving when cards are in motion
-        {
-            if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
-            lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(true));
-        }
-    }
-
-    public void OnMouseExit()
-    {
-        if (_isSelected || !isPlayerCard) return;
-        if (_location != CardLocation.InHand) return;
-
-        if (!DuelManager.instance.CardsInTransition)
-        {
-            if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
-            lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(false));
-        }
-    }
-
-    public void OnLeftClick() => OnCardSelected();
-
-    public void OnRightClick() => OnDisplayCardInfo();
-    #endregion
-
-    private void OnCardSelected()
-    {
-        switch (_location)
-        {
-            case CardLocation.InDeck:
-                //I don't think there's anything to do here
-                //Player draws automatically
-                //I guess if the player gets to select a card from their deck... but that will probably be a UI effect to keep things simple
-                break;
-            case CardLocation.InDiscard:
-                //Same thing here as the deck. Honestly I'm heavily leaning towards what MtG does (I think) and just having a static gameObject to represent the deck and the discard pile
-                //Selecting either commander's discard pile should give a similar UI display of all cards in that pile, since they're public
-                break;
-            case CardLocation.InHand:
-                _isSelected = true;
-                DuelManager.instance.onCardInHandSelected?.Invoke(this);
-                //I need to set some check to make sure that the card CAN be selected
-                break;
-            case CardLocation.OnField: //cards on the field wiill never be selected, the nodes they are occupying will be selected
-                _isSelected = true;
-                //DuelManager.instance.onCardInPlaySelected?.Invoke(this);
-                break;
-            case CardLocation.InExile:
-                //Maybe show display, the current route is that cards in exile are removed from the game for the current match
-                //I could make it so that they're removed from the deck entirely, for the rest of the dungeon crawl,
-                //but that would make exile effects against the player significantly more impactful than those used by the player
-                //if that were the case, then the player must also be able to add cards to their deck during the dungeon crawl.
-                break;
-        }
-    }
-
-    private void OnDisplayCardInfo()
-    {
-        if (isRevealed) DungeonUIManager.instance.ShowCardDisplay(_cardInfo);
-    }
-
     public void OnDeSelectCard()
     {
-        _isSelected = false;
+        //_display.OnDeSelectCard();
 
-        switch (_location)
-        {
-            case CardLocation.InHand:
-                if (lerpCardUpCoroutine != null) StopCoroutine(lerpCardUpCoroutine);
-                lerpCardUpCoroutine = StartCoroutine(RaiseCardInHand(false));
-                break;
-            case CardLocation.OnField:
-                break;
-        }
-
-    }
-
-    protected IEnumerator RaiseCardInHand(bool up)
-    {
-        //Ignore this if not placed in hand
-        if (_location != CardLocation.InHand) yield break;
-
-        float timeElapsed = 0;
-        float timeToMove = 0.25f;
-        var endPos = transform.localPosition;
-        endPos.z = 0;
-        if (up) endPos.z += 0.75f;
-
-        while (timeElapsed < timeToMove)
-        {
-            transform.localPosition = Vector3.Lerp(transform.localPosition, endPos, (timeElapsed / timeToMove));
-            timeElapsed += Time.deltaTime;
-            yield return null;
-        }
-        transform.localPosition = endPos;
     }
 }
 

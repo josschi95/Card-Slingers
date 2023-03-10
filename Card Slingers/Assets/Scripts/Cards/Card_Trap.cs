@@ -4,10 +4,17 @@ using UnityEngine;
 
 public class Card_Trap : Card_Permanent
 {
-    private TrapSO _trapInfo => CardInfo as TrapSO;
+    private TrapSO _trapInfo;
     private Animator _trapAnim;
 
-    public override void OnSummoned(GridNode node)
+    public Card_Trap(TrapSO trap, bool isPlayerCard) : base (trap, isPlayerCard)
+    {
+        _cardInfo = trap;
+        _trapInfo = trap;
+        this.isPlayerCard = isPlayerCard;
+    }
+
+    public override void OnSummoned(Summon summon, GridNode node)
     {
         SetCardLocation(CardLocation.OnField);
         isRevealed = false;
@@ -15,8 +22,8 @@ public class Card_Trap : Card_Permanent
 
         OnOccupyNode(node); //Occupy the given node
 
-        _permanentObject = Instantiate(_trapInfo.Prefab, node.transform.position, Quaternion.identity);
-        _trapAnim = _permanentObject.GetComponent<Animator>();
+        _summon = summon;
+        _trapAnim = _summon.GetComponent<Animator>();
     }
 
     private void OnTrapTriggered(Card_Unit unit)
@@ -31,8 +38,7 @@ public class Card_Trap : Card_Permanent
             GameManager.OnApplyEffect(unit, _trapInfo.Effects[i]);
         }
 
-        //Invoke after 1 second delay
-        Invoke("OnPermanentDestroyed", 1f);
+        OnPermanentDestroyed();
     }
 
     protected override void OnOccupyNode(GridNode newNode)
@@ -51,10 +57,8 @@ public class Card_Trap : Card_Permanent
 
     protected override void OnPermanentDestroyed()
     {
+        _summon.DestroyAfterDelay(1f);
         OnAbandonNode();
-
-        _display.gameObject.SetActive(true);
-        Destroy(PermanentObject); //Destroy trap
         onPermanentDestroyed?.Invoke(this);
         onRemovedFromField?.Invoke(this);
     }

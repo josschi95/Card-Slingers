@@ -780,6 +780,7 @@ GameObject:
   - component: {fileID: 4336874656255028}
   - component: {fileID: 95960775912527714}
   - component: {fileID: -7392176277653937520}
+  - component: {fileID: 1194212877284747525}
   m_Layer: 0
   m_Name: Skeleton_Soldier_01
   m_TagString: Untagged
@@ -836,6 +837,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2bbbcf36adcbbf41ac1f692c2b5f223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1194212877284747525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1547369703441942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95827f25e4d93f244b3440970a9e1309, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _transform: {fileID: 4336874656255028}
 --- !u!1 &1564535468406806
 GameObject:
   m_ObjectHideFlags: 0

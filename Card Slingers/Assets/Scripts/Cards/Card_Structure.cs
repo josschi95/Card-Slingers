@@ -18,14 +18,20 @@ public class Card_Structure : Card_Permanent
     public bool IsOccupied => _occupant != null;
     public bool canBeTraversed => CanBeTraversed();
 
+    public Card_Structure(StructureSO structure, bool isPlayerCard) : base(structure, isPlayerCard)
+    {
+        _cardInfo = structure;
+        this.isPlayerCard = isPlayerCard;
+    }
+
     #region - Override Methods -
-    public override void OnSummoned(GridNode node)
+    public override void OnSummoned(Summon summon, GridNode node)
     {
         var info = CardInfo as StructureSO;
         _maxHealth = info.MaxHealth;
         _currentHealth = _maxHealth;
 
-        base.OnSummoned(node);
+        base.OnSummoned(summon, node);
     }
 
     private int NetDefense()
@@ -45,24 +51,25 @@ public class Card_Structure : Card_Permanent
     public override void OnTakeDamage(int damage)
     {
         _currentHealth -= damage;
+        _summon.OnDamage();
         if (_currentHealth <= 0) OnPermanentDestroyed();
         onValueChanged?.Invoke();
     }
 
     protected override void OnPermanentDestroyed()
     {
-        //Debug.Log("structure has been destroyed");
         onPermanentDestroyed?.Invoke(this);
 
         OnRemoveFromField();
 
         //explosions or something
 
-        //start a coroutine to wait until anim is finished playing
-        StartCoroutine(WaitToRemove());
+        _summon.DestroyAfterDelay(2);
+
+        onRemovedFromField?.Invoke(this);
     }
     #endregion
-    
+
     private CardFocus StructurePurpose()
     {
         var card = CardInfo as StructureSO;
@@ -83,16 +90,6 @@ public class Card_Structure : Card_Permanent
     {
         var card = CardInfo as StructureSO;
         return card.CanBeTraversed;
-    }
-
-    private IEnumerator WaitToRemove()
-    {
-        yield return new WaitForSeconds(2);
-        //include a part where the gameObject sinks beneath the battlefield
-        Destroy(PermanentObject); //Destroy unit
-
-        //Invoke an event for the commander to listen to
-        onRemovedFromField?.Invoke(this);
     }
 
     protected override void OnCommanderVictory()

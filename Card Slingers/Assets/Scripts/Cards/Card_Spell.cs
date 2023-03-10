@@ -4,39 +4,18 @@ using UnityEngine;
 
 public class Card_Spell : Card
 {
-    public int Range
+    private SpellSO _spellInfo;
+
+    public Card_Spell(SpellSO spell, bool isPlayerCard) : base (spell, isPlayerCard)
     {
-        get
-        {
-            var info = CardInfo as SpellSO;
-            return info.Range;
-        }
+        _cardInfo = spell;
+        _spellInfo = spell;
+        this.isPlayerCard = isPlayerCard;
     }
 
-    public EffectHolder[] Effects
-    {
-        get
-        {
-            var info = CardInfo as SpellSO;
-            return info.SpellEffects;
-        }
-    }
+    public int Range => _spellInfo.Range;
+    public Vector3 StartPos => _spellInfo.StartPos;
+    public ParticleSystem FX => _spellInfo.SpellFX;
+    public EffectHolder[] Effects => _spellInfo.SpellEffects;
 
-    public ParticleSystem FX
-    {
-        get
-        {
-            var info = CardInfo as SpellSO;
-            return info.SpellFX;
-        }
-    }
-
-    public Vector3 StartPos
-    {
-        get
-        {
-            var info = CardInfo as SpellSO;
-            return info.StartPos;
-        }
-    }
 }

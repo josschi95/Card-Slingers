@@ -16,10 +16,10 @@ public class Card_Permanent : Card
     public OnPermanentValueChangedCallback onValueChanged;
 
     [SerializeField] protected GridNode _occupiedNode;
-    [SerializeField] protected GameObject _permanentObject;
+    [SerializeField] protected Summon _summon;
 
     public GridNode Node => _occupiedNode;
-    public GameObject PermanentObject => _permanentObject;
+    public Summon Summon => _summon;
     public int ThreatLevel => GetThreatLevel();
     //For ordering player cards based on their perceived threat based on power and position
     [SerializeField] private float _modifiedThreatLevel;
@@ -32,10 +32,14 @@ public class Card_Permanent : Card
         }
     }
 
-    public override void AssignCardInfo(CardSO card, bool isPlayerCard)
+    public Card_Permanent(PermanentSO card, bool isPlayerCard) : base (card, isPlayerCard)
     {
-        base.AssignCardInfo(card, isPlayerCard);
+        _cardInfo = card;
+        this.isPlayerCard = isPlayerCard;
+    }
 
+    protected void SubscribeToEvents()
+    {
         if (isPlayerCard)
         {
             DuelManager.instance.onPlayerVictory += OnCommanderVictory;
@@ -48,7 +52,7 @@ public class Card_Permanent : Card
         }
     }
 
-    private void OnDestroy()
+    protected void UnsubscribeFromEvents()
     {
         if (isPlayerCard)
         {
@@ -62,19 +66,11 @@ public class Card_Permanent : Card
         }
     }
 
-    public virtual void OnSummoned(GridNode node)
-    {       
-        //Set as child to the battlefield
-        transform.SetParent(DuelManager.instance.Battlefield.transform);
-
+    public virtual void OnSummoned(Summon summon, GridNode node)
+    {
+        _summon = summon;
         OnOccupyNode(node); //Occupy the given node
-
-        //Instantiate permanent
-        var permanent = CardInfo as PermanentSO;
-        _permanentObject = Instantiate(permanent.Prefab, transform.position, transform.rotation);
-        _permanentObject.transform.SetParent(transform);
-        _display.gameObject.SetActive(false);
-        GetComponent<Collider>().enabled = false; //Disable collider to not interfere with node selection
+        SubscribeToEvents();
     }
 
     //Set current node and occupy it
@@ -84,7 +80,7 @@ public class Card_Permanent : Card
         _occupiedNode.Occupant = this;
         //_occupiedNode.SetOccupant(this);
 
-        transform.position = newNode.transform.position;
+        _summon.transform.position = newNode.transform.position;
     }
 
     //Abandon the currently occupied node
@@ -107,13 +103,12 @@ public class Card_Permanent : Card
     }
 
     /// <summary>
-    /// Call this method when the card is destroyed. Abandons node, re-enables card GFX and collider
+    /// Call this method when the card is destroyed. Abandons node, unsubscribes from events
     /// </summary>
     protected void OnRemoveFromField() //Maybe change this to a method in the base Card class for OnEnterDiscard which will also set location
     {
         OnAbandonNode(); //I think I'm just going to move this stuff into OnPermanentDestroyed
-        _display.gameObject.SetActive(true);
-        GetComponent<Collider>().enabled = true; //re-enable collider for card selection
+        UnsubscribeFromEvents();
     }
 
     public virtual void OnTargetEngaged(Card_Unit attacker)

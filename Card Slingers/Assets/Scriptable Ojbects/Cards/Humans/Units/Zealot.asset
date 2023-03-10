@@ -13,14 +13,13 @@ MonoBehaviour:
   m_Name: Zealot
   m_EditorClassIdentifier: 
   name: Zealot
-  cardPrefab: {fileID: 5835411494563231940, guid: 325c52135d74aa64bab77db000ae8436, type: 3}
   cost: 3
   icon: {fileID: 21300000, guid: e2e59673159616c44b546b4a66992a4f, type: 3}
   type: 0
   faction: 1
   description: 'HP:5 ATK:1 DEF: 0 SPD: 2'
   flavorText: A noble knight
-  _permanentPrefab: {fileID: 1552075872333300, guid: f575356c591a52e47a3f6efa6c18f316, type: 3}
+  _summonPrefab: {fileID: 6766454236543649322, guid: f575356c591a52e47a3f6efa6c18f316, type: 3}
   _maxHealth: 15
   _attack: 5
   _range: 1

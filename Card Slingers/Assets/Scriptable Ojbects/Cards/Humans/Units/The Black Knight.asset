@@ -13,14 +13,13 @@ MonoBehaviour:
   m_Name: The Black Knight
   m_EditorClassIdentifier: 
   name: The Black Knight
-  cardPrefab: {fileID: 5835411494563231940, guid: 325c52135d74aa64bab77db000ae8436, type: 3}
   cost: 4
   icon: {fileID: 21300000, guid: e2e59673159616c44b546b4a66992a4f, type: 3}
   type: 0
   faction: 1
   description: 
   flavorText: A noble knight
-  _permanentPrefab: {fileID: 1772587093756804, guid: f96fa216d8859434fb29ff7cc4930724, type: 3}
+  _summonPrefab: {fileID: -375130169653341377, guid: f96fa216d8859434fb29ff7cc4930724, type: 3}
   _maxHealth: 15
   _attack: 6
   _range: 1

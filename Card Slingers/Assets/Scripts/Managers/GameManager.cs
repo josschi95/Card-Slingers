@@ -23,6 +23,13 @@ public class GameManager : MonoBehaviour
     }
     #endregion
 
+    public delegate void OnTestCallback();
+    public OnTestCallback onTest;
+
+    public delegate void OnPlayerGoldChange();
+    public OnPlayerGoldChange onTempGoldChange;
+    public OnPlayerGoldChange onTotalGoldChange;
+
     [SerializeField] private Image screenFade;
 
     [SerializeField] private EffectManager effectManager;
@@ -131,18 +138,47 @@ public class GameManager : MonoBehaviour
     }
     #endregion
 
-    #region - Save File Info -
-    private int[] _unlockedDungeonLevels = new int[2]; //A value of zero means that the dungeon is not available
-    public int[] UnlockedDungeonLevels => _unlockedDungeonLevels;
-    private int _playerGold;
+    #region - Player Gold -
+    private int _tentativeGold; //gold gained during dungeon run, subject to loss
+    public int PlayerTempGold
+    {
+        get => _tentativeGold;
+        set
+        {
+            _tentativeGold = Mathf.Clamp(value, 0, int.MaxValue);
+            onTempGoldChange?.Invoke();
+        }
+    }
+    private int _playerGold; //gold that has been confirmed
     public int PlayerGold
     {
         get => _playerGold;
         set
         {
-            _playerGold = Mathf.Clamp(value, 0, int.MaxValue);            
+            _playerGold = Mathf.Clamp(value, 0, int.MaxValue);
+            onTotalGoldChange?.Invoke();
         }
     }
+
+    public static void OnGainTempGold(int amount) => instance.OnPlayerGainTempGold(amount);
+    public static void OnGainGold(int amount) => instance.OnPlayerGainGold(amount);
+    public static void OnLoseGold(int amount) => instance.OnPlayerLoseGold(amount);
+    public static void OnConfirmTempGold() => instance.OnConfirmPlayerTempGold();
+
+    private void OnPlayerGainGold(int amount) => PlayerGold += amount;
+    private void OnPlayerLoseGold(int amount) => PlayerGold -= amount;
+    private void OnPlayerGainTempGold(int amount) => PlayerTempGold += amount;
+    private void OnConfirmPlayerTempGold()
+    {
+        PlayerGold += _tentativeGold;
+        PlayerTempGold = 0;
+    }
+    #endregion
+
+    #region - Save File Info -
+    private int[] _unlockedDungeonLevels = new int[2]; //A value of zero means that the dungeon is not available
+    public int[] UnlockedDungeonLevels => _unlockedDungeonLevels;
+
 
 
     #endregion

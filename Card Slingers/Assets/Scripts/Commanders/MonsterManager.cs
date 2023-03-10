@@ -47,16 +47,20 @@ public class MonsterManager : MonoBehaviour
     private void SelectMonstersFromPool()
     {
         int num = monsterCount[Random.Range(0, monsterCount.Length)];
+        int gold = 0;
 
         for (int i = 0; i < num; i++)
         {
             //Grab a random card from the pool
             var card = _encounter.MonsterPool[Random.Range(0, _encounter.MonsterPool.Length)];
 
-            Card newCard = Instantiate(card.cardPrefab);
-            newCard.AssignCardInfo(card, false);
-            PlaceMonstersAtStart(newCard as Card_Unit);
+            gold += card.MaxHealth + card.Attack + card.Defense;
+
+            Card_Unit newCard = new Card_Unit(card, false);
+            PlaceMonstersAtStart(newCard);
         }
+
+        duelManager.SetMatchReward(gold);
     }
 
     private void PlaceMonstersAtStart(Card_Unit unit)
@@ -70,16 +74,18 @@ public class MonsterManager : MonoBehaviour
         var node = GetNodeToSummon(nodes);
         if (node == null) return;
 
-        unit.OnSummoned(node);
+        var info = unit.CardInfo as PermanentSO;
+        var summon = Instantiate(info.Prefab, node.Transform.position, node.transform.rotation);
+        unit.OnSummoned(summon, node);
         unit.onPermanentDestroyed += OnPermanentDestroyed;
         unit.onRemovedFromField += DestroyPermanent;
 
-        var controller = unit.gameObject.AddComponent<MonsterController>();
+        var controller = summon.gameObject.AddComponent<MonsterController>();
         _monsters.Add(controller);
 
-        var rot = duelManager.Battlefield.Center.eulerAngles;
-        rot.y -= 180;
-        unit.transform.eulerAngles = rot;
+        //var rot = duelManager.Battlefield.Center.eulerAngles;
+        //rot.y -= 180;
+        //unit.transform.eulerAngles = rot;
     }
 
     private GridNode GetNodeToSummon(List<GridNode> nodes)
@@ -173,13 +179,13 @@ public class MonsterManager : MonoBehaviour
         //Remove from list
         _permanentsOnField.Remove(permanent);
 
-        if (permanent.TryGetComponent(out MonsterController monster)) _monsters.Remove(monster);
+        if (permanent.Summon.TryGetComponent(out MonsterController monster)) _monsters.Remove(monster);
     }
 
     private void DestroyPermanent(Card_Permanent card)
     {
         card.onRemovedFromField -= DestroyPermanent;
-        Destroy(card.gameObject);
+        Destroy(card.Summon.gameObject);
 
         //All monsters on the field have been defeated, player victory
         if (_permanentsOnField.Count == 0) DuelManager.instance.onPlayerVictory?.Invoke();

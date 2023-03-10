@@ -18,14 +18,13 @@ public class CommanderEncounter : CombatEncounter
 
     private void OnCommanderCombatEncounter()
     {
-        commander = Instantiate(enemyCommander.cardPrefab).GetComponent<OpponentCommander>();
+        
+        commander = Instantiate(enemyCommander.Prefab).GetComponent<OpponentCommander>();
         commander.OnAssignCommander(enemyCommander);
 
         commander.transform.position = DuelManager.instance.Battlefield.Center.position;
         commander.transform.eulerAngles = DuelManager.instance.Battlefield.Center.eulerAngles;
 
-        //commander.transform.eulerAngles = PlayerController.instance.currentRoom.Orientation;
-
-        commander.CommanderCard.OnCommanderSummon();
+        commander.CommanderCard.OnCommanderSummon(DuelManager.instance.Battlefield.Center);
     }
 }

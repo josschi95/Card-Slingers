@@ -4,12 +4,18 @@ using UnityEngine;
 
 public class Card_Commander : Card_Unit 
 {
+    public Card_Commander(CommanderSO commander, bool isPlayerCard) : base(commander, isPlayerCard)
+    {
+        _cardInfo = commander;
+        this.isPlayerCard = isPlayerCard;
+    }
+
     public void SetStartingNode(GridNode node)
     {
         OnOccupyNode(node);
     }
 
-    public void OnCommanderSummon()
+    public void OnCommanderSummon(Transform parent)
     {
         _currentHealth = NetMaxHealth();
         _movesLeft = Speed;
@@ -17,12 +23,10 @@ public class Card_Commander : Card_Unit
 
         //Instantiate permanent
         var permanent = CardInfo as PermanentSO;
-        _permanentObject = Instantiate(permanent.Prefab, transform.position, transform.rotation, gameObject.transform);
-        _animator = PermanentObject.GetComponent<Animator>();
-
-        _display.gameObject.SetActive(false);
-        var coll = GetComponent<Collider>();
-        if (coll != null) coll.enabled = false;
+        _summon = Object.Instantiate(permanent.Prefab, parent.position, parent.rotation, parent);
+        _summon.Card = this;
+        _animator = Summon.GetComponent<Animator>();
+        _summon.GetComponent<AnimationEventHandler>().Unit = this;
     }
 
     public override void OnTakeDamage(int damage)
@@ -30,7 +34,7 @@ public class Card_Commander : Card_Unit
         damage = Mathf.Clamp(damage - Defense, 0, int.MaxValue);
         _currentHealth -= damage;
         
-        GameManager.instance.GetBloodParticles(transform.position + Vector3.up);
+        GameManager.instance.GetBloodParticles(_summon.transform.position + Vector3.up);
 
         if (_currentHealth <= 0) _animator.SetTrigger("death");
         else
@@ -40,7 +44,7 @@ public class Card_Commander : Card_Unit
             {
                 //Debug.Log("Unit can retaliate");
                 DuelManager.instance.onCardBeginAction?.Invoke(this);
-                StartCoroutine(TurnToFaceTarget(_attackTarget.transform.position));
+                _summon.FaceTargetCoroutine(_attackTarget.Node.Transform.position);
                 _animator.SetTrigger("attack");
                 _canRetaliate = false;
             }
@@ -49,7 +53,7 @@ public class Card_Commander : Card_Unit
         onValueChanged?.Invoke();
     }
 
-    public override void OnUnitDeathAnimationComplete()
+    public void OnCommanderDeath()
     {
         if (isPlayerCard) DuelManager.instance.onPlayerDefeat?.Invoke();
         else DuelManager.instance.onPlayerVictory?.Invoke();

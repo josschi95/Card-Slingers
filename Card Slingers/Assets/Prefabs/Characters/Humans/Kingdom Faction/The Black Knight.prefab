@@ -1380,6 +1380,7 @@ GameObject:
   - component: {fileID: 4988520983457884}
   - component: {fileID: 95977976145306962}
   - component: {fileID: 5107054783409812638}
+  - component: {fileID: -375130169653341377}
   m_Layer: 0
   m_Name: The Black Knight
   m_TagString: Untagged
@@ -1438,6 +1439,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2bbbcf36adcbbf41ac1f692c2b5f223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-375130169653341377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1772587093756804}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95827f25e4d93f244b3440970a9e1309, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _transform: {fileID: 4988520983457884}
 --- !u!1 &1792235981519018
 GameObject:
   m_ObjectHideFlags: 0

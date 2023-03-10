@@ -1693,6 +1693,7 @@ GameObject:
   - component: {fileID: 3117561082101451007}
   - component: {fileID: 3026785591946544493}
   - component: {fileID: 8077858089500189057}
+  - component: {fileID: 6046879130760564884}
   m_Layer: 0
   m_Name: Goblin_Barrel_Bearer
   m_TagString: Untagged
@@ -1751,6 +1752,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2bbbcf36adcbbf41ac1f692c2b5f223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6046879130760564884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3123139219063703833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95827f25e4d93f244b3440970a9e1309, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _transform: {fileID: 3117561082101451007}
 --- !u!1 &3123141594323937555
 GameObject:
   m_ObjectHideFlags: 0

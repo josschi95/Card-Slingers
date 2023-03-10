@@ -37,7 +37,7 @@ public class GridNode : MonoBehaviour, IInteractable
         {
             if (_occupant != null)
             {
-                if (value != null) Debug.LogError("Node " + gridX + "," + gridZ + "is already occupied by " + _occupant.name);
+                if (value != null) Debug.LogError("Node " + gridX + "," + gridZ + "is already occupied by " + _occupant.CardInfo.name);
                 _occupant.onValueChanged -= UpdateOccupantPower;
             }
 

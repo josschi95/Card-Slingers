@@ -13,14 +13,13 @@ MonoBehaviour:
   m_Name: Goblin Fodder
   m_EditorClassIdentifier: 
   name: Goblin Fodder
-  cardPrefab: {fileID: 5835411494563231940, guid: 325c52135d74aa64bab77db000ae8436, type: 3}
   cost: 1
   icon: {fileID: 21300000, guid: ec1a15d39f73d7c47b52d046cd66fb16, type: 3}
   type: 0
   faction: 2
   description: 
   flavorText: 
-  _permanentPrefab: {fileID: 1387492477484550, guid: 7ee713c854e6be5469a1372d66b7bc40, type: 3}
+  _summonPrefab: {fileID: -7708747493006033911, guid: 7ee713c854e6be5469a1372d66b7bc40, type: 3}
   _maxHealth: 5
   _attack: 3
   _range: 1

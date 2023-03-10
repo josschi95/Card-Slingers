@@ -13,14 +13,13 @@ MonoBehaviour:
   m_Name: The Rouge Rogue
   m_EditorClassIdentifier: 
   name: The Rouge Rogue
-  cardPrefab: {fileID: 1569306437134555641, guid: 9de5d73ca39d92b4d81691ac7edc7822, type: 3}
   cost: 0
   icon: {fileID: 21300000, guid: 8dbd05199e3ff3840ad70786c90bcc3e, type: 3}
   type: 6
   faction: 1
   description: 
   flavorText: 
-  _permanentPrefab: {fileID: 1209543301476556, guid: 953667ada6702494d8d9c1a11b7c9142, type: 3}
+  _summonPrefab: {fileID: -3688377863650930702, guid: 953667ada6702494d8d9c1a11b7c9142, type: 3}
   _maxHealth: 0
   _attack: 0
   _range: 0

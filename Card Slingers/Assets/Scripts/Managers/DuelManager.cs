@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class DuelManager : MonoBehaviour
-{   
-    [SerializeField] private CardHolder _cardHolderPrefab;
+{
+    [SerializeField] private GameObject _nodeMarker;
+    [SerializeField] private CardHolder _cardHolderPrefab; //There will only ever be two of these at max, so just toggle it
     [SerializeField] private Material neutralMat, hostileMat;
 
     #region - Singleton -
@@ -71,6 +72,8 @@ public class DuelManager : MonoBehaviour
     private int _cardsInAction; //Prevents declaring new actions while one is taking place
     private int _cardsInTransition; //prevents phase transition if cards are moving around
     public bool CardsInTransition => _cardsInTransition > 0;
+
+    private int _encounterGoldReward;
     #endregion
 
     #region - Properties -
@@ -89,8 +92,9 @@ public class DuelManager : MonoBehaviour
         arcLine = GetComponent<LineRenderer>();
 
         onMatchStarted += OnMatchStart;
-        onPlayerVictory += OnMatchEnd;
         onPlayerDefeat += OnMatchEnd;
+        onPlayerVictory += OnMatchEnd;
+        onPlayerVictory += OnPlayerVictory;
 
         onNodeSelected += OnNodeSelected;
         onNodeMouseEnter += OnNodeMouseEnter;
@@ -168,6 +172,11 @@ public class DuelManager : MonoBehaviour
 
         commander.OnMatchStart(cardMat);
     }
+
+    public void SetMatchReward(int gold)
+    {
+        _encounterGoldReward = gold;
+    }
     #endregion
 
     #region - Turn Control -
@@ -228,19 +237,26 @@ public class DuelManager : MonoBehaviour
         _validTargetNodes.Clear();
 
         DungeonUIManager.instance.HideCardDisplay();
-        ClearLineArc();
+        //ClearLineArc();
+        _nodeMarker.SetActive(false);
     }
 
     private void OnNodeMouseEnter(GridNode node)
     {
         highlightedNode = node;
-        if (_waitForValidNode && NodeIsValid(node)) DisplayLineArc(_cardToPlay.transform.position, node.transform.position);
+        //if (_waitForValidNode && NodeIsValid(node)) DisplayLineArc(_cardToPlay.transform.position, node.transform.position);
+        if (_waitForValidNode && NodeIsValid(node))
+        {
+            _nodeMarker.SetActive(true);
+            _nodeMarker.transform.position = node.Transform.position;
+        }
     }
 
     private void OnNodeMouseExit(GridNode node)
     {
         if (node == highlightedNode) highlightedNode = null;
-        ClearLineArc();
+        _nodeMarker.gameObject.SetActive(false);
+        //ClearLineArc();
     }
 
     private void OnNodeSelected(GridNode node)
@@ -316,7 +332,8 @@ public class DuelManager : MonoBehaviour
         while (_waitForValidNode) yield return null;
 
         card.OnDeSelectCard();
-        ClearLineArc();
+        //ClearLineArc();
+        _nodeMarker.SetActive(false);
     }
     #endregion
 
@@ -344,12 +361,20 @@ public class DuelManager : MonoBehaviour
 
         while (_waitForTargetNode == true)
         {
-            if (highlightedNode == null) ClearLineArc();
+            //if (highlightedNode == null) ClearLineArc();
+            if (highlightedNode == null) _nodeMarker.SetActive(false);
             else
             {
-                if (walkNodes.Contains(highlightedNode)) DisplayLineArc(unit.Node.transform.position, highlightedNode.transform.position);
-                else if (atkNodes.Contains(highlightedNode)) DisplayLineArc(unit.Node.transform.position, highlightedNode.transform.position, true);
-                else ClearLineArc();
+                //if (walkNodes.Contains(highlightedNode)) DisplayLineArc(unit.Node.transform.position, highlightedNode.transform.position);
+                //else if (atkNodes.Contains(highlightedNode)) DisplayLineArc(unit.Node.transform.position, highlightedNode.transform.position, true);
+                //else ClearLineArc();
+
+                if (walkNodes.Contains(highlightedNode) || atkNodes.Contains(highlightedNode))
+                {
+                    _nodeMarker.transform.position = highlightedNode.Transform.position;
+                    _nodeMarker.SetActive(true);
+                }
+                else _nodeMarker.SetActive(false);
             }
             yield return null;
         }
@@ -367,7 +392,8 @@ public class DuelManager : MonoBehaviour
 
     public void OnMoveActionConfirmed(Card_Unit unit, GridNode nodeToOccupy)
     {
-        unit.MoveToNode(nodeToOccupy);
+        var nodePath = new List<GridNode>(battleField.FindNodePath(unit, nodeToOccupy));
+        StartCoroutine(unit.MoveUnit(nodePath));
         StartCoroutine(ResolveDeclaredAction(unit, ActionType.Move, nodeToOccupy));
     }
 
@@ -392,7 +418,7 @@ public class DuelManager : MonoBehaviour
                     nodePath.RemoveAt(nodePath.Count - 1); //Remove the node belonging to the attack target
                 }
 
-                unit.MoveAlongNodePath(nodePath); //Set unit route
+                StartCoroutine(unit.MoveUnit(nodePath));
                 StartCoroutine(ResolveDeclaredAction(unit, ActionType.Attack, nodeToAttack));
             }
             else Debug.Log("Cannot find intermediary node. Cannot attack");
@@ -425,9 +451,17 @@ public class DuelManager : MonoBehaviour
     #region - Match End -
     private void OnMatchEnd()
     {
-        ClearLineArc();
+        //ClearLineArc();
+        _nodeMarker.SetActive(false);
         battleField.DestroyGrid();
         monsterManager.ClearEncounter(); //Clears all cards and wipes board
+    }
+
+    private void OnPlayerVictory()
+    {
+        DungeonUIManager.instance.UpdateGoldDisplay(_encounterGoldReward);
+        GameManager.OnGainTempGold(_encounterGoldReward);
+        _encounterGoldReward = 0;
     }
 
     //Move player to center of the battlefield and allow them to select their next destination

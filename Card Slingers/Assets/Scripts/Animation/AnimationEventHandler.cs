@@ -7,18 +7,29 @@ using UnityEngine;
 /// </summary>
 public class AnimationEventHandler : MonoBehaviour
 {
-    private Card_Unit unit;
-
-    private void Start()
+    private Card_Unit _unit;
+    public Card_Unit Unit
     {
-        unit = GetComponentInParent<Card_Unit>();
+        get => _unit;
+        set
+        {
+            _unit = value;
+        }
     }
 
-    public void OnAttackAnimationTrigger() => unit.OnAttackAnimationTrigger();
+    public void OnAttackAnimationTrigger() => _unit.OnAttackAnimationTrigger();
    
-    public void OnAbilityAnimationTrigger() => unit.onAbilityAnimation?.Invoke();
+    public void OnAbilityAnimationTrigger() => _unit.onAbilityAnimation?.Invoke();
 
-    public void OnDeathAnimationCompleted() => unit.OnUnitDeathAnimationComplete();
+    public void OnDeathAnimationCompleted()
+    {
+        if (_unit is Card_Commander comm) comm.OnCommanderDeath();
+        else StartCoroutine(_unit.OnRemoveUnit());
+    }
 
-    public void OnUnsummon() => GameManager.instance.GetUnsummonParticles(transform.position);
+    public void OnUnsummon()
+    {
+        GameManager.instance.GetUnsummonParticles(transform.position);
+        StartCoroutine(_unit.OnRemoveUnit(false));
+    }
 }

@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
         instance = this;
     }
 
+    [SerializeField] private Transform _transform;
     [SerializeField] private CommanderSO playerCommander;
     [SerializeField] private float _inputSensitivity = 7.5f;
     [SerializeField] private float _rotationSpeed = 10f;
@@ -72,8 +73,8 @@ public class PlayerController : MonoBehaviour
     {
         var player = GetComponent<PlayerCommander>();
         player.OnAssignCommander(playerCommander);
-        player.CommanderCard.OnCommanderSummon();
-        _animator = player.CommanderCard.PermanentObject.GetComponent<Animator>();
+        player.CommanderCard.OnCommanderSummon(_transform);
+        _animator = player.CommanderCard.Summon.GetComponent<Animator>();
 
         //_animator.speed = 2;
     }
@@ -141,21 +142,6 @@ public class PlayerController : MonoBehaviour
         Vector3 direction = (pos - transform.position).normalized;
         Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * _rotationSpeed);
-    }
-    #endregion
-
-    #region - Deck -
-    private void PlaceInPocket(List<Card> cards)
-    {
-        for (int i = 0; i < cards.Count; i++)
-        {
-            cards[i].gameObject.transform.SetParent(_deckPocket, false);
-        }
-    }
-
-    public static void PlaceDeckInPocket(List<Card> cards)
-    {
-        instance.PlaceInPocket(cards);
     }
     #endregion
 }

@@ -20,6 +20,8 @@ public class OpponentCommander : CommanderController
 
     public override void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
     {
+        Debug.LogWarning("Need to revisit logic in this script entirely.");
+
         base.OnMatchStart(holder, startingHandSize, mana);
         playerCommander = duelManager.Player_Commander;
         invadesLanes = new bool[duelManager.Battlefield.Width];
@@ -125,10 +127,6 @@ public class OpponentCommander : CommanderController
             //Find each threat on the board and order them accordingly. Will need to make a lot of changes since lane locking is no longer a thing
             //Find an appropriate response to each threat and summon it, obviously starting with the highest threat first
 
-
-            if (CommanderLaneIsWeak()) combo = GetSummonCombo(CommanderCard.Node.gridX, CardFocus.Defense);
-            if (OnTryValidateSummon(combo)) continue;
-
             if (CanAndNeedToDefendTerritory()) combo = GetSummonCombo(HighestThreatLane(), CardFocus.Offense);
             if (OnTryValidateSummon(combo)) continue;
 
@@ -156,15 +154,6 @@ public class OpponentCommander : CommanderController
         if (combo.card == null || combo.node == null) return false;
         OnCardPlayed(combo.card, combo.node);
         return true;
-    }
-
-    //if true: lane balance of commander is in player's favor
-    private bool CommanderLaneIsWeak()
-    {
-        //the lane balance is greater than the negative value of the commander's power =>
-        //there is at least one player unit in this lane with power greater than any allied unit
-        int commanderLanePower = DuelManager.instance.Battlefield.LaneThreatArray[CommanderCard.Node.gridX];
-        return commanderLanePower > -CommanderCard.ThreatLevel;
     }
 
     /// <summary>
@@ -401,7 +390,7 @@ public class OpponentCommander : CommanderController
         {
             if (_cardsInHand[i] is Card_Unit unit)
             {
-                if (unit.ThreatLevel < cardPower) //returns a negative value. because enemy
+                if (unit.ThreatLevel > cardPower)
                 {
                     card = unit;
                     cardPower = unit.ThreatLevel;

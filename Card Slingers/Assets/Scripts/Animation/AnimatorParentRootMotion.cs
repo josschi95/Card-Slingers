@@ -13,8 +13,8 @@ public class AnimatorParentRootMotion : StateMachineBehaviour
     // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        animator.transform.parent.rotation = animator.rootRotation;
-        animator.transform.parent.position += animator.deltaPosition;
+        animator.transform.rotation = animator.rootRotation;
+        animator.transform.position += animator.deltaPosition;
     }
 
     // OnStateExit is called when a transition ends and the state machine finishes evaluating this state

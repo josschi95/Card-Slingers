@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class CommanderController : MonoBehaviour
 {
+    public delegate void OnCardsChangeCallback();
+    public OnCardsChangeCallback onCardsInHandChange;
+
     public delegate void OnStatValueChangedCallback();
     public OnStatValueChangedCallback onHealthChange;
     public OnStatValueChangedCallback onManaChange;
@@ -50,7 +53,7 @@ public class CommanderController : MonoBehaviour
     public virtual void OnAssignCommander(CommanderSO commanderInfo)
     {
         _commanderInfo = commanderInfo;
-        _commanderCard.AssignCardInfo(commanderInfo, this is PlayerCommander);
+        _commanderCard = new Card_Commander(commanderInfo, this is PlayerCommander);
     }
 
     public virtual void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
@@ -77,11 +80,33 @@ public class CommanderController : MonoBehaviour
     protected virtual void GenerateNewDeck()
     {
         if (_commanderInfo == null) throw new UnityException("CommanderSO is null. Cannot Generate Deck.");
+        bool isPlayer = this is PlayerCommander;
 
         foreach (CardSO cardSO in _commanderInfo.Deck.cards)
         {
-            Card newCard = Instantiate(cardSO.cardPrefab);
-            newCard.AssignCardInfo(cardSO, this is PlayerCommander);
+            Card newCard = null;
+            switch (cardSO.type)
+            {
+                case CardType.Unit:
+                    newCard = new Card_Unit(cardSO as UnitSO, isPlayer);
+                    break;
+                case CardType.Structure:
+                    newCard = new Card_Structure(cardSO as StructureSO, isPlayer);
+                    break;
+                case CardType.Trap:
+                    newCard = new Card_Trap(cardSO as TrapSO, isPlayer);
+                    break;
+                case CardType.Equipment:
+                    //newCard = new Card_Equipment();
+                    break;
+                case CardType.Terrain:
+                    //newCard = new Card_Terrain();
+                    break;
+                case CardType.Spell:
+                    newCard = new Card_Spell(cardSO as SpellSO, isPlayer);
+                    break;
+            }
+            //newCard.AssignCardInfo
             PlaceCardInDeck(newCard);
         }
     }
@@ -162,28 +187,25 @@ public class CommanderController : MonoBehaviour
     {
         _cardsInHand.Add(card);
         card.SetCardLocation(CardLocation.InHand);
-        card.transform.SetParent(_cardHolder.Hand);
+        onCardsInHandChange?.Invoke();
     }
 
     protected void PlaceCardInDeck(Card card)
     {
         _cardsInDeck.Add(card);
         card.SetCardLocation(CardLocation.InDeck);
-        card.transform.SetParent(_cardHolder.Deck);
     }
 
     private void PlaceCardInDiscard(Card card)
     {
         _cardsInDiscardPile.Add(card);
         card.SetCardLocation(CardLocation.InDiscard);
-        card.transform.SetParent(_cardHolder.Discard);
     }
 
     private void PlaceCardInExile(Card card)
     {
         _cardsInExile.Add(card);
         card.SetCardLocation(CardLocation.InExile);
-        card.transform.SetParent(_cardHolder.Exile);
     }
 
     private void DiscardCardFromHand(Card cardToDiscard)
@@ -221,6 +243,7 @@ public class CommanderController : MonoBehaviour
     {
         if (card is Card_Spell spell) OnInstantPlayed(spell, node);
         else if (card is Card_Permanent perm) OnPermanentPlayed(perm, node);
+        onCardsInHandChange?.Invoke();
     }
 
     private void OnInstantPlayed(Card_Spell spell, GridNode node)
@@ -269,27 +292,16 @@ public class CommanderController : MonoBehaviour
         card.onPermanentDestroyed += OnPermanentDestroyed;
         card.onRemovedFromField += OnPermanentRemoved;
 
-        if (card is Card_Trap trap)
-        {
-            OnTrapPlayed(trap, node);
-            return;
-        }
-
         //Display path line for visual cues
-        duelManager.DisplayLineArc(card.transform.position, node.transform.position);
-
+        //duelManager.DisplayLineArc(card.transform.position, node.transform.position);
+        var info = card.CardInfo as PermanentSO;
+        var summon = Instantiate(info.Prefab, node.Transform.position, node.Transform.rotation);
+        card.OnSummoned(summon, node);
         //Move the card to its new position
-        StartCoroutine(MoveCardToField(card, node));
+        //StartCoroutine(MoveCardToField(card, node));
     }
 
-    private void OnTrapPlayed(Card_Trap trap, GridNode node)
-    {
-        trap.transform.SetParent(_cardHolder.Traps);
-
-        trap.OnSummoned(node);
-    }
-
-    private IEnumerator MoveCardToField(Card_Permanent card, GridNode node)
+    /*private IEnumerator MoveCardToField(Card_Permanent card, GridNode node)
     {
         //float dist = Vector3.Distance(card.transform.position, endPos);
         float timeToMove = Vector3.Distance(card.transform.position, node.transform.position) / 25f;
@@ -322,8 +334,8 @@ public class CommanderController : MonoBehaviour
         card.OnSummoned(node);
 
         //Remove trail display
-        duelManager.ClearLineArc();
-    }
+        //duelManager.ClearLineArc();
+    }*/
     #endregion
 
     #region - Mana -

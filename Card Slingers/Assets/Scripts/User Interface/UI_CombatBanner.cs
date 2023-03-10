@@ -29,7 +29,7 @@ public class UI_CombatBanner : MonoBehaviour
 
     [Space]
 
-    [SerializeField] private Button endPhaseButton;
+    [SerializeField] private Button endTurnButton;
     [SerializeField] private Button cancelActionButton;
 
     private Coroutine lerpBannerCoroutine;
@@ -41,6 +41,8 @@ public class UI_CombatBanner : MonoBehaviour
 
     private void Start()
     {
+        endTurnButton.gameObject.SetActive(false);
+
         UI = DungeonUIManager.instance;
         player = PlayerController.instance.GetComponent<PlayerCommander>();
         duelManager = DuelManager.instance;
@@ -50,7 +52,7 @@ public class UI_CombatBanner : MonoBehaviour
         duelManager.onPlayerVictory += OnPlayerVictory;
         duelManager.onPlayerDefeat += OnPlayerDefeat;
 
-        endPhaseButton.onClick.AddListener(OnPlayerEndTurn);
+        endTurnButton.onClick.AddListener(OnPlayerEndTurn);
         cancelActionButton.onClick.AddListener(delegate { duelManager.OnClearAction(); });
 
         bannerParent.anchoredPosition = bannerHiddenPos;
@@ -58,6 +60,8 @@ public class UI_CombatBanner : MonoBehaviour
 
     private void OnMatchStart(CombatEncounter encounter)
     {
+        endTurnButton.gameObject.SetActive(true);
+
         playerTurn = true;
         //Subscribe to events
         player.onHealthChange += OnCommanderValuesChanged;
@@ -105,6 +109,7 @@ public class UI_CombatBanner : MonoBehaviour
     private void OnNewTurn(bool isPlayerTurn)
     {
         playerTurn = isPlayerTurn;
+        endTurnButton.gameObject.SetActive(isPlayerTurn);
 
         if (playerTurn) phaseText.text = "Player Turn";
         else phaseText.text = "Enemy Turn";
@@ -126,6 +131,8 @@ public class UI_CombatBanner : MonoBehaviour
 
     private void OnMatchEnd()
     {
+        endTurnButton.gameObject.SetActive(false);
+
         //Unsubscribe to events
         player.onHealthChange -= OnCommanderValuesChanged;
         player.onManaChange -= OnCommanderValuesChanged;

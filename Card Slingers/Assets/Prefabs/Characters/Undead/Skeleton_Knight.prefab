@@ -751,6 +751,7 @@ GameObject:
   - component: {fileID: 4450662538183050}
   - component: {fileID: 95638647239848926}
   - component: {fileID: -4671276546431847047}
+  - component: {fileID: -4800554437666261620}
   m_Layer: 0
   m_Name: Skeleton_Knight
   m_TagString: Untagged
@@ -807,6 +808,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2bbbcf36adcbbf41ac1f692c2b5f223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-4800554437666261620
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1438608989707952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95827f25e4d93f244b3440970a9e1309, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _transform: {fileID: 4450662538183050}
 --- !u!1 &1453651309194626
 GameObject:
   m_ObjectHideFlags: 0

@@ -1740,6 +1740,7 @@ GameObject:
   - component: {fileID: 4846237722299100}
   - component: {fileID: 95689213451807572}
   - component: {fileID: -3577170595316263586}
+  - component: {fileID: -208824233819156767}
   m_Layer: 0
   m_Name: Human_Witch
   m_TagString: Untagged
@@ -1796,6 +1797,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2bbbcf36adcbbf41ac1f692c2b5f223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-208824233819156767
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1839772047184272}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95827f25e4d93f244b3440970a9e1309, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _transform: {fileID: 4846237722299100}
 --- !u!1 &1843635529114130
 GameObject:
   m_ObjectHideFlags: 0

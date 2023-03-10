@@ -48,8 +48,6 @@ public class PlayerCommander : CommanderController
         _cardsInDiscardPile.Clear();
         _cardsInExile.Clear();
         _permanentsOnField.Clear();
-
-        PlayerController.PlaceDeckInPocket(_existingDeck);
     }
 
     protected override void OnPlayerVictory()

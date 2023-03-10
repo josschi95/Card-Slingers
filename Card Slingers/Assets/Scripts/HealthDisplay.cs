@@ -12,7 +12,7 @@ public class HealthDisplay : MonoBehaviour
 
     private void Start()
     {
-        permanent = GetComponentInParent<Card_Unit>();
+        permanent = GetComponentInParent<Summon>().Card as Card_Unit;
         nameText.text = permanent.CardInfo.name;
 
         if (permanent.isPlayerCard) nameText.color = Color.green;

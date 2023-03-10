@@ -8,7 +8,7 @@ public class Card_Unit : Card_Permanent
     public delegate void OnAnimatorEventCallback();
     public OnAnimatorEventCallback onAbilityAnimation;
     protected Animator _animator;
-
+    private UnitSO _unitInfo;
     [Space]
 
     [SerializeField] protected int _currentHealth;
@@ -22,17 +22,16 @@ public class Card_Unit : Card_Permanent
 
     protected Card_Permanent _attackTarget;
 
+    protected bool _hasTakenAction;
     protected bool _canRetaliate;
     private bool _isDestroyed;
 
-    protected int _movesLeft; //
-    public int MovesLeft => _movesLeft;
-    protected bool _hasTakenAction;
+    protected int _movesLeft;
 
     #region - Properties -
     public int MaxHealth => NetMaxHealth();
     public int CurrentHealth => _currentHealth;
-    public int Damage => NetDamage();
+    public int Attack => NetDamage();
     public int Range => NetRange();
     public int Defense => NetDefense();
     public int Speed => NetSpeed();
@@ -43,10 +42,18 @@ public class Card_Unit : Card_Permanent
     public bool CanMove => UnitCanMove();
     public bool CanAttack => UnitCanAttack();
     public bool CanUseAbility => UnitCanUseAbility();
+    public int MovesLeft => _movesLeft;
     #endregion
 
+    public Card_Unit(UnitSO unit, bool isPlayerCard) : base(unit, isPlayerCard)
+    {
+        _cardInfo = unit;
+        _unitInfo = unit;
+        this.isPlayerCard = isPlayerCard;
+    }
+
     #region - Override Methods -
-    public override void OnSummoned(GridNode node)
+    public override void OnSummoned(Summon summon, GridNode node)
     {
         //set max health before occupying node
         _isDestroyed = false;
@@ -55,25 +62,25 @@ public class Card_Unit : Card_Permanent
 
         _currentHealth = NetMaxHealth();
 
-        base.OnSummoned(node);
+        base.OnSummoned(summon, node);
         
         //Summon prefab before getting anim
-        _animator = PermanentObject.GetComponent<Animator>();
-
+        _summon.Card = this;
+        _animator = Summon.GetComponent<Animator>();
+        _summon.GetComponent<AnimationEventHandler>().Unit = this;
         _equipment = new List<Card_Permanent>();
     }
 
     protected override int GetThreatLevel()
     {
-        if (isPlayerCard) return _currentHealth + Damage + Defense;
-        else return -(_currentHealth + Damage + Defense);
+        return _currentHealth + Attack + Defense;
     }
 
     protected override void OnCommanderVictory()
     {
         if (_location != CardLocation.OnField) return;
         _animator.SetTrigger("victory");
-        StartCoroutine(OnRemoveUnit(false));
+        //StartCoroutine(OnRemoveUnit(false));
     }
 
     protected override void OnCommanderDefeat()
@@ -86,14 +93,12 @@ public class Card_Unit : Card_Permanent
     #region - Unit Stats -
     private void ResetAllStats()
     {
-        var unit = CardInfo as UnitSO;
-        _currentHealth = unit.MaxHealth;
+        _currentHealth = _unitInfo.MaxHealth;
 
         for (int i = 0; i < _statModifiers.Length; i++)
         {
             _statModifiers[i] = 0;
         }
-
     }
 
     public void AddModifier(UnitStat stat, int modifier = 1)
@@ -103,8 +108,7 @@ public class Card_Unit : Card_Permanent
 
     protected int NetMaxHealth()
     {
-        var unit = CardInfo as UnitSO;
-        int value = unit.MaxHealth;
+        int value = _unitInfo.MaxHealth;
         value += _statModifiers[(int)UnitStat.Health];
         if (value < 0) value = 0;
         return value;
@@ -112,8 +116,7 @@ public class Card_Unit : Card_Permanent
 
     private int NetDamage()
     {
-        var unit = CardInfo as UnitSO;
-        int value = unit.Attack;
+        int value = _unitInfo.Attack;
         value += _statModifiers[(int)UnitStat.Attack];
         if (value < 0) value = 0;
         return value;
@@ -123,8 +126,7 @@ public class Card_Unit : Card_Permanent
     {
         if (!CanAttack) return 0;
 
-        var unit = CardInfo as UnitSO;
-        int value = unit.Range;
+        int value = _unitInfo.Range;
         value += _statModifiers[(int)UnitStat.Range];
         if (value < 0) value = 0;
         return value;
@@ -132,8 +134,7 @@ public class Card_Unit : Card_Permanent
 
     private int NetDefense()
     {
-        var unit = CardInfo as UnitSO;
-        int value = unit.Defense;
+        int value = _unitInfo.Defense;
         value += _statModifiers[(int)UnitStat.Defense];
         if (value < 0) value = 0;
         return value;
@@ -141,8 +142,7 @@ public class Card_Unit : Card_Permanent
 
     private int NetSpeed()
     {
-        var unit = CardInfo as UnitSO;
-        int value = unit.Speed;
+        int value = _unitInfo.Speed;
         value += _statModifiers[(int)UnitStat.Speed];
         if (value < 0) value = 0;
         return value;
@@ -203,19 +203,8 @@ public class Card_Unit : Card_Permanent
 
     #endregion
 
-    #region - Movement -
-    public void MoveToNode(GridNode newNode)
-    {
-        var nodePath = new List<GridNode>(DuelManager.instance.Battlefield.FindNodePath(this, newNode));
-        StartCoroutine(MoveUnit(nodePath));
-    }
-
-    public void MoveAlongNodePath(List<GridNode> nodePath)
-    {
-        StartCoroutine(MoveUnit(nodePath));
-    }
-    
-    private IEnumerator MoveUnit(List<GridNode> nodePath)
+    #region - Movement -   
+    public IEnumerator MoveUnit(List<GridNode> nodePath)
     {
         _isMoving = true;
         DuelManager.instance.onCardBeginAction?.Invoke(this);
@@ -235,16 +224,16 @@ public class Card_Unit : Card_Permanent
                 yield break;
             }
 
-            while (Vector3.Distance(transform.position, nodePath[0].transform.position) > 0.1f)
+            while (Vector3.Distance(_summon.Transform.position, nodePath[0].transform.position) > 0.1f)
             {
                 _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
-                FaceTarget(nodePath[0].transform.position);
+                _summon.FaceTarget(nodePath[0].Transform.position);
                 yield return null;
             }
 
             _movesLeft--;
 
-            transform.position = nodePath[0].transform.position;
+            _summon.Transform.position = nodePath[0].transform.position;
             nodePath[0].onNodeEntered?.Invoke(this);
             currentNode = nodePath[0];
             nodePath.RemoveAt(0);
@@ -255,24 +244,6 @@ public class Card_Unit : Card_Permanent
         //occupies the new node
         OnOccupyNode(endNode);
         OnStopMovement();
-    }
-
-    protected IEnumerator TurnToFaceTarget(Vector3 pos)
-    {
-        float t = 0, timeToMove = 0.5f;
-        while (t < timeToMove)
-        {
-            FaceTarget(pos);
-            t += Time.deltaTime;
-            yield return null;
-        }
-    }
-
-    private void FaceTarget(Vector3 pos) //update this to accept a Transform transform?
-    {
-        Vector3 direction = (pos - transform.position).normalized;
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 25f);
     }
 
     private void OnStopMovement()
@@ -316,7 +287,7 @@ public class Card_Unit : Card_Permanent
         _isAttacking = true;
         _canRetaliate = false;
         DuelManager.instance.onCardBeginAction?.Invoke(this);
-        StartCoroutine(TurnToFaceTarget(node.transform.position));
+        _summon.FaceTargetCoroutine(node.Transform.position);
         node.Occupant.OnTargetEngaged(this);
         
         _attackTarget = node.Occupant;
@@ -331,7 +302,7 @@ public class Card_Unit : Card_Permanent
             Debug.LogWarning("Attack target is null for attacker at " + Node.gridX + "," + Node.gridZ);
             return;
         }
-        _attackTarget.OnTakeDamage(Damage);
+        _attackTarget.OnTakeDamage(Attack);
         _isAttacking = false;
         _attackTarget = null;
         DuelManager.instance.onCardEndAction?.Invoke(this);
@@ -342,7 +313,7 @@ public class Card_Unit : Card_Permanent
         damage = Mathf.Clamp(damage - Defense, 0, int.MaxValue);
         _currentHealth -= damage;
 
-        GameManager.instance.GetBloodParticles(transform.position + Vector3.up);
+        _summon.OnDamage();
 
         if (_currentHealth <= 0) OnPermanentDestroyed();
         else
@@ -353,7 +324,7 @@ public class Card_Unit : Card_Permanent
                 if (UnitCanRetaliate())
                 {
                     DuelManager.instance.onCardBeginAction?.Invoke(this);
-                    StartCoroutine(TurnToFaceTarget(_attackTarget.transform.position));
+                    _summon.FaceTargetCoroutine(_attackTarget.Node.Transform.position);
                     _animator.SetTrigger("attack");
                     _canRetaliate = false;
                 }
@@ -395,24 +366,19 @@ public class Card_Unit : Card_Permanent
         DuelManager.instance.onCardMovementStarted?.Invoke(this);
     }
 
-    public virtual void OnUnitDeathAnimationComplete()
-    {
-        StartCoroutine(OnRemoveUnit());
-    }
-
-    protected virtual IEnumerator OnRemoveUnit(bool sinkUnit = true)
+    public virtual IEnumerator OnRemoveUnit(bool sinkUnit = true)
     {
         float timeElapsed = 0, timeToMove = 1.5f;
         if (!sinkUnit) timeToMove = 2f;
         while (timeElapsed < timeToMove)
         {
             timeElapsed += Time.deltaTime; //slowly sink the unit beneath the playing field before destroying it
-            if (sinkUnit) PermanentObject.transform.localPosition = Vector3.Lerp(PermanentObject.transform.localPosition, Vector3.down, timeElapsed / timeToMove);
+            if (sinkUnit) Summon.transform.localPosition = Vector3.Lerp(Summon.transform.localPosition, Vector3.down, timeElapsed / timeToMove);
             yield return null;
         }
 
         OnRemoveFromField();
-        Destroy(PermanentObject); //Destroy unit
+        Object.Destroy(Summon); //Destroy unit
 
         //Invoke an event for the commander to listen to
         onRemovedFromField?.Invoke(this);

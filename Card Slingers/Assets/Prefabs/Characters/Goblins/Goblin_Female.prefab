@@ -1095,6 +1095,7 @@ GameObject:
   - component: {fileID: 4571890692663102}
   - component: {fileID: 95285293887918914}
   - component: {fileID: -4658910271529824408}
+  - component: {fileID: -2947429473896676105}
   m_Layer: 0
   m_Name: Goblin_Female
   m_TagString: Untagged
@@ -1153,6 +1154,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2bbbcf36adcbbf41ac1f692c2b5f223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-2947429473896676105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1435744202117670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95827f25e4d93f244b3440970a9e1309, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _transform: {fileID: 4571890692663102}
 --- !u!1 &1439348661205246
 GameObject:
   m_ObjectHideFlags: 0

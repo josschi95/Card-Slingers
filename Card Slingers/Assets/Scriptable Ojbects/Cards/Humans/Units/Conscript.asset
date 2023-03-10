@@ -13,14 +13,13 @@ MonoBehaviour:
   m_Name: Conscript
   m_EditorClassIdentifier: 
   name: Conscript
-  cardPrefab: {fileID: 5835411494563231940, guid: 325c52135d74aa64bab77db000ae8436, type: 3}
   cost: 1
   icon: {fileID: 21300000, guid: 58bac37f0d7391f4ca6d341174276884, type: 3}
   type: 0
   faction: 1
   description: 
   flavorText: Born and raised on a farm, but now destined to die in a dungeon.
-  _permanentPrefab: {fileID: 1354146139030546, guid: 5baf554084cda7f43a0a3516b5c1d5b3, type: 3}
+  _summonPrefab: {fileID: -5659478014458924926, guid: 5baf554084cda7f43a0a3516b5c1d5b3, type: 3}
   _maxHealth: 2
   _attack: 1
   _range: 1

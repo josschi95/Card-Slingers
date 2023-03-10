@@ -13,14 +13,13 @@ MonoBehaviour:
   m_Name: Soldier
   m_EditorClassIdentifier: 
   name: Soldier
-  cardPrefab: {fileID: 5835411494563231940, guid: 325c52135d74aa64bab77db000ae8436, type: 3}
   cost: 2
   icon: {fileID: 21300000, guid: 58bac37f0d7391f4ca6d341174276884, type: 3}
   type: 0
   faction: 1
   description: 'HP:5 ATK:1 DEF: 0 SPD: 2'
   flavorText: 'A lowly peasant conscript. '
-  _permanentPrefab: {fileID: 1140322766594170, guid: 084d983feb3cc754a8dc6647297cd52f, type: 3}
+  _summonPrefab: {fileID: -4610213045977425964, guid: 084d983feb3cc754a8dc6647297cd52f, type: 3}
   _maxHealth: 5
   _attack: 3
   _range: 1

@@ -1364,6 +1364,7 @@ GameObject:
   - component: {fileID: 4445567255626938}
   - component: {fileID: 95234824906876322}
   - component: {fileID: 89567494349018371}
+  - component: {fileID: -4092341359112452719}
   m_Layer: 0
   m_Name: Hero_Knight_Female
   m_TagString: Untagged
@@ -1420,6 +1421,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2bbbcf36adcbbf41ac1f692c2b5f223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-4092341359112452719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1753741187899190}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95827f25e4d93f244b3440970a9e1309, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _transform: {fileID: 4445567255626938}
 --- !u!1 &1755220326971792
 GameObject:
   m_ObjectHideFlags: 0

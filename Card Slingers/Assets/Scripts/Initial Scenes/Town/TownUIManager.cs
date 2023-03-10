@@ -43,13 +43,15 @@ public class TownUIManager : MonoBehaviour
         _levelSelectButton.onClick.AddListener(ContinueToLevelSelectScene);
         _questViewButton.onClick.AddListener(DisplayQuests);
         _settingsButton.onClick.AddListener(DisplaySettings);
+
+        GameManager.instance.onTotalGoldChange += UpdatePlayerGold;
+        UpdatePlayerGold();
     }
 
     private void ToggleTownPanels(Location location)
     {
         _locationText.text = location.ToString();
-        _playerGoldText.text = GameManager.instance.PlayerGold.ToString();
-
+        
         switch (location)
         {
             case Location.Square:
@@ -75,6 +77,11 @@ public class TownUIManager : MonoBehaviour
                 _generalLocationPanel.SetActive(true);
                 break;
         }
+    }
+
+    private void UpdatePlayerGold()
+    {
+        _playerGoldText.text = GameManager.instance.PlayerGold.ToString();
     }
 
     private void ContinueToLevelSelectScene()

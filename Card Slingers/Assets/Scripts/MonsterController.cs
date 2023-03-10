@@ -32,20 +32,20 @@ public class MonsterController : MonoBehaviour
 
             if (permanent is Card_Structure structure)
             {
-                if (structure.Defense >= unit.Damage) continue; //No point in attacking something they can't damage
+                if (structure.Defense >= unit.Attack) continue; //No point in attacking something they can't damage
                 //Can later factor in offensive ability damage and if (unit.CanUseAbility)
 
                 value -= 10; //prioritize units over structures
-                value += unit.Damage - (structure.CurrentHealth + structure.Defense); //value targets with lower health and defense
-                if (structure.CurrentHealth + structure.Defense <= unit.Damage) value += 5; //can destroy it
+                value += unit.Attack - (structure.CurrentHealth + structure.Defense); //value targets with lower health and defense
+                if (structure.CurrentHealth + structure.Defense <= unit.Attack) value += 5; //can destroy it
             }
             else if (permanent is Card_Unit summon)
             {
-                if (summon.Defense >= unit.Damage) continue; //Same as above
+                if (summon.Defense >= unit.Attack) continue; //Same as above
                 //Can later factor in offensive ability damage and if (unit.CanUseAbility)
 
-                value += unit.Damage - (summon.CurrentHealth + summon.Defense); //value targets with lower health and defense
-                if (summon.CurrentHealth + summon.Defense <= unit.Damage) value += 10; //can destroy it
+                value += unit.Attack - (summon.CurrentHealth + summon.Defense); //value targets with lower health and defense
+                if (summon.CurrentHealth + summon.Defense <= unit.Attack) value += 10; //can destroy it
                 if (summon.CanUseAbility) value += 5; //Change this later to if it has an ability at all
             }
 
