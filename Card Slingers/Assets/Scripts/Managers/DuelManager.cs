@@ -111,6 +111,25 @@ public class DuelManager : MonoBehaviour
     }
 
     #region - Match Start -
+    private void OnMatchStart(MonsterGroupManager monsters)
+    {
+        var playerRot = playerController.transform.localEulerAngles;
+        playerRot.y = SnapFloat(playerRot.y);
+        _playerRotation = Quaternion.Euler(playerRot);
+        playerCommander.DefaultRotation = Quaternion.Euler(playerRot);
+
+        var enemyRot = playerRot;
+        enemyRot.y += 180;
+        _enemyRotation = Quaternion.Euler(enemyRot);
+
+        _turnCount = 1;
+        _isPlayerTurn = true;
+
+        monsterManager.OnMatchStart(monsters);
+
+        onNewTurn?.Invoke(_isPlayerTurn);
+    }
+
     private void OnMatchStart(CombatEncounter encounter)
     {
         var playerRot = playerController.transform.localEulerAngles;

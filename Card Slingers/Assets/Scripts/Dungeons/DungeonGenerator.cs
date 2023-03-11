@@ -67,11 +67,11 @@ public class DungeonGenerator : MonoBehaviour
     {
         yield return StartCoroutine(SpawnRooms(rooms));
 
-        yield return StartCoroutine(combatGenerator.PlaceCombats(_preset.Encounters, dungeonRooms.ToArray(), combats)); 
+        FindDungeonBounds();
 
         obstacleGenerator.GenerateObstacles(_preset.Obstacles, dungeonRooms);
 
-        FindDungeonBounds();
+        yield return StartCoroutine(combatGenerator.PlaceCombats(_preset.Encounters, dungeonRooms.ToArray(), combats)); 
 
         OnDungeonComplete();
     }

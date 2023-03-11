@@ -15,12 +15,10 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private Transform _transform;
     [SerializeField] private CommanderSO _commanderSO;
-    [SerializeField] private float _inputSensitivity = 7.5f;
     [SerializeField] private float _rotationSpeed = 10f;
     [SerializeField] private Transform _deckPocket;
     private PlayerCommander _playerCommander;
-    private PathNode _currentWaypoint;
-    private GridNode _currentNode;
+    //private PathNode _currentWaypoint;
 
     public DungeonRoom currentRoom { get; private set; }
     public Transform DeckPocket => _deckPocket;
@@ -45,6 +43,13 @@ public class PlayerController : MonoBehaviour
         CreateCommander();
     }
 
+    private void OnDestroy()
+    {
+        DuelManager.instance.onMatchStarted -= delegate { _inCombat = true; };
+        DuelManager.instance.onPlayerDefeat -= delegate { _inCombat = false; };
+        DuelManager.instance.onPlayerVictory -= delegate { _inCombat = false; };
+    }
+    
     private void Update()
     {
         moveInput = InputHandler.GetMoveInput();
@@ -53,10 +58,20 @@ public class PlayerController : MonoBehaviour
 
     private void LateUpdate()
     {
+        HandleMovement();
         RotatePlayer();
     }
 
+    private void HandleMovement()
+    {
+        if (_inCombat || _isMoving) return;
 
+        if (moveInput.y == 1)
+        {
+            var node = BattlefieldManager.instance.GetNode(_transform.position + _transform.forward * 5);
+            if (node != null) StartCoroutine(MovePlayer(node));
+        }
+    }
 
     private void RotatePlayer()
     {
@@ -76,19 +91,6 @@ public class PlayerController : MonoBehaviour
             //_animator.SetFloat("horizontal", -1);
 
         }
-
-        if (moveInput.y == 1)
-        {
-            var node = BattlefieldManager.instance.GetNode(_transform.position + _transform.forward * 5);
-            if (node != null) StartCoroutine(MovePlayer(node));
-        }
-    }
-
-    private void OnDestroy()
-    {
-        DuelManager.instance.onMatchStarted -= delegate { _inCombat = true; };
-        DuelManager.instance.onPlayerDefeat -= delegate { _inCombat = false; };
-        DuelManager.instance.onPlayerVictory -= delegate { _inCombat = false; };
     }
 
     private void CreateCommander()
@@ -101,49 +103,67 @@ public class PlayerController : MonoBehaviour
 
         var node = BattlefieldManager.instance.GetNode(_transform.position);
         _playerCommander.CommanderCard.OnOccupyNode(node);
-        node.SetLockedDisplay(GridNode.MaterialType.Yellow);
     }
 
-    #region - Movement -
-    public static void SetWaypoint(PathNode point)
+    #region - Manual Movement -
+    private IEnumerator MovePlayer(GridNode node)
     {
-        instance.SetPlayerWaypoint(point);
+        if (node.Occupant != null) yield break;
+
+        _isMoving = true;
+        _playerCommander.CommanderCard.OnAbandonNode();
+        while (Vector3.Distance(_transform.position, node.Transform.position) > 0.15f)
+        {
+            _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
+            FaceTarget(node.Transform.position);
+            yield return null;
+        }
+        _transform.position = node.Transform.position;
+        _playerCommander.CommanderCard.OnOccupyNode(node);
+
+        if (moveInput.y == 1)
+        {
+            var nextNode = BattlefieldManager.instance.GetNode(_transform.position + _transform.forward * 5);
+            if (nextNode != null) yield return StartCoroutine(MovePlayer(nextNode));
+        }
+
+        _animator.SetFloat("speed", 0);
+        _isMoving = false;
     }
 
+    private IEnumerator RotatePlayer(Vector3 pos)
+    {
+        _isMoving = true;
+
+        float t = 0, timeToMove = 1f;
+        while (t < timeToMove)
+        {
+            FaceTarget(pos);
+            t += Time.deltaTime;
+            yield return null;
+        }
+        //_animator.SetFloat("horizontal", 0);
+        _isMoving = false;
+    }
+
+    private void FaceTarget(Vector3 pos) //update this to accept a Transform transform?
+    {
+        Vector3 direction = (pos - transform.position).normalized;
+        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * _rotationSpeed);
+    }
+    #endregion
+
+    #region - Auto Movement -
     public static void SetDestination(Vector3 destination)
     {
         instance.SetPlayerDestination(destination);
-    }
-
-    private void SetPlayerWaypoint(PathNode point)
-    {
-        if (_isMoving || _inCombat) return;
-        StartCoroutine(MoveToWaypoint(point));
     }
 
     private void SetPlayerDestination(Vector3 destination)
     {
         if (_isMoving || _inCombat) return;
         StartCoroutine(MoveToPosition(destination));
-    }
-
-    private IEnumerator MoveToWaypoint(PathNode point)
-    {
-        _isMoving = true;
-
-        while (Vector3.Distance(transform.position, point.transform.position) > 0.15f)
-        {
-            _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
-            FaceTarget(point.transform.position);
-            yield return null;
-        }
-
-        transform.position = point.transform.position;
-        _isMoving = false; //set to false so SetPlayerWaypoint/SetPlayerDestination can be called
-        var nextPoint = point.OnWaypointReached(_currentWaypoint);
-        _currentWaypoint = point; //Set this after reaching the destination
-        if (nextPoint != null) SetPlayerWaypoint(nextPoint);
-        else _animator.SetFloat("speed", 0);
     }
 
     private IEnumerator MoveToPosition(Vector3 point)
@@ -161,51 +181,35 @@ public class PlayerController : MonoBehaviour
         _animator.SetFloat("speed", 0);
         _isMoving = false;
     }
-
-    private void FaceTarget(Vector3 pos) //update this to accept a Transform transform?
+    
+    /*public static void SetWaypoint(PathNode point)
     {
-        Vector3 direction = (pos - transform.position).normalized;
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * _rotationSpeed);
+        instance.SetPlayerWaypoint(point);
     }
-    #endregion
-
-    #region - New Movement -
-    private IEnumerator RotatePlayer(Vector3 pos)
+    
+    private void SetPlayerWaypoint(PathNode point)
+    {
+        if (_isMoving || _inCombat) return;
+        StartCoroutine(MoveToWaypoint(point));
+    }
+    
+    private IEnumerator MoveToWaypoint(PathNode point)
     {
         _isMoving = true;
 
-        float t = 0, timeToMove = 1f;
-        while (t < timeToMove)
-        {
-            FaceTarget(pos);
-            t += Time.deltaTime;
-            yield return null;
-        }
-        //_animator.SetFloat("horizontal", 0);
-        _isMoving = false;
-    }
-
-    private IEnumerator MovePlayer(GridNode node)
-    {
-        if (node.Occupant != null) yield break;
-
-        _isMoving = true;
-        _playerCommander.CommanderCard.OnAbandonNode();
-        node.SetLockedDisplay(GridNode.MaterialType.Yellow);
-        while (Vector3.Distance(_transform.position, node.Transform.position) > 0.15f)
+        while (Vector3.Distance(transform.position, point.transform.position) > 0.15f)
         {
             _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
-            FaceTarget(node.Transform.position);
+            FaceTarget(point.transform.position);
             yield return null;
         }
-        _animator.SetFloat("speed", 0);
-        _transform.position = node.Transform.position;
 
-        _playerCommander.CommanderCard.OnOccupyNode(node);
-        _isMoving = false;
-    }
-
-
+        transform.position = point.transform.position;
+        _isMoving = false; //set to false so SetPlayerWaypoint/SetPlayerDestination can be called
+        var nextPoint = point.OnWaypointReached(_currentWaypoint);
+        _currentWaypoint = point; //Set this after reaching the destination
+        if (nextPoint != null) SetPlayerWaypoint(nextPoint);
+        else _animator.SetFloat("speed", 0);
+    }*/
     #endregion
 }

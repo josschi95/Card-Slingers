@@ -5,8 +5,10 @@ using UnityEngine;
 public class Summon : MonoBehaviour
 {
     [SerializeField] private Transform _transform;
+    [SerializeField] private Transform _eyes;
     private Card_Permanent _card;
     public Transform Transform => _transform;
+    public Transform Eyes => _eyes;
     public Card_Permanent Card
     {
         get => _card;

@@ -47,7 +47,7 @@ public class BattlefieldManager : MonoBehaviour
                 var go = Instantiate(node, nodePos, Quaternion.identity, Center);
 
                 gridArray[x, z] = go;
-                gridArray[x, z].OnAssignCoordinates(x, z, true);
+                gridArray[x, z].OnAssignCoordinates(x, z);
             }
         }
         
@@ -55,7 +55,6 @@ public class BattlefieldManager : MonoBehaviour
         //So then I also need to go through them all and determine which ones are valid and which are not
         //What I probably want to do is create a full grid of non-monobehaviour nodes, and then only instantiate the GridNodes where there is a valid node
     }
-
 
     public void CreateGrid(Vector3 center, Vector3 rotation, Vector2Int dimensions)
     {
@@ -67,9 +66,6 @@ public class BattlefieldManager : MonoBehaviour
             Center.position.y, 
             (-Depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + Center.position.z);
         
-
-        float f = Depth; int playerDepth = Mathf.RoundToInt(f * 0.5f);
-
         gridArray = new GridNode[Width, Depth];
 
         for (int x = 0; x < gridArray.GetLength(0); x++)
@@ -79,7 +75,7 @@ public class BattlefieldManager : MonoBehaviour
                 var go = Instantiate(node, GetGridPosition(x, z), Quaternion.identity, Center);
 
                 gridArray[x, z] = go;
-                gridArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);
+                gridArray[x, z].OnAssignCoordinates(x, z);
             }
         }
 
@@ -123,6 +119,13 @@ public class BattlefieldManager : MonoBehaviour
         return GetNode(x, z);
     }
 
+    public GridNode GetNode(float worldXPos, float worldZPos)
+    {
+        int x = Mathf.FloorToInt(((Mathf.Abs(worldXPos - _origin.x)) + 2.5f) / CELL_SIZE);
+        int z = Mathf.FloorToInt(((Mathf.Abs(worldZPos - _origin.z)) + 2.5f) / CELL_SIZE);
+        return GetNode(x, z);
+    }
+
     private Vector3 GetLocalGridPosition(int x, int z)
     {
         return new Vector3(x * CELL_SIZE, 0, z * CELL_SIZE);
@@ -148,7 +151,6 @@ public class BattlefieldManager : MonoBehaviour
         }
         return nodeList;
     }
-
 
     public List<GridNode> GetControlledNodesInLane(bool isPlayer, int lane)
     {
@@ -180,7 +182,25 @@ public class BattlefieldManager : MonoBehaviour
         return tempList;
     }
 
+    public List<GridNode> GetNodesInRoom(DungeonRoom room)
+    {
+        var nodeList = new List<GridNode>();
+        //Debug.Log("Center: " + room.transform.position);
+        var origin = room.Transform.position;
+        origin.x -= (room.RoomDimensions.x - CELL_SIZE) * 0.5f;
+        origin.z -= (room.RoomDimensions.y - CELL_SIZE) * 0.5f;
+        //Debug.Log("Origin: " + origin);
 
+        for (int x = 0; x < room.BoardDimensions.x; x++)
+        {
+            for (int z = 0; z < room.BoardDimensions.y; z++)
+            {
+                nodeList.Add(GetNode(new Vector3(origin.x + x * CELL_SIZE, 0, origin.z + z * CELL_SIZE)));
+            }
+        }
+
+        return nodeList;
+    }
 
     public List<GridNode> GetSummonableNodes(bool isplayer)
     {
@@ -532,19 +552,5 @@ public struct ReachableNodes
     {
         walkNodes = walk;
         attackNodes = attack;
-    }
-}
-
-public class TempNode
-{
-    public int x;
-    public int y;
-    public bool isValid;
-
-    public TempNode(int x, int y, bool valid)
-    {
-        this.x = x;
-        this.y = y;
-        isValid = valid;
     }
 }

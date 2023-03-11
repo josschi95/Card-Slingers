@@ -5,6 +5,16 @@ using UnityEngine;
 
 public class MonsterController : MonoBehaviour
 {
+    private MonsterGroupManager _groupManager;
+    public MonsterGroupManager GroupManager
+    {
+        get => _groupManager;
+        set
+        {
+            _groupManager = value;
+        }
+    }
+
     private Card_Unit _unit;
     public Card_Unit Unit
     {
@@ -16,10 +26,36 @@ public class MonsterController : MonoBehaviour
     }
 
     private List<TargetPriority> priorityList;
+    private bool _isInCombat;
+
+    private float _sightDistance = 25f;
+    private Transform _eyes;
+    RaycastHit hit;
+    Ray ray;
 
     private void Awake()
     {
         priorityList = new List<TargetPriority>();
+        _eyes = GetComponent<Summon>().Eyes;
+    }
+
+
+    private void Update()
+    {
+        LookForPlayer();
+    }
+
+    private void LookForPlayer()
+    {
+        if (_isInCombat) return;
+
+        ray = new Ray(_eyes.position, _eyes.forward);
+        Debug.DrawRay(_eyes.position, _eyes.forward);
+        if (Physics.Raycast(ray, out hit, _sightDistance) && hit.collider != null)
+        {
+            if (hit.collider.GetComponent<PlayerController>()) _groupManager.OnPlayerSpotted();
+
+        }
     }
 
     public void AssignCard(Card_Unit unit)

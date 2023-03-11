@@ -18336,6 +18336,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1607091872}
+  - component: {fileID: 1607091876}
   - component: {fileID: 1607091873}
   - component: {fileID: 1607091875}
   m_Layer: 0
@@ -18378,7 +18379,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _transform: {fileID: 1607091872}
   _commanderSO: {fileID: 11400000, guid: 976e9b0abbe12e240ade98a6315322c2, type: 2}
-  _inputSensitivity: 7.5
   _rotationSpeed: 10
   _deckPocket: {fileID: 1004848771}
   rayPos: {fileID: 1824586027}
@@ -18396,6 +18396,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _commanderInfo: {fileID: 11400000, guid: 976e9b0abbe12e240ade98a6315322c2, type: 2}
   _currentMana: 4
+--- !u!136 &1607091876
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1607091871}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.5
+  m_Height: 3
+  m_Direction: 1
+  m_Center: {x: 0, y: 1.5, z: 0}
 --- !u!1 &1614229078
 GameObject:
   m_ObjectHideFlags: 0

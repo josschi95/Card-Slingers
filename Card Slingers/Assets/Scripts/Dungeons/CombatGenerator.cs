@@ -5,10 +5,13 @@ using UnityEngine;
 public class CombatGenerator : MonoBehaviour
 {
     private List<CombatEncounter> encounterList;
+    private List<MonsterGroupManager> _monsterGroups;
+    private int[] monsterCount = { 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6 };
 
     public IEnumerator PlaceCombats(CombatEncounter[] encounters, DungeonRoom[] dungeonRooms, int combats)
     {
         encounterList = new List<CombatEncounter>();
+        _monsterGroups = new List<MonsterGroupManager>();
 
         var availableRooms = new List<DungeonRoom>(dungeonRooms);
         availableRooms.RemoveAt(0); //Get rid of the starting room
@@ -30,16 +33,60 @@ public class CombatGenerator : MonoBehaviour
             availableRooms.Remove(room); //Remove room from list of rooms to select from
             combats--;
 
+            if (encounter is MonsterEncounter monsterEncounter) SpawnEnemies(monsterEncounter, room);
+
             DrawDebugBox(room.Transform.position + Vector3.up * 3f, Quaternion.identity, new Vector3(room.RoomDimensions.x + 1, 6f, room.RoomDimensions.y + 1), Color.yellow);
 
             yield return null;
         }
 
-        if (combats > 0)
-        {
-            Debug.LogWarning("Was unable to place all combat before allowed attempts ran out.");
-        }
+        if (combats > 0) Debug.LogWarning("Was unable to place all combat before allowed attempts ran out.");
+
         DungeonManager.instance.SetEncounters(encounterList);
+        DungeonManager.instance.AddGroups(_monsterGroups);
+    }
+
+    private void SpawnEnemies(MonsterEncounter encounter, DungeonRoom room)
+    {
+        int num = monsterCount[Random.Range(0, monsterCount.Length)];
+        var nodes = BattlefieldManager.instance.GetNodesInRoom(room);
+        var monsterList = new List<MonsterController>();
+
+        for (int i = 0; i < num; i++)
+        {
+            var node = GetNodeToSummon(nodes);
+            if (node == null) break; //There are no summonable nodes in the room
+
+            //Grab a random card from the pool
+            var card = encounter.MonsterPool[Random.Range(0, encounter.MonsterPool.Length)];
+
+            Card_Unit newMonster = new Card_Unit(card, false);
+            newMonster.SetCardLocation(CardLocation.OnField);
+
+            var info = newMonster.CardInfo as PermanentSO;
+            var summon = Instantiate(info.Prefab, node.Transform.position, Quaternion.identity);
+            newMonster.OnSummoned(summon, node);
+
+            var controller = summon.gameObject.AddComponent<MonsterController>();
+            controller.AssignCard(newMonster);
+            monsterList.Add(controller);
+        }
+
+        var newGroup = new MonsterGroupManager(monsterList);
+        _monsterGroups.Add(newGroup);
+    }
+
+    private GridNode GetNodeToSummon(List<GridNode> nodes)
+    {
+        for (int i = nodes.Count - 1; i >= 0; i--)
+        {
+            if (nodes[i].Obstacle != null) nodes.RemoveAt(i);
+            else if (nodes[i].Occupant != null) nodes.RemoveAt(i);
+        }
+
+        if (nodes.Count == 0) return null;
+
+        return nodes[Random.Range(0, nodes.Count)];
     }
 
     private void DrawDebugBox(Vector3 pos, Quaternion rot, Vector3 scale, Color c, float duration = 15f)

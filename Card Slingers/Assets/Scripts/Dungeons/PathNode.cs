@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PathNode : MonoBehaviour, IInteractable
+public class PathNode : MonoBehaviour//, IInteractable
 {
     [SerializeField] private Transform _transform;
     [SerializeField] private Direction _direction;
@@ -41,7 +41,7 @@ public class PathNode : MonoBehaviour, IInteractable
         }
     }
 
-    public void OnLeftClick()
+    /*public void OnLeftClick()
     {
         PlayerController.SetWaypoint(this);
     }
@@ -71,5 +71,5 @@ public class PathNode : MonoBehaviour, IInteractable
             return null;
         }
         else return _neighborNode;
-    }
+    }*/
 }

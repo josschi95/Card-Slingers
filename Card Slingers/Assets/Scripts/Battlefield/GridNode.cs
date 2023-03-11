@@ -68,14 +68,12 @@ public class GridNode : MonoBehaviour, IInteractable
             _obstacle = value;
         }
     }
-
     public int occupantPower { get; private set; }
     #endregion
 
     #region - Pathfinding Properties -
     public int gridX { get; private set; }
     public int gridZ { get; private set; }
-    public bool isPlayerNode { get; private set; } //located on player half of the grid
 
     [HideInInspector] public int gCost; //the movement cost to move from the start node to this node, following the existing path
     [HideInInspector] public int hCost; //the estimated movement cost to move from this node to the end node
@@ -94,10 +92,9 @@ public class GridNode : MonoBehaviour, IInteractable
     }
     #endregion
 
-    public void OnAssignCoordinates(int x, int z, bool isPlayerNode)
+    public void OnAssignCoordinates(int x, int z)
     {
         gridX = x; gridZ = z;
-        this.isPlayerNode = isPlayerNode;
     }
 
     public void CalculateFCost()

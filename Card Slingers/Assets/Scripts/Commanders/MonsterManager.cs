@@ -35,6 +35,18 @@ public class MonsterManager : MonoBehaviour
     }
 
     #region - Match Start -
+    public void OnMatchStart(MonsterGroupManager monsters)
+    {
+        isTurn = false;
+
+        _permanentsOnField = new List<Card_Permanent>();
+        _monsters = new List<MonsterController>();
+
+        SubscribeToMatchEvents();
+
+        Debug.LogError("Need to grab monsters");
+    }
+
     public void OnMatchStart(MonsterEncounter encounter, Quaternion defaultRotation)
     {
         isTurn = false;
@@ -110,14 +122,6 @@ public class MonsterManager : MonoBehaviour
         }
 
         if (nodes.Count == 0) return null;
-
-        //int halfDepth = Mathf.RoundToInt(duelManager.Battlefield.Depth * 0.5f);
-
-        //Right now I'm just going to choose to place monsters in the front row; however, moving forward I should add a "preferred distance" and use that to set the row
-        /*for (int i = nodes.Count - 1; i >= 0; i--)
-        {
-            if (nodes[i].gridZ != halfDepth) nodes.RemoveAt(i);
-        }*/
 
         return nodes[Random.Range(0, nodes.Count)];
     }

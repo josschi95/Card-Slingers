@@ -36,6 +36,7 @@ public class DungeonManager : MonoBehaviour
 
     [SerializeField] 
     private List<CombatEncounter> _encounters;
+    private List<MonsterGroupManager> _monsterGroups;
 
     public bool AllEncountersComplete()
     {
@@ -55,14 +56,10 @@ public class DungeonManager : MonoBehaviour
         _generator.BeginGeneration(_dungeonPresets[(int)dungeon], _dungeonSize);
     }
 
-    //FOR TESTING ONLY
-    /*public void CreateDungeon(int floor)
+    public void AddGroups(List<MonsterGroupManager> monsterGroups)
     {
-        _dungeonIsReady = false;
-        Debug.Log("Floor set to " + floor);
-        _generator.BeginGeneration(_dungeonSize);
-        //Change this to take in the level and set number of rooms and combats accordingly
-    }*/
+        _monsterGroups = new List<MonsterGroupManager>(monsterGroups);
+    }
 
     public void SetEncounters(List<CombatEncounter> encounters)
     {

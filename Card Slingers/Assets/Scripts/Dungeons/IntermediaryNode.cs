@@ -20,9 +20,9 @@ public class IntermediaryNode : PathNode
         //Debug.DrawLine(transform.position, _secondNeighbor.transform.position, Color.blue, int.MaxValue);
     }
 
-    public override PathNode OnWaypointReached(PathNode fromWaypoint)
+    /*public override PathNode OnWaypointReached(PathNode fromWaypoint)
     {
         if (fromWaypoint == _neighborNode) return _secondNeighbor;
         else return _neighborNode;
-    }
+    }*/
 }

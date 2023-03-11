@@ -163,103 +163,6 @@ Transform:
   m_Father: {fileID: 6588430841651710579}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1505985327300721545
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4968748800080124313}
-  - component: {fileID: 6918065401877455278}
-  - component: {fileID: 4292749871385972729}
-  - component: {fileID: 8521061564652856623}
-  m_Layer: 0
-  m_Name: Hallway Light
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &4968748800080124313
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1505985327300721545}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.5, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 0.01}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4552987423142333483}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &6918065401877455278
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1505985327300721545}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &4292749871385972729
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1505985327300721545}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: fcda4a977c9c8ef49b660ad15ab03d43, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &8521061564652856623
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1505985327300721545}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1783407915364258755
 GameObject:
   m_ObjectHideFlags: 0
@@ -506,7 +409,7 @@ BoxCollider:
   m_GameObject: {fileID: 4552987422238002271}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 5, y: 5, z: 0.1}
   m_Center: {x: 0, y: 2.5, z: 0}
@@ -707,7 +610,7 @@ BoxCollider:
   m_GameObject: {fileID: 4552987422689875118}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 0.1, y: 5, z: 5}
   m_Center: {x: 0, y: 2.5, z: 0}
@@ -743,7 +646,6 @@ Transform:
   m_Children:
   - {fileID: 4474393977852790573}
   - {fileID: 5334868114224655138}
-  - {fileID: 4968748800080124313}
   m_Father: {fileID: 8970592011313804437}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -774,7 +676,7 @@ BoxCollider:
   m_GameObject: {fileID: 4552987423142333486}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 5, y: 5, z: 0.1}
   m_Center: {x: 0, y: 2.5, z: 0}
@@ -988,7 +890,7 @@ BoxCollider:
   m_GameObject: {fileID: 5672699108959666003}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 0.1, y: 5, z: 5}
   m_Center: {x: 0, y: 2.5, z: 0}
@@ -1173,6 +1075,10 @@ PrefabInstance:
     - target: {fileID: 7292866416244084981, guid: 44cded9d9d4227345b9eddb0780f3e12, type: 3}
       propertyPath: m_Name
       value: Hallway Fog
+      objectReference: {fileID: 0}
+    - target: {fileID: 7292866416244084981, guid: 44cded9d9d4227345b9eddb0780f3e12, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 44cded9d9d4227345b9eddb0780f3e12, type: 3}
@@ -1373,6 +1279,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Hallway Fog
       objectReference: {fileID: 0}
+    - target: {fileID: 7292866416244084981, guid: 44cded9d9d4227345b9eddb0780f3e12, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 44cded9d9d4227345b9eddb0780f3e12, type: 3}
 --- !u!4 &5334868114224655138 stripped
@@ -1501,6 +1411,10 @@ PrefabInstance:
     - target: {fileID: 7292866416244084981, guid: 44cded9d9d4227345b9eddb0780f3e12, type: 3}
       propertyPath: m_Name
       value: Hallway Fog
+      objectReference: {fileID: 0}
+    - target: {fileID: 7292866416244084981, guid: 44cded9d9d4227345b9eddb0780f3e12, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 44cded9d9d4227345b9eddb0780f3e12, type: 3}
@@ -1692,6 +1606,10 @@ PrefabInstance:
     - target: {fileID: 7292866416244084981, guid: 44cded9d9d4227345b9eddb0780f3e12, type: 3}
       propertyPath: m_Name
       value: Hallway Fog
+      objectReference: {fileID: 0}
+    - target: {fileID: 7292866416244084981, guid: 44cded9d9d4227345b9eddb0780f3e12, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9152963718563800684, guid: 44cded9d9d4227345b9eddb0780f3e12, type: 3}
       propertyPath: ShapeModule.m_Rotation.x
