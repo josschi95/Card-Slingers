@@ -4,15 +4,17 @@ using UnityEngine;
 
 public class CommanderController : MonoBehaviour
 {
+    #region - Callbacks -
     public delegate void OnCardsChangeCallback();
     public OnCardsChangeCallback onCardsInHandChange;
 
     public delegate void OnStatValueChangedCallback();
     public OnStatValueChangedCallback onHealthChange;
     public OnStatValueChangedCallback onManaChange;
+    #endregion
 
     protected DuelManager duelManager;
-    [HideInInspector] public Animator animator;
+    protected Animator commanderAnimator;
 
     [SerializeField] private CommanderSO _commanderInfo;
     [SerializeField] private Card_Commander _commanderCard;
@@ -25,6 +27,7 @@ public class CommanderController : MonoBehaviour
     [Space]
     [SerializeField] protected List<Card_Permanent> _permanentsOnField;
     protected HealthDisplay healthDisplay;
+    protected Quaternion _defaultRotation;
 
     public bool isTurn { get; protected set; }
     private int _defaultMana = 4;
@@ -37,6 +40,14 @@ public class CommanderController : MonoBehaviour
     public int CurrentMana => _currentMana;
     public List<Card> CardsInHand => _cardsInHand;
     public List<Card_Permanent> CardsOnField => _permanentsOnField;
+    public Quaternion DefaultRotation
+    {
+        get => _defaultRotation;
+        set
+        {
+            _defaultRotation = value;
+        }
+    }
     #endregion
 
     protected virtual void Start()
@@ -256,7 +267,7 @@ public class CommanderController : MonoBehaviour
 
         //Commander play casting animation
         //_commanderCard.PermanentObject.GetComponent<Animator>().SetTrigger("ability");
-        animator.SetTrigger("ability");
+        commanderAnimator.SetTrigger("ability");
 
         StartCoroutine(ResolveInstantDelay(spell, node));
 
@@ -298,7 +309,7 @@ public class CommanderController : MonoBehaviour
         //Display path line for visual cues
         //duelManager.DisplayLineArc(card.transform.position, node.transform.position);
         var info = card.CardInfo as PermanentSO;
-        var summon = Instantiate(info.Prefab, node.Transform.position, node.Transform.rotation);
+        var summon = Instantiate(info.Prefab, node.Transform.position, _defaultRotation);
         card.OnSummoned(summon, node);
         //Move the card to its new position
         //StartCoroutine(MoveCardToField(card, node));
@@ -367,9 +378,9 @@ public class CommanderController : MonoBehaviour
     
     public void SetStartingNode(GridNode node, Vector3 front)
     {
-        if (animator == null)
+        if (commanderAnimator == null)
         {
-            animator = GetComponentInChildren<Animator>();
+            commanderAnimator = GetComponentInChildren<Animator>();
         }
 
         StartCoroutine(MoveToPosition(node, front));
@@ -381,13 +392,13 @@ public class CommanderController : MonoBehaviour
 
         while (Vector3.Distance(transform.position, node.transform.position) > 0.2f)
         {
-            animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
+            commanderAnimator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
             FaceTarget(node.transform.position);
             yield return null;
         }
 
         transform.position = node.transform.position;
-        animator.SetFloat("speed", 0);
+        commanderAnimator.SetFloat("speed", 0);
 
         _commanderCard.SetStartingNode(node);
         isMoving = false;

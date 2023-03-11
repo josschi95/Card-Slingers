@@ -7502,7 +7502,6 @@ MonoBehaviour:
   _defenseText: {fileID: 873454633}
   _attackText: {fileID: 1555230781}
   _speedText: {fileID: 331549680}
-  _raiseAmount: 100
 --- !u!114 &967579199
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9694,7 +9693,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 0
   m_OnCullStateChanged:
@@ -14847,7 +14846,6 @@ MonoBehaviour:
   _defenseText: {fileID: 199180747}
   _attackText: {fileID: 1558545984}
   _speedText: {fileID: 876188010}
-  _raiseAmount: 100
 --- !u!114 &1207667422
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15712,7 +15710,6 @@ MonoBehaviour:
   _defenseText: {fileID: 662492702}
   _attackText: {fileID: 294573207}
   _speedText: {fileID: 2133313379}
-  _raiseAmount: 100
 --- !u!114 &1344840696
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16627,7 +16624,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -17095,7 +17092,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -18398,7 +18395,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce5ffe4017d000746848b1b0ce4468a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 0}
   _commanderInfo: {fileID: 11400000, guid: 976e9b0abbe12e240ade98a6315322c2, type: 2}
   _currentMana: 4
 --- !u!1 &1614229078
@@ -23300,7 +23296,6 @@ MonoBehaviour:
   _defenseText: {fileID: 1629148436}
   _attackText: {fileID: 339723959}
   _speedText: {fileID: 335893048}
-  _raiseAmount: 100
 --- !u!114 &2140208277
 MonoBehaviour:
   m_ObjectHideFlags: 0

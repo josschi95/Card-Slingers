@@ -20,6 +20,7 @@ public class CardDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     [SerializeField] private TMP_Text _healthText, _defenseText, _attackText, _speedText;
 
     protected bool _isSelected;
+    private float _raiseAmount = 265f;
     private Coroutine lerpCardUpCoroutine;
 
     public Card AssignedCard
@@ -179,7 +180,6 @@ public class CardDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     }
 
-    [SerializeField] private float _raiseAmount = 265f;
     protected IEnumerator RaiseCardInHand(bool up)
     {
         //Ignore this if not placed in hand

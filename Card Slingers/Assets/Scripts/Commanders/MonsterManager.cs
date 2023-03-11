@@ -11,12 +11,23 @@ public class MonsterManager : MonoBehaviour
     protected List<Card_Permanent> _permanentsOnField;
     private List<MonsterController> _monsters;
     private bool isTurn;
+    protected Quaternion _defaultRotation;
 
     //gives a weighted chance for the number of monsters in a match to lean towards 4
     //Will likely need a cleaner and more modifiable way to do this in the future
     //I'd say it should depend on the dungeon as well, some value that's held in the dungeon manager
     //take into account... board size, the dungeon, and the level. 2 should be rare in all, uncommon in first floors
     private int[] monsterCount = { 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6 };
+    public Quaternion DefaultRotation
+    {
+        get => _defaultRotation;
+        set
+        {
+            _defaultRotation = value;
+        }
+    }
+
+
 
     private void Start()
     {
@@ -24,9 +35,10 @@ public class MonsterManager : MonoBehaviour
     }
 
     #region - Match Start -
-    public void OnNewMatchStart(MonsterEncounter encounter)
+    public void OnMatchStart(MonsterEncounter encounter, Quaternion defaultRotation)
     {
         isTurn = false;
+        _defaultRotation = defaultRotation;
 
         _permanentsOnField = new List<Card_Permanent>();
         _monsters = new List<MonsterController>();
@@ -75,7 +87,7 @@ public class MonsterManager : MonoBehaviour
         if (node == null) return;
 
         var info = unit.CardInfo as PermanentSO;
-        var summon = Instantiate(info.Prefab, node.Transform.position, node.transform.rotation);
+        var summon = Instantiate(info.Prefab, node.Transform.position, _defaultRotation);
         unit.OnSummoned(summon, node);
         unit.onPermanentDestroyed += OnPermanentDestroyed;
         unit.onRemovedFromField += DestroyPermanent;
