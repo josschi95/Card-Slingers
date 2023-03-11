@@ -74,7 +74,7 @@ public class Card_Permanent : Card
     }
 
     //Set current node and occupy it
-    protected virtual void OnOccupyNode(GridNode newNode)
+    public virtual void OnOccupyNode(GridNode newNode)
     {
         _occupiedNode = newNode;
         _occupiedNode.Occupant = this;

@@ -13,7 +13,6 @@ public class BattlefieldManager : MonoBehaviour
 
     private GridNode[,] gridArray;
     private Vector2Int _dimensions;
-    [SerializeField] private int[] _laneThreatArray;
     [Space]
     [SerializeField] private Transform _center;
     [SerializeField] private Transform _cameraHome;
@@ -26,10 +25,38 @@ public class BattlefieldManager : MonoBehaviour
     public int Width => _dimensions.x; //These are currently only being used for early testing
     public int Depth => _dimensions.y;
     public float CellSize => CELL_SIZE;
-    public int[] LaneThreatArray => _laneThreatArray;
     #endregion
 
     #region - Grid -
+    public void CreateGrid(Vector3 origin, Vector2Int dimensions)
+    {
+        Physics.SyncTransforms();
+
+        _dimensions = dimensions;
+        _origin = origin;
+
+        gridArray = new GridNode[Width, Depth];
+        for (int x = 0; x < gridArray.GetLength(0); x++)
+        {
+            for (int z = 0; z < gridArray.GetLength(1); z++)
+            {
+                var nodePos = GetGridPosition(x, z);
+
+                if (!Physics.CheckSphere(nodePos, 0.5f)) continue;
+
+                var go = Instantiate(node, nodePos, Quaternion.identity, Center);
+
+                gridArray[x, z] = go;
+                gridArray[x, z].OnAssignCoordinates(x, z, true);
+            }
+        }
+        
+        //So this would create the grid itself, but then I'm also going to have a whole lot of empty/out of bounds nodes
+        //So then I also need to go through them all and determine which ones are valid and which are not
+        //What I probably want to do is create a full grid of non-monobehaviour nodes, and then only instantiate the GridNodes where there is a valid node
+    }
+
+
     public void CreateGrid(Vector3 center, Vector3 rotation, Vector2Int dimensions)
     {
         _center.position = center;
@@ -44,7 +71,6 @@ public class BattlefieldManager : MonoBehaviour
         float f = Depth; int playerDepth = Mathf.RoundToInt(f * 0.5f);
 
         gridArray = new GridNode[Width, Depth];
-        _laneThreatArray = new int[Width];
 
         for (int x = 0; x < gridArray.GetLength(0); x++)
         {
@@ -54,7 +80,6 @@ public class BattlefieldManager : MonoBehaviour
 
                 gridArray[x, z] = go;
                 gridArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);
-                gridArray[x, z].onNodeValueChanged += OnNodeValueChanged;
             }
         }
 
@@ -73,7 +98,6 @@ public class BattlefieldManager : MonoBehaviour
             for (int z = 0; z < gridArray.GetLength(1); z++)
             {
                 var node = gridArray[x, z];
-                node.onNodeValueChanged -= OnNodeValueChanged;
                 node.ReleaseToPool();
                 //Destroy(node.gameObject);
             }
@@ -90,6 +114,13 @@ public class BattlefieldManager : MonoBehaviour
         }
 
         throw new System.Exception("parameter " + x + "," + z + " outside bounds of array");
+    }
+
+    public GridNode GetNode(Vector3 worldPosition)
+    {
+        int x = Mathf.FloorToInt(((Mathf.Abs(worldPosition.x - _origin.x)) + 2.5f) / CELL_SIZE);
+        int z = Mathf.FloorToInt(((Mathf.Abs(worldPosition.z - _origin.z)) + 2.5f) / CELL_SIZE);
+        return GetNode(x, z);
     }
 
     private Vector3 GetLocalGridPosition(int x, int z)
@@ -213,18 +244,6 @@ public class BattlefieldManager : MonoBehaviour
         }
 
         return tempList;
-    }
-
-    private void OnNodeValueChanged(GridNode node)
-    {
-        int lane = node.gridX;
-        int newLaneValue = 0;
-
-        for (int i = 0; i < gridArray.GetLength(0); i++)
-        {
-            newLaneValue += gridArray[lane, i].occupantPower;
-        }
-        _laneThreatArray[lane] = newLaneValue;
     }
     #endregion
 
@@ -513,5 +532,19 @@ public struct ReachableNodes
     {
         walkNodes = walk;
         attackNodes = attack;
+    }
+}
+
+public class TempNode
+{
+    public int x;
+    public int y;
+    public bool isValid;
+
+    public TempNode(int x, int y, bool valid)
+    {
+        this.x = x;
+        this.y = y;
+        isValid = valid;
     }
 }

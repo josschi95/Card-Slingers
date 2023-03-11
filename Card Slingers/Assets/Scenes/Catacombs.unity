@@ -455,7 +455,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd509c5078b1da34e957dfe911781505, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _laneThreatArray: 
   _center: {fileID: 297752908}
   _cameraHome: {fileID: 364962045}
   node: {fileID: 3777873372622269370, guid: ee29f5833272e544bbd39bb561198829, type: 3}
@@ -2286,7 +2285,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 297752907}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.2, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -18378,7 +18377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _transform: {fileID: 1607091872}
-  playerCommander: {fileID: 11400000, guid: 976e9b0abbe12e240ade98a6315322c2, type: 2}
+  _commanderSO: {fileID: 11400000, guid: 976e9b0abbe12e240ade98a6315322c2, type: 2}
   _inputSensitivity: 7.5
   _rotationSpeed: 10
   _deckPocket: {fileID: 1004848771}
@@ -18390,7 +18389,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1607091871}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce5ffe4017d000746848b1b0ce4468a7, type: 3}
   m_Name: 

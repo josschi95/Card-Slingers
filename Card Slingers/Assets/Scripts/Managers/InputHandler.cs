@@ -57,6 +57,8 @@ public class InputHandler : MonoBehaviour
 
     private void OnLeftClick()
     {
+        if (cam == null) return;
+
         ray = cam.ScreenPointToRay(GetMousePos());
         if (Physics.Raycast(ray, out hit))
         {

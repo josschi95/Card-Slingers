@@ -14,14 +14,17 @@ public class PlayerController : MonoBehaviour
     }
 
     [SerializeField] private Transform _transform;
-    [SerializeField] private CommanderSO playerCommander;
+    [SerializeField] private CommanderSO _commanderSO;
     [SerializeField] private float _inputSensitivity = 7.5f;
     [SerializeField] private float _rotationSpeed = 10f;
     [SerializeField] private Transform _deckPocket;
+    private PlayerCommander _playerCommander;
     private PathNode _currentWaypoint;
+    private GridNode _currentNode;
 
     public DungeonRoom currentRoom { get; private set; }
     public Transform DeckPocket => _deckPocket;
+    private Vector2 moveInput;
     private Vector3 rotationInput;
 
     private Animator _animator;
@@ -29,25 +32,22 @@ public class PlayerController : MonoBehaviour
     private bool _inCombat;
 
     public Transform rayPos;
-    /*
-     * For changing to manual input for movement, basically keep the same set up but the player would have to hold down W to change the animator speed from 0 to 1
-     * Of course there would also have to be a bool for _allowInput so player can't move during combat, or when they're being sent to the middle after combat
-     * This actually works pretty well even when not on a track. The only issue is that I'll then have to add colliders back onto walls
-     * And I can't do that without majorly fucking up the dungeon generation
-    */
 
-    private void Start()
+    private IEnumerator Start()
     {
-        CreateCommander();
         DuelManager.instance.onMatchStarted += delegate { _inCombat = true; };
         DuelManager.instance.onPlayerDefeat += delegate { _inCombat = false; };
         DuelManager.instance.onPlayerVictory += delegate { _inCombat = false; };
 
         onRoomEntered += (room) => currentRoom = room;
+
+        while (!DungeonManager.instance.DungeonIsReady) yield return null;
+        CreateCommander();
     }
 
     private void Update()
     {
+        moveInput = InputHandler.GetMoveInput();
         rotationInput.y = InputHandler.GetRotationInput();
     }
 
@@ -56,10 +56,32 @@ public class PlayerController : MonoBehaviour
         RotatePlayer();
     }
 
+
+
     private void RotatePlayer()
     {
         if (_inCombat || _isMoving) return;
-        transform.localEulerAngles += rotationInput * 10 * _inputSensitivity * Time.deltaTime;
+
+        //transform.localEulerAngles += rotationInput * 10 * _inputSensitivity * Time.deltaTime;
+
+        if (rotationInput.y == 1)
+        {
+            StartCoroutine(RotatePlayer(_transform.position + _transform.right));
+            //_animator.SetFloat("horizontal", 1);
+
+        }
+        else if (rotationInput.y == -1)
+        {
+            StartCoroutine(RotatePlayer(_transform.position - _transform.right));
+            //_animator.SetFloat("horizontal", -1);
+
+        }
+
+        if (moveInput.y == 1)
+        {
+            var node = BattlefieldManager.instance.GetNode(_transform.position + _transform.forward * 5);
+            if (node != null) StartCoroutine(MovePlayer(node));
+        }
     }
 
     private void OnDestroy()
@@ -71,12 +93,15 @@ public class PlayerController : MonoBehaviour
 
     private void CreateCommander()
     {
-        var player = GetComponent<PlayerCommander>();
-        player.OnAssignCommander(playerCommander);
-        player.CommanderCard.OnCommanderSummon(_transform);
-        _animator = player.CommanderCard.Summon.GetComponent<Animator>();
+        _playerCommander = GetComponent<PlayerCommander>();
+        _playerCommander.enabled = true;
+        _playerCommander.OnAssignCommander(_commanderSO);
+        _playerCommander.CommanderCard.OnCommanderSummon(_transform);
+        _animator = _playerCommander.CommanderCard.Summon.GetComponent<Animator>();
 
-        //_animator.speed = 2;
+        var node = BattlefieldManager.instance.GetNode(_transform.position);
+        _playerCommander.CommanderCard.OnOccupyNode(node);
+        node.SetLockedDisplay(GridNode.MaterialType.Yellow);
     }
 
     #region - Movement -
@@ -143,5 +168,44 @@ public class PlayerController : MonoBehaviour
         Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * _rotationSpeed);
     }
+    #endregion
+
+    #region - New Movement -
+    private IEnumerator RotatePlayer(Vector3 pos)
+    {
+        _isMoving = true;
+
+        float t = 0, timeToMove = 1f;
+        while (t < timeToMove)
+        {
+            FaceTarget(pos);
+            t += Time.deltaTime;
+            yield return null;
+        }
+        //_animator.SetFloat("horizontal", 0);
+        _isMoving = false;
+    }
+
+    private IEnumerator MovePlayer(GridNode node)
+    {
+        if (node.Occupant != null) yield break;
+
+        _isMoving = true;
+        _playerCommander.CommanderCard.OnAbandonNode();
+        node.SetLockedDisplay(GridNode.MaterialType.Yellow);
+        while (Vector3.Distance(_transform.position, node.Transform.position) > 0.15f)
+        {
+            _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
+            FaceTarget(node.Transform.position);
+            yield return null;
+        }
+        _animator.SetFloat("speed", 0);
+        _transform.position = node.Transform.position;
+
+        _playerCommander.CommanderCard.OnOccupyNode(node);
+        _isMoving = false;
+    }
+
+
     #endregion
 }

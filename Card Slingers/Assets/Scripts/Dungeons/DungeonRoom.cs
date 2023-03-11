@@ -123,12 +123,6 @@ public class DungeonRoom : MonoBehaviour
 
         _fogOfWar.SetActive(false);
 
-        if (TESTING_NO_ENCOUNTER)
-        {
-            PlayerController.SetDestination(transform.position);
-            return;
-        }
-
         if (_encounter != null && !_encounterTriggered) OnCombatEncounter();
         else PlayerController.SetDestination(transform.position);
     }

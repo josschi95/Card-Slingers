@@ -49,6 +49,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09037b6515b173b4e88f10c4e875d0db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _version: 0.02
   screenFade: {fileID: 3795722142646515936}
   effectManager: {fileID: 11400000, guid: 22b1fc1677cd329418afb00823057313, type: 2}
   _bloodParticlePool: {fileID: 3795722142475590199}

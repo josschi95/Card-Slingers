@@ -41,7 +41,7 @@ public class Card_Trap : Card_Permanent
         OnPermanentDestroyed();
     }
 
-    protected override void OnOccupyNode(GridNode newNode)
+    public override void OnOccupyNode(GridNode newNode)
     {
         _occupiedNode = newNode;
         newNode.Trap = this;
