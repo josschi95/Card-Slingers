@@ -18,11 +18,11 @@ public class OpponentCommander : CommanderController
 
     [SerializeField] private List<Card_Permanent> threats = new List<Card_Permanent>();
 
-    public override void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
+    public override void OnMatchStart(int startingHandSize = 4, int mana = 4)
     {
         Debug.LogWarning("Need to revisit logic in this script entirely.");
 
-        base.OnMatchStart(holder, startingHandSize, mana);
+        base.OnMatchStart(startingHandSize, mana);
         playerCommander = duelManager.Player_Commander;
         invadesLanes = new bool[duelManager.Battlefield.Width];
     }

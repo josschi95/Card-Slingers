@@ -28,19 +28,22 @@ public class CardDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         set
         {
             _card = value;
-            if (_card != null) SetDisplay(_card.CardInfo);
+            if (_card != null)
+            {
+                if (_card.CardInfo == null)
+                {
+                    throw new UnityException("Not Assigning SO to card!");
+                }
+                SetDisplay(_card.CardInfo);
+            }
         }
-    }
-
-    public void SetCard(Card card)
-    {
-        _card = card;
-        SetDisplay(_card.CardInfo);
     }
 
     #region - Display - 
     private void SetDisplay(CardSO card)
     {
+        if (card == null) throw new UnityException("Cannot set display for a null card!");
+
         cardArt.sprite = card.icon;
         title.text = card.name;
         description.text = card.description;
@@ -176,10 +179,9 @@ public class CardDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     }
 
-    [SerializeField] private float _raiseAmount = 100f;
+    [SerializeField] private float _raiseAmount = 265f;
     protected IEnumerator RaiseCardInHand(bool up)
     {
-        Debug.Log("Starting Coroutine");
         //Ignore this if not placed in hand
         if (_card.Location != CardLocation.InHand) yield break;
 

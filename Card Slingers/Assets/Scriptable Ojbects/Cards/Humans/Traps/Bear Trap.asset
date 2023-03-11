@@ -15,7 +15,7 @@ MonoBehaviour:
   name: Bear Trap
   cost: 1
   icon: {fileID: 21300000, guid: 27a3a19b73fcc9a49a770add86b62d7b, type: 3}
-  type: 0
+  type: 2
   faction: 0
   description: Stops a unit's movement and deals 2 damage.
   flavorText: A staple in a hunter's arsenal no matter the species of the prey.

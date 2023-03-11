@@ -5,13 +5,26 @@ using UnityEngine;
 
 public class MonsterController : MonoBehaviour
 {
-    public Card_Unit unit { get; private set; }
+    private Card_Unit _unit;
+    public Card_Unit Unit
+    {
+        get => _unit;
+        set
+        {
+            _unit = value;
+        }
+    }
+
     private List<TargetPriority> priorityList;
 
     private void Awake()
     {
-        unit = GetComponent<Card_Unit>();
         priorityList = new List<TargetPriority>();
+    }
+
+    public void AssignCard(Card_Unit unit)
+    {
+        _unit = unit;
     }
 
     //Prioritize targets based on multiple variables before selecting an action
@@ -26,26 +39,26 @@ public class MonsterController : MonoBehaviour
 
             int value = 0;
 
-            value -= DuelManager.instance.Battlefield.GetDistanceInNodes(unit.Node, permanent.Node) * 2; //targets further away are valued less
+            value -= DuelManager.instance.Battlefield.GetDistanceInNodes(_unit.Node, permanent.Node) * 2; //targets further away are valued less
 
             if (permanent == DuelManager.instance.Player_Commander.CommanderCard) value += 10; //higher value on commander
 
             if (permanent is Card_Structure structure)
             {
-                if (structure.Defense >= unit.Attack) continue; //No point in attacking something they can't damage
+                if (structure.Defense >= _unit.Attack) continue; //No point in attacking something they can't damage
                 //Can later factor in offensive ability damage and if (unit.CanUseAbility)
 
                 value -= 10; //prioritize units over structures
-                value += unit.Attack - (structure.CurrentHealth + structure.Defense); //value targets with lower health and defense
-                if (structure.CurrentHealth + structure.Defense <= unit.Attack) value += 5; //can destroy it
+                value += _unit.Attack - (structure.CurrentHealth + structure.Defense); //value targets with lower health and defense
+                if (structure.CurrentHealth + structure.Defense <= _unit.Attack) value += 5; //can destroy it
             }
             else if (permanent is Card_Unit summon)
             {
-                if (summon.Defense >= unit.Attack) continue; //Same as above
+                if (summon.Defense >= _unit.Attack) continue; //Same as above
                 //Can later factor in offensive ability damage and if (unit.CanUseAbility)
 
-                value += unit.Attack - (summon.CurrentHealth + summon.Defense); //value targets with lower health and defense
-                if (summon.CurrentHealth + summon.Defense <= unit.Attack) value += 10; //can destroy it
+                value += _unit.Attack - (summon.CurrentHealth + summon.Defense); //value targets with lower health and defense
+                if (summon.CurrentHealth + summon.Defense <= _unit.Attack) value += 10; //can destroy it
                 if (summon.CanUseAbility) value += 5; //Change this later to if it has an ability at all
             }
 
@@ -68,16 +81,16 @@ public class MonsterController : MonoBehaviour
     //Select an action available to the unit based on positions
     public void SelectAction()
     {
-        if (!unit.CanAct)
+        if (!_unit.CanAct)
         {
             Debug.LogWarning("Unit cannot act. Skipping.");
             return;
         }
 
-        var targets = DuelManager.instance.Battlefield.FindTargetableNodes(unit, unit.Range);
+        var targets = DuelManager.instance.Battlefield.FindTargetableNodes(_unit, _unit.Range);
 
         //Use ability if able and there is a valid target within range
-        if (unit.CanUseAbility) //will ahve to figure out how to delegate this
+        if (_unit.CanUseAbility) //will ahve to figure out how to delegate this
         {
             //use ability
             Debug.LogWarning("Using ability.");
@@ -85,40 +98,40 @@ public class MonsterController : MonoBehaviour
         }
 
         //Attack a target if able and there is a valid target within range
-        if (!unit.HasActed && targets.Count > 0) //Attack the nearest target
+        if (!_unit.HasActed && targets.Count > 0) //Attack the nearest target
         {
             //loop through available targets in order of highest priority to lowest
             for (int i = 0; i < priorityList.Count; i++)
             {
                 if (targets.Contains(priorityList[i].target.Node))
                 {
-                    DuelManager.instance.OnAttackActionConfirmed(unit, priorityList[i].target.Node);
+                    DuelManager.instance.OnAttackActionConfirmed(_unit, priorityList[i].target.Node);
                     return;
                 }
             }
         }
 
         //Else move towards the highest priority target
-        if (unit.MovesLeft > 0) //Unit can move at least one space
+        if (_unit.MovesLeft > 0) //Unit can move at least one space
         {
             //Move towards highest priority target
             for (int i = 0; i < priorityList.Count; i++)
             {
-                var path = DuelManager.instance.Battlefield.FindNodePath(unit, priorityList[i].target.Node, true);
+                var path = DuelManager.instance.Battlefield.FindNodePath(_unit, priorityList[i].target.Node, true);
                 if (path == null) continue; //There is no path to the target, check the next one
 
                 for (int p = path.Count - 1; p >= 0; p--)
                 {
-                    if (p > unit.MovesLeft) path.RemoveAt(p);
+                    if (p > _unit.MovesLeft) path.RemoveAt(p);
                     else //able to reach these nodes
                     {
                         //Find the furthest node that can be occupied
-                        if (path[p].CanBeOccupied(unit)) break;
+                        if (path[p].CanBeOccupied(_unit)) break;
                         else path.RemoveAt(p);
                     }
                 }
                 if (path.Count <= 1) continue; //path only contains start node or no nodes
-                DuelManager.instance.OnMoveActionConfirmed(unit, path[path.Count - 1]);
+                DuelManager.instance.OnMoveActionConfirmed(_unit, path[path.Count - 1]);
                 break;
             }
         }

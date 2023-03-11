@@ -81,6 +81,7 @@ public class MonsterManager : MonoBehaviour
         unit.onRemovedFromField += DestroyPermanent;
 
         var controller = summon.gameObject.AddComponent<MonsterController>();
+        controller.AssignCard(unit);
         _monsters.Add(controller);
 
         //var rot = duelManager.Battlefield.Center.eulerAngles;
@@ -160,7 +161,7 @@ public class MonsterManager : MonoBehaviour
         //Circle back to them and try to move again
         for (int i = 0; i < _monsters.Count; i++)
         {
-            var unit = _monsters[i].unit;
+            var unit = _monsters[i].Unit;
             if (unit.HasActed && unit.MovesLeft <= 0) continue; //There is nothing more that the unit can do this turn
 
             _monsters[i].PrioritizeTargets();

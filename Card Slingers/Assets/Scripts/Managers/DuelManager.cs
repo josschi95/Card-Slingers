@@ -5,8 +5,6 @@ using UnityEngine;
 public class DuelManager : MonoBehaviour
 {
     [SerializeField] private GameObject _nodeMarker;
-    [SerializeField] private CardHolder _cardHolderPrefab; //There will only ever be two of these at max, so just toggle it
-    [SerializeField] private Material neutralMat, hostileMat;
 
     #region - Singleton -
     public static DuelManager instance;
@@ -135,7 +133,7 @@ public class DuelManager : MonoBehaviour
 
     private void SetCommanderStartingNode(CommanderController commander)
     {
-        SetCommanderCardMat(commander);
+        commander.OnMatchStart();
         
         float width = battleField.Width;
 
@@ -152,25 +150,6 @@ public class DuelManager : MonoBehaviour
 
         var node = battleField.GetNode(nodeX, nodeZ);
         commander.SetStartingNode(node, battleField.GetNode(nodeX, frontNode).transform.position);
-    }
-
-    //This will likely go away as the cards in your hand become a UI element
-    //And the physical cards are "displayed" in front of the commander
-    private void SetCommanderCardMat(CommanderController commander)
-    {
-        var dist = battleField.Depth * battleField.CellSize * 0.5f + 1f;
-        if (commander is PlayerCommander) dist *= -1;
-
-        var cardMat = Instantiate(_cardHolderPrefab, battleField.Center);
-        cardMat.transform.localPosition += new Vector3(0, -1, dist);
-        cardMat.transform.SetParent(null);
-
-        var matPos = cardMat.transform.position;
-        matPos.y += 1.5f;
-
-        cardMat.transform.position = matPos;
-
-        commander.OnMatchStart(cardMat);
     }
 
     public void SetMatchReward(int gold)
@@ -509,8 +488,8 @@ public class DuelManager : MonoBehaviour
     #region - Display Line -
     public void DisplayLineArc(Vector3 start, Vector3 end, bool hostile = false)
     {
-        if (hostile) arcLine.material = hostileMat;
-        else arcLine.material = neutralMat;
+        //if (hostile) arcLine.material = hostileMat;
+        //else arcLine.material = neutralMat;
 
         arcLine.positionCount = 100;
 

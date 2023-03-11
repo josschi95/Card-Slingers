@@ -7,10 +7,10 @@ public class PlayerCommander : CommanderController
     private bool _deckIsCreated;
     [SerializeField] private List<Card> _existingDeck = new List<Card>();
 
-    public override void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
+    public override void OnMatchStart(int startingHandSize = 4, int mana = 4)
     {
         isTurn = true;
-        base.OnMatchStart(holder, startingHandSize, mana);
+        base.OnMatchStart(startingHandSize, mana);
     }
 
     protected override void OnNewTurn(bool isPlayerTurn)

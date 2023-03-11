@@ -13,10 +13,9 @@ MonoBehaviour:
   m_Name: Magic Arrow
   m_EditorClassIdentifier: 
   name: Magic Arrow
-  cardPrefab: {fileID: 4352255705957388408, guid: a4f2524b46871c54ba54d961d0439ff9, type: 3}
   cost: 1
   icon: {fileID: 21300000, guid: 391f8050dd31bb04994160aa0dd9d395, type: 3}
-  type: 0
+  type: 5
   faction: 0
   description: 
   flavorText: 

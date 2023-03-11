@@ -12,7 +12,6 @@ public class CommanderController : MonoBehaviour
     public OnStatValueChangedCallback onManaChange;
 
     protected DuelManager duelManager;
-    private CardHolder _cardHolder;
     [HideInInspector] public Animator animator;
 
     [SerializeField] private CommanderSO _commanderInfo;
@@ -46,7 +45,6 @@ public class CommanderController : MonoBehaviour
 
         healthDisplay = GetComponentInChildren<HealthDisplay>();
         healthDisplay.gameObject.SetActive(false);
-
     }
 
     #region - Initial Methods -
@@ -56,19 +54,19 @@ public class CommanderController : MonoBehaviour
         _commanderCard = new Card_Commander(commanderInfo, this is PlayerCommander);
     }
 
-    public virtual void OnMatchStart(CardHolder holder, int startingHandSize = 4, int mana = 4)
+    public virtual void OnMatchStart(int startingHandSize = 4, int mana = 4)
     {
         SubscribeToMatchEvents();
 
-        _cardHolder = holder;
         healthDisplay.gameObject.SetActive(true);
 
         _defaultMana = mana;
         _handSize = startingHandSize;
 
         _cardsInDeck = new List<Card>();
-        _cardsInDiscardPile = new List<Card>();
         _cardsInHand = new List<Card>();
+        _cardsInDiscardPile = new List<Card>();
+        _cardsInExile = new List<Card>();
         _permanentsOnField = new List<Card_Permanent>();
         _permanentsOnField.Add(CommanderCard);
 
@@ -85,6 +83,7 @@ public class CommanderController : MonoBehaviour
         foreach (CardSO cardSO in _commanderInfo.Deck.cards)
         {
             Card newCard = null;
+            
             switch (cardSO.type)
             {
                 case CardType.Unit:
@@ -97,16 +96,20 @@ public class CommanderController : MonoBehaviour
                     newCard = new Card_Trap(cardSO as TrapSO, isPlayer);
                     break;
                 case CardType.Equipment:
+                    throw new UnityException("Equipment has not been added!");
                     //newCard = new Card_Equipment();
-                    break;
+                    //break;
                 case CardType.Terrain:
+                    throw new UnityException("Terrain has not been added!");
                     //newCard = new Card_Terrain();
-                    break;
+                    //break;
                 case CardType.Spell:
                     newCard = new Card_Spell(cardSO as SpellSO, isPlayer);
                     break;
+                case CardType.Commander:
+                    throw new UnityException("Should not be adding commander to deck!");
             }
-            //newCard.AssignCardInfo
+
             PlaceCardInDeck(newCard);
         }
     }
@@ -442,10 +445,6 @@ public class CommanderController : MonoBehaviour
         duelManager.onPlayerDefeat -= OnPlayerDefeat;
 
         if (healthDisplay != null) healthDisplay.gameObject.SetActive(false);
-
-        //need to let coroutines finish, and let player pocket their cards
-        if (_cardHolder != null) Destroy(_cardHolder.gameObject, 5f); 
-        //get rid of card holders. Probbly lerp them down eventually
     }
     #endregion
 }

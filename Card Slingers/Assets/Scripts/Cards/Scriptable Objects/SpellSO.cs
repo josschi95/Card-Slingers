@@ -5,6 +5,11 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "New Spell", menuName = "Scriptable Objects/Cards/Instants/Spell")]
 public class SpellSO : CardSO
 {
+    private void Reset()
+    {
+        type = CardType.Spell;
+    }
+
     [Header("Spell Properties")]
     [SerializeField] private ParticleSystem _spellFX;
     [SerializeField] private Vector3 _startingPosition;
