@@ -18,6 +18,7 @@ public class DungeonGenerator : MonoBehaviour
     [Space]
 
     [SerializeField] private List<DungeonRoom> dungeonRooms;
+    private List<IntermediaryNode> _corners = new List<IntermediaryNode>();
     private List<GameObject> tentativePieces;
 
     private DungeonPresets _preset;
@@ -178,7 +179,7 @@ public class DungeonGenerator : MonoBehaviour
 
             if (!CreateHallway(fromNode.Point, inter.Point, _preset.Hallway_Vert)) return false;
             if (!CreateHallway(toNode.Point, inter.PointTwo, _preset.Hallway_Horz)) return false;
-
+            _corners.Add(inter);
             inter.SetAsIntermediate(fromNode, toNode);
             return true;
         }
@@ -198,7 +199,7 @@ public class DungeonGenerator : MonoBehaviour
 
             if (!CreateHallway(fromNode.Point, inter.PointTwo, _preset.Hallway_Horz)) return false; //intermediate's point two is always left/right
             if (!CreateHallway(toNode.Point, inter.Point, _preset.Hallway_Vert)) return false;
-
+            _corners.Add(inter);
             inter.SetAsIntermediate(fromNode, toNode);
             return true;
         }
@@ -244,6 +245,8 @@ public class DungeonGenerator : MonoBehaviour
             }
             if (!CreateHallway(firstIntermediate.PointTwo, secondIntermediate.PointTwo, _preset.Hallway_Horz, true)) return false;
 
+            _corners.Add(firstIntermediate);
+            _corners.Add(secondIntermediate);
             firstIntermediate.SetAsIntermediate(secondIntermediate, fromNode);
             secondIntermediate.SetAsIntermediate(firstIntermediate, toNode);
             return true;
@@ -290,6 +293,8 @@ public class DungeonGenerator : MonoBehaviour
             }
             if (!CreateHallway(firstIntermediate.Point, secondIntermediate.Point, _preset.Hallway_Vert, true)) return false;
 
+            _corners.Add(firstIntermediate);
+            _corners.Add(secondIntermediate);
             firstIntermediate.SetAsIntermediate(secondIntermediate, fromNode);
             secondIntermediate.SetAsIntermediate(firstIntermediate, toNode);
             return true;
@@ -379,19 +384,14 @@ public class DungeonGenerator : MonoBehaviour
         {
             dungeonRooms[i].OnConfirmLayout();
         }
+        for (int i = 0; i < _corners.Count; i++)
+        {
+            _corners[i].OnComplete();
+        }
 
         miniMap.SetBounds(dungeonRooms.ToArray());
-
-        var player = GameObject.Find("Player Controller").transform;
-        player.position = transform.position;
-        if (dungeonRooms[0].ConnectedRooms[0] != null) player.eulerAngles = Vector3.zero;
-        else if (dungeonRooms[0].ConnectedRooms[1] != null) player.eulerAngles = new Vector3(0, 180, 0);
-        else if (dungeonRooms[0].ConnectedRooms[2] != null) player.eulerAngles = new Vector3(0, 270, 0);
-        else if (dungeonRooms[0].ConnectedRooms[3] != null) player.eulerAngles = new Vector3(0, 90, 0);
         
-        //dungeonRooms[0].OnRoomEntered(Direction.Up);
-
-        DungeonManager.instance.DungeonIsReady = true;
+        DungeonManager.instance.DungeonIsReady = true;        
     }
 
     private void PurgeAttempts()

@@ -59,10 +59,11 @@ public class CommanderController : MonoBehaviour
     }
 
     #region - Initial Methods -
-    public virtual void OnAssignCommander(CommanderSO commanderInfo)
+    public virtual void OnAssignCommander(CommanderSO commanderInfo, Card_Commander card)
     {
         _commanderInfo = commanderInfo;
-        _commanderCard = new Card_Commander(commanderInfo, this is PlayerCommander);
+        _commanderCard = card;
+        commanderAnimator = GetComponent<Animator>();
     }
 
     public virtual void OnMatchStart(int startingHandSize = 4, int mana = 4)
@@ -370,58 +371,6 @@ public class CommanderController : MonoBehaviour
     {
         _currentMana += mana;
         onManaChange?.Invoke();
-    }
-    #endregion
-
-    #region - Off-Grid Movement -
-    public bool isMoving { get; private set; }
-    
-    public void SetStartingNode(GridNode node, Vector3 front)
-    {
-        if (commanderAnimator == null)
-        {
-            commanderAnimator = GetComponentInChildren<Animator>();
-        }
-
-        StartCoroutine(MoveToPosition(node, front));
-    }
-
-    private IEnumerator MoveToPosition(GridNode node, Vector3 front)
-    {
-        isMoving = true;
-
-        while (Vector3.Distance(transform.position, node.transform.position) > 0.2f)
-        {
-            commanderAnimator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
-            FaceTarget(node.transform.position);
-            yield return null;
-        }
-
-        transform.position = node.transform.position;
-        commanderAnimator.SetFloat("speed", 0);
-
-        _commanderCard.SetStartingNode(node);
-        isMoving = false;
-
-        StartCoroutine(TurnToFaceTarget(front));
-    }
-
-    private IEnumerator TurnToFaceTarget(Vector3 pos)
-    {
-        float t = 0, timeToMove = 0.5f;
-        while (t < timeToMove)
-        {
-            FaceTarget(pos);
-            t += Time.deltaTime;
-            yield return null;
-        }
-    }
-
-    private void FaceTarget(Vector3 pos) //update this to accept a Transform transform?
-    {
-        Vector3 direction = (pos - transform.position).normalized;
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 10f);
     }
     #endregion
 

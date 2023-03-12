@@ -5,8 +5,8 @@ using UnityEngine;
 
 public class MonsterController : MonoBehaviour
 {
-    private MonsterGroupManager _groupManager;
-    public MonsterGroupManager GroupManager
+    private EnemyGroupManager _groupManager;
+    public EnemyGroupManager GroupManager
     {
         get => _groupManager;
         set
@@ -162,7 +162,7 @@ public class MonsterController : MonoBehaviour
                     else //able to reach these nodes
                     {
                         //Find the furthest node that can be occupied
-                        if (path[p].CanBeOccupied(_unit)) break;
+                        if (path[p].CanBeOccupied()) break;
                         else path.RemoveAt(p);
                     }
                 }

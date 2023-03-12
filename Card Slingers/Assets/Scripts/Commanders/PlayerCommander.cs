@@ -11,6 +11,7 @@ public class PlayerCommander : CommanderController
     {
         isTurn = true;
         base.OnMatchStart(startingHandSize, mana);
+        Debug.Log("OnMatchStart Player");
     }
 
     protected override void OnNewTurn(bool isPlayerTurn)

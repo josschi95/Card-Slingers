@@ -36,7 +36,6 @@ public class InputHandler : MonoBehaviour
     {
         playerInput.actions["Left Click"].performed += i => OnLeftClick();
         playerInput.actions["Right Click"].performed += i => OnRightClick();
-        playerInput.actions["Camera Home"].performed += i => CameraController.instance.ReturnHome();
         playerInput.actions["Change View"].performed += i => CameraController.instance.SwitchView();
         playerInput.actions["Test"].performed += i => GameManager.instance.onTest?.Invoke();
 
@@ -48,12 +47,9 @@ public class InputHandler : MonoBehaviour
     {
         playerInput.actions["Left Click"].performed -= i => OnLeftClick();
         playerInput.actions["Right Click"].performed -= i => OnRightClick();
-        playerInput.actions["Camera Home"].performed -= i => CameraController.instance.ReturnHome();
         playerInput.actions["Change View"].performed -= i => CameraController.instance.SwitchView();
         playerInput.actions["Test"].performed -= i => GameManager.instance.onTest?.Invoke();
     }
-
-
 
     private void OnLeftClick()
     {

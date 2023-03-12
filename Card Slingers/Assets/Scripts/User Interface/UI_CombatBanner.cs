@@ -39,14 +39,13 @@ public class UI_CombatBanner : MonoBehaviour
     private bool playerTurn;
     #endregion
 
-    private void Start()
+    private IEnumerator Start()
     {
         endTurnButton.gameObject.SetActive(false);
 
         UI = DungeonUIManager.instance;
-        player = PlayerController.instance.GetComponent<PlayerCommander>();
         duelManager = DuelManager.instance;
-        duelManager.onMatchStarted += OnMatchStart;
+        duelManager.onCombatBegin += OnMatchStart;
         duelManager.onNewTurn += OnNewTurn;
 
         duelManager.onPlayerVictory += OnPlayerVictory;
@@ -56,19 +55,21 @@ public class UI_CombatBanner : MonoBehaviour
         cancelActionButton.onClick.AddListener(delegate { duelManager.OnClearAction(); });
 
         bannerParent.anchoredPosition = bannerHiddenPos;
+
+        while (PlayerController.instance == null) yield return null;
+        player = PlayerController.instance.GetComponent<PlayerCommander>();
     }
 
-    private void OnMatchStart(CombatEncounter encounter)
+    private void OnMatchStart(EnemyGroupManager enemyGroup)
     {
         endTurnButton.gameObject.SetActive(true);
-
         playerTurn = true;
-        //Subscribe to events
+
         player.onHealthChange += OnCommanderValuesChanged;
         player.onManaChange += OnCommanderValuesChanged;
 
         playerCommanderName.text = player.CommanderInfo.name;
-        if (encounter is CommanderEncounter commander) SetEnemyCommander(commander.Commander);
+        if (enemyGroup.Commander != null) SetEnemyCommander(enemyGroup.Commander);
         else enemyBannerParent.SetActive(false);
 
         OnCommanderValuesChanged();

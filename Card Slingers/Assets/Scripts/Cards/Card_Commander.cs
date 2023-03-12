@@ -2,31 +2,49 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class Card_Commander : Card_Unit 
 {
+    private CommanderSO _commanderInfo;
+
     public Card_Commander(CommanderSO commander, bool isPlayerCard) : base(commander, isPlayerCard)
     {
         _cardInfo = commander;
+        _commanderInfo = commander;
         this.isPlayerCard = isPlayerCard;
+    }
+
+    public CommanderController OnCommanderCreated(bool isPlayer, GridNode node)
+    {
+        _summon = Object.Instantiate(_commanderInfo.Prefab, node.Transform.position, Quaternion.identity);
+        Summon.Card = this;
+        
+        _animator = _summon.GetComponent<Animator>();
+        Summon.GetComponent<AnimationEventHandler>().Unit = this;
+
+        _currentHealth = NetMaxHealth();
+        _movesLeft = Speed;
+        _hasTakenAction = false;
+
+        SetStartingNode(node);
+
+        if (isPlayer)
+        {
+            var player = Summon.gameObject.AddComponent<PlayerCommander>();
+            player.OnAssignCommander(_commanderInfo, this);
+            return player;
+        }
+        else
+        {
+            var enemy = Summon.gameObject.AddComponent<OpponentCommander>();
+            enemy.OnAssignCommander(_commanderInfo, this);
+            return enemy;
+        }
     }
 
     public void SetStartingNode(GridNode node)
     {
         OnOccupyNode(node);
-    }
-
-    public void OnCommanderSummon(Transform parent)
-    {
-        _currentHealth = NetMaxHealth();
-        _movesLeft = Speed;
-        _hasTakenAction = false;
-
-        //Instantiate permanent
-        var permanent = CardInfo as PermanentSO;
-        _summon = Object.Instantiate(permanent.Prefab, parent.position, parent.rotation, parent);
-        _summon.Card = this;
-        _animator = Summon.GetComponent<Animator>();
-        _summon.GetComponent<AnimationEventHandler>().Unit = this;
     }
 
     public override void OnTakeDamage(int damage)

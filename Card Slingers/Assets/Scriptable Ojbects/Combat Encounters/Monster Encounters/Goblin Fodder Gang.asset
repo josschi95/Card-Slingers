@@ -9,9 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e3cc3a008fac0a1449a659464f2df25e, type: 3}
-  m_Name: Goblin Encounter
+  m_Script: {fileID: 11500000, guid: 5323ff23c6aedc74b859221c2d256f81, type: 3}
+  m_Name: Goblin Fodder Gang
   m_EditorClassIdentifier: 
-  _battlefieldDimensions: {x: 0, y: 0}
   _monsterPool:
   - {fileID: 11400000, guid: 54412063b9561a54382e3451c865ca95, type: 2}

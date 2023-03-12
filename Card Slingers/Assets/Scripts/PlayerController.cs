@@ -4,48 +4,48 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public delegate void OnRoomEnteredCallback(DungeonRoom room);
-    public OnRoomEnteredCallback onRoomEntered;
-
+    #region - Singleton -
     public static PlayerController instance;
     private void Awake()
     {
         instance = this;
     }
+    #endregion
+
+    public delegate void OnGridNodeSelected(GridNode node);
+    public OnGridNodeSelected onNodeSelected;
 
     [SerializeField] private Transform _transform;
-    [SerializeField] private CommanderSO _commanderSO;
     [SerializeField] private float _rotationSpeed = 10f;
-    [SerializeField] private Transform _deckPocket;
     private PlayerCommander _playerCommander;
-    //private PathNode _currentWaypoint;
 
-    public DungeonRoom currentRoom { get; private set; }
-    public Transform DeckPocket => _deckPocket;
     private Vector2 moveInput;
-    private Vector3 rotationInput;
+    private float rotationInput;
 
     private Animator _animator;
     private bool _isMoving;
     private bool _inCombat;
 
-    public Transform rayPos;
-
     private IEnumerator Start()
     {
-        DuelManager.instance.onMatchStarted += delegate { _inCombat = true; };
+        _transform = transform;
+        _playerCommander = GetComponent<PlayerCommander>();
+        _animator = GetComponent<Animator>();
+
+        onNodeSelected += SetNodeDestination;
+        DuelManager.instance.onCombatBegin += delegate { _inCombat = true; };
         DuelManager.instance.onPlayerDefeat += delegate { _inCombat = false; };
         DuelManager.instance.onPlayerVictory += delegate { _inCombat = false; };
 
-        onRoomEntered += (room) => currentRoom = room;
-
         while (!DungeonManager.instance.DungeonIsReady) yield return null;
-        CreateCommander();
+
+        SetInitialFacingDirection();
     }
 
     private void OnDestroy()
     {
-        DuelManager.instance.onMatchStarted -= delegate { _inCombat = true; };
+        onNodeSelected -= SetNodeDestination;
+        DuelManager.instance.onCombatBegin -= delegate { _inCombat = true; };
         DuelManager.instance.onPlayerDefeat -= delegate { _inCombat = false; };
         DuelManager.instance.onPlayerVictory -= delegate { _inCombat = false; };
     }
@@ -53,13 +53,27 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         moveInput = InputHandler.GetMoveInput();
-        rotationInput.y = InputHandler.GetRotationInput();
+        rotationInput = InputHandler.GetRotationInput();
     }
 
     private void LateUpdate()
     {
-        HandleMovement();
-        RotatePlayer();
+        //HandleMovement();
+        //RotatePlayer();
+    }
+
+    private void SetInitialFacingDirection()
+    {
+        //Set correct starting direction
+        var room = DungeonManager.instance.Generator.transform.GetChild(0).GetComponent<DungeonRoom>();
+        for (int i = 0; i < room.Nodes.Length; i++)
+        {
+            if (room.Nodes[i].ConnectedNode != null)
+            {
+                StartCoroutine(RotatePlayer(room.Nodes[i].Point.position, 0.05f));
+                break;
+            }
+        }
     }
 
     private void HandleMovement()
@@ -77,32 +91,9 @@ public class PlayerController : MonoBehaviour
     {
         if (_inCombat || _isMoving) return;
 
-        //transform.localEulerAngles += rotationInput * 10 * _inputSensitivity * Time.deltaTime;
-
-        if (rotationInput.y == 1)
-        {
-            StartCoroutine(RotatePlayer(_transform.position + _transform.right));
-            //_animator.SetFloat("horizontal", 1);
-
-        }
-        else if (rotationInput.y == -1)
-        {
-            StartCoroutine(RotatePlayer(_transform.position - _transform.right));
-            //_animator.SetFloat("horizontal", -1);
-
-        }
-    }
-
-    private void CreateCommander()
-    {
-        _playerCommander = GetComponent<PlayerCommander>();
-        _playerCommander.enabled = true;
-        _playerCommander.OnAssignCommander(_commanderSO);
-        _playerCommander.CommanderCard.OnCommanderSummon(_transform);
-        _animator = _playerCommander.CommanderCard.Summon.GetComponent<Animator>();
-
-        var node = BattlefieldManager.instance.GetNode(_transform.position);
-        _playerCommander.CommanderCard.OnOccupyNode(node);
+        if (rotationInput == 1) StartCoroutine(RotatePlayer(_transform.position + transform.right));
+        else if (rotationInput == -1) StartCoroutine(RotatePlayer(_transform.position - transform.right));
+        else if (moveInput.y == -1) StartCoroutine(RotatePlayer(_transform.position - transform.forward, 1.4f));
     }
 
     #region - Manual Movement -
@@ -112,37 +103,45 @@ public class PlayerController : MonoBehaviour
 
         _isMoving = true;
         _playerCommander.CommanderCard.OnAbandonNode();
+        
         while (Vector3.Distance(_transform.position, node.Transform.position) > 0.15f)
         {
             _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
-            FaceTarget(node.Transform.position);
             yield return null;
         }
-        _transform.position = node.Transform.position;
+        
         _playerCommander.CommanderCard.OnOccupyNode(node);
 
         if (moveInput.y == 1)
         {
             var nextNode = BattlefieldManager.instance.GetNode(_transform.position + _transform.forward * 5);
-            if (nextNode != null) yield return StartCoroutine(MovePlayer(nextNode));
+            if (nextNode != null)
+            {
+                StartCoroutine(MovePlayer(nextNode));
+                yield break;
+            }
         }
 
+        _transform.position = node.Transform.position;
         _animator.SetFloat("speed", 0);
         _isMoving = false;
     }
 
-    private IEnumerator RotatePlayer(Vector3 pos)
+    private IEnumerator RotatePlayer(Vector3 pos, float timeToMove = 0.8f)
     {
         _isMoving = true;
 
-        float t = 0, timeToMove = 1f;
+        Vector3 direction = (pos - transform.position).normalized;
+        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+
+        float t = 0;
         while (t < timeToMove)
         {
-            FaceTarget(pos);
+            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, t / timeToMove);
+
             t += Time.deltaTime;
             yield return null;
         }
-        //_animator.SetFloat("horizontal", 0);
         _isMoving = false;
     }
 
@@ -155,6 +154,56 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region - Auto Movement -
+
+    private void SetNodeDestination(GridNode node)
+    {
+        if (_inCombat) return;
+        if (node.Occupant != null || node.Obstacle != null)
+        {
+            StartCoroutine(RotatePlayer(node.Transform.position));
+            return;
+        }
+
+        var nodePath = BattlefieldManager.instance.FindNodePath(_playerCommander.CommanderCard, node);
+        if (nodePath == null)
+        {
+            StartCoroutine(RotatePlayer(node.Transform.position));
+            return;
+        }
+
+        StartCoroutine(FollowNodePath(nodePath));
+    }
+
+    private IEnumerator FollowNodePath(List<GridNode> nodePath)
+    {
+        _isMoving = true;
+        var currentNode = _playerCommander.CommanderCard.Node;
+        if (nodePath[0] == currentNode) nodePath.RemoveAt(0);
+
+        while (nodePath.Count > 0)
+        {
+            if (_inCombat) break; //stop movement if combat starts
+
+            while (Vector3.Distance(_transform.position, nodePath[0].transform.position) > 0.1f)
+            {
+                _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
+                FaceTarget(nodePath[0].Transform.position);
+                yield return null;
+            }
+
+            nodePath[0].onNodeEntered?.Invoke(_playerCommander.CommanderCard);
+            currentNode = nodePath[0];
+            nodePath.RemoveAt(0);
+
+            yield return null;
+        }
+
+        _animator.SetFloat("speed", 0);
+        _playerCommander.CommanderCard.OnOccupyNode(currentNode);
+        _transform.position = currentNode.Transform.position;
+        _isMoving = false;
+    }
+
     public static void SetDestination(Vector3 destination)
     {
         instance.SetPlayerDestination(destination);

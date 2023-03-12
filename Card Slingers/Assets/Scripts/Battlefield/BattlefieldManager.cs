@@ -50,56 +50,6 @@ public class BattlefieldManager : MonoBehaviour
                 gridArray[x, z].OnAssignCoordinates(x, z);
             }
         }
-        
-        //So this would create the grid itself, but then I'm also going to have a whole lot of empty/out of bounds nodes
-        //So then I also need to go through them all and determine which ones are valid and which are not
-        //What I probably want to do is create a full grid of non-monobehaviour nodes, and then only instantiate the GridNodes where there is a valid node
-    }
-
-    public void CreateGrid(Vector3 center, Vector3 rotation, Vector2Int dimensions)
-    {
-        _center.position = center;
-        _dimensions = dimensions;
-
-        _origin = new Vector3(
-            (-Width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + Center.position.x,
-            Center.position.y, 
-            (-Depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + Center.position.z);
-        
-        gridArray = new GridNode[Width, Depth];
-
-        for (int x = 0; x < gridArray.GetLength(0); x++)
-        {
-            for (int z = 0; z < gridArray.GetLength(1); z++)
-            {
-                var go = Instantiate(node, GetGridPosition(x, z), Quaternion.identity, Center);
-
-                gridArray[x, z] = go;
-                gridArray[x, z].OnAssignCoordinates(x, z);
-            }
-        }
-
-        _center.localEulerAngles = rotation;
-
-        float initZ = 27 + ((Depth - 6) * 2.5f);
-        _cameraHome.localPosition = new Vector3(0, 12, -initZ);
-
-        CameraController.instance.SetHome(_cameraHome.position, Center.localEulerAngles.y);
-    }
-
-    public void DestroyGrid()
-    {
-        for (int x = 0; x < gridArray.GetLength(0); x++)
-        {
-            for (int z = 0; z < gridArray.GetLength(1); z++)
-            {
-                var node = gridArray[x, z];
-                node.ReleaseToPool();
-                //Destroy(node.gameObject);
-            }
-        }
-
-        _center.localEulerAngles = Vector3.zero;
     }
 
     public GridNode GetNode(int x, int z)
@@ -108,8 +58,9 @@ public class BattlefieldManager : MonoBehaviour
         {
             return gridArray[x, z];
         }
+        return null;
 
-        throw new System.Exception("parameter " + x + "," + z + " outside bounds of array");
+        //throw new System.Exception("parameter " + x + "," + z + " outside bounds of array");
     }
 
     public GridNode GetNode(Vector3 worldPosition)
@@ -146,7 +97,32 @@ public class BattlefieldManager : MonoBehaviour
             {
                 var vertical = Mathf.Abs(originNode.gridZ - z);
                 var horizontal = Mathf.Abs(originNode.gridX - x);
-                if (vertical + horizontal <= range) nodeList.Add(gridArray[x, z]);
+                if (vertical + horizontal > range) continue;
+                var node = GetNode(x, z);
+                if (node == null) continue;
+                nodeList.Add(node);
+            }
+        }
+        return nodeList;
+    }
+
+    public List<GridNode> GetSummonableNodes(GridNode originNode, int range)
+    {
+        var nodeList = new List<GridNode>();
+
+        for (int x = 0; x < gridArray.GetLength(0); x++)
+        {
+            for (int z = 0; z < gridArray.GetLength(1); z++)
+            {
+                var vertical = Mathf.Abs(originNode.gridZ - z);
+                var horizontal = Mathf.Abs(originNode.gridX - x);
+                if (vertical + horizontal > range) continue;
+
+                var node = GetNode(x, z);
+
+                if (node == null) continue;
+                if (node.Occupant != null || node.Obstacle != null) continue;
+                nodeList.Add(node);
             }
         }
         return nodeList;
@@ -182,7 +158,7 @@ public class BattlefieldManager : MonoBehaviour
         return tempList;
     }
 
-    public List<GridNode> GetNodesInRoom(DungeonRoom room)
+    public List<GridNode> GetNodesInRoom(DungeonRoom room, bool excludePerimeter = false, bool excludeEntrances = true)
     {
         var nodeList = new List<GridNode>();
         //Debug.Log("Center: " + room.transform.position);
@@ -195,60 +171,28 @@ public class BattlefieldManager : MonoBehaviour
         {
             for (int z = 0; z < room.BoardDimensions.y; z++)
             {
+                if (excludePerimeter) //Don't include the outside ring of nodes
+                {
+                    if (x == 0 || z == 0) continue;
+                    if (x == room.BoardDimensions.x - 1 || z == room.BoardDimensions.y - 1) continue; //break?
+                }
+
+                if (excludeEntrances) //Don't include the nodes in the outside ring in the middle of that side
+                {
+                    int middleX = Mathf.CeilToInt(room.BoardDimensions.x);
+                    int middleZ = Mathf.CeilToInt(room.BoardDimensions.y);
+
+                    if (z == middleZ && x == 0) continue;
+                    else if (z == middleZ && x == room.BoardDimensions.x - 1) continue;
+                    else if (x == middleX && z == 0) continue;
+                    else if (x == middleX && z == room.BoardDimensions.y - 1) continue;
+                }
+
                 nodeList.Add(GetNode(new Vector3(origin.x + x * CELL_SIZE, 0, origin.z + z * CELL_SIZE)));
             }
         }
 
         return nodeList;
-    }
-
-    public List<GridNode> GetSummonableNodes(bool isplayer)
-    {
-        var tempList = new List<GridNode>();
-        int halfDepth = Mathf.RoundToInt(Depth * 0.5f);
-
-        if (isplayer)
-        {
-            //Goes lane by lane from 0 to width
-            for (int x = 0; x < Width; x++)
-            {
-                for (int z = 0; z < halfDepth; z++)
-                {
-                    var node = GetNode(x, z);
-
-                    if (node.Obstacle != null) continue;
-                    if (node.Occupant != null)
-                    {
-                        if (!node.Occupant.isPlayerCard) break;
-                        else continue;
-                    }
-
-                    tempList.Add(node);
-                }
-            }
-        }
-        else
-        {
-            //Goes lane by lane from 0 to width
-            for (int x = 0; x < Width; x++)
-            {
-                for (int z = Depth - 1; z >= halfDepth; z--)
-                {
-                    var node = GetNode(x, z);
-
-                    if (node.Obstacle != null) continue;
-                    if (node.Occupant != null)
-                    {
-                        if (node.Occupant.isPlayerCard) break;
-                        else continue;
-                    }
-
-                    tempList.Add(node);
-                }
-            }
-        }
-
-        return tempList;
     }
 
     /// <summary>
@@ -286,6 +230,7 @@ public class BattlefieldManager : MonoBehaviour
             for (int y = 0; y < Depth; y++)
             {
                 GridNode pathNode = GetNode(x, y);
+                if (pathNode == null) continue;
                 pathNode.gCost = int.MaxValue;
                 pathNode.CalculateFCost();
                 pathNode.cameFromNode = null;
@@ -300,7 +245,7 @@ public class BattlefieldManager : MonoBehaviour
         {
             GridNode currentNode = GetLowestFCostNode(openList);
 
-            if (stopInRange && GetDistanceInNodes(currentNode, endNode) <= unit.Range && currentNode.CanBeOccupied(unit))
+            if (stopInRange && GetDistanceInNodes(currentNode, endNode) <= unit.Range && currentNode.CanBeOccupied())
             {
                 //Don't need to move any further
                 //Debug.Log("Found closest node within range, located at " + currentNode.gridX + "," + currentNode.gridZ);
@@ -362,7 +307,9 @@ public class BattlefieldManager : MonoBehaviour
             for (int y = 0; y < Depth; y++)
             {
                 GridNode pathNode = GetNode(x, y);
-                if (pathNode.CanBeTraversed(unit) && pathNode.CanBeOccupied(unit) && GetDistanceInNodes(startNode, pathNode) <= unit.MovesLeft + 1)
+                if (pathNode == null) continue;
+
+                if (pathNode.CanBeTraversed(unit) && pathNode.CanBeOccupied() && GetDistanceInNodes(startNode, pathNode) <= unit.MovesLeft + 1)
                 {
                     nodes.Add(pathNode);
                     //Debug.Log(pathNode.x + "," + pathNode.y);
@@ -396,9 +343,11 @@ public class BattlefieldManager : MonoBehaviour
             for (int y = 0; y < Depth; y++)
             {
                 GridNode pathNode = GetNode(x, y);
+                if (pathNode == null) continue;
+
                 var dist = GetDistanceInNodes(startNode, pathNode);
                 if (dist <= unit.MovesLeft + unit.Range && pathNode.CanBeAttacked(unit)) attackNodes.Add(pathNode);
-                if (dist <= unit.MovesLeft && pathNode.CanBeOccupied(unit)) walkNodes.Add(pathNode);
+                if (dist <= unit.MovesLeft && pathNode.CanBeOccupied()) walkNodes.Add(pathNode);
             }
         }
 
@@ -418,6 +367,7 @@ public class BattlefieldManager : MonoBehaviour
             for (int y = 0; y < Depth; y++)
             {
                 GridNode pathNode = GetNode(x, y);
+                if (pathNode == null) continue;
                 //Add all walkable nodes which can be accessed 
                 if (pathNode.CanBeAttacked(unit) && GetDistanceInNodes(startNode, pathNode) <= range + unit.MovesLeft)
                 {
@@ -446,7 +396,7 @@ public class BattlefieldManager : MonoBehaviour
 
             //The node path has at least two nodes in it - Checking this to not throw an error for the next check
             //The final node in the path can be occupied
-            else if (path.Count >= 2 && !path[path.Count - 1].CanBeOccupied(unit))
+            else if (path.Count >= 2 && !path[path.Count - 1].CanBeOccupied())
             {
                 //Ok this is where I'm running into an issue
                 //Debug.Log("Cannot occupy node needed to move to");
@@ -506,13 +456,29 @@ public class BattlefieldManager : MonoBehaviour
         List<GridNode> neighborList = new List<GridNode>();
 
         //Up
-        if (currentNode.gridZ + 1 < Depth) neighborList.Add(GetNode(currentNode.gridX, currentNode.gridZ + 1));
+        if (currentNode.gridZ + 1 < Depth)
+        {
+            var neighbor = GetNode(currentNode.gridX, currentNode.gridZ + 1);
+            if (neighbor != null) neighborList.Add(neighbor);
+        }
         //Down
-        if (currentNode.gridZ - 1 >= 0) neighborList.Add(GetNode(currentNode.gridX, currentNode.gridZ - 1));
+        if (currentNode.gridZ - 1 >= 0)
+        {
+            var neighbor = GetNode(currentNode.gridX, currentNode.gridZ - 1);
+            if (neighbor != null) neighborList.Add(neighbor);
+        }
         //Left
-        if (currentNode.gridX - 1 >= 0) neighborList.Add(GetNode(currentNode.gridX - 1, currentNode.gridZ));
+        if (currentNode.gridX - 1 >= 0)
+        {
+            var neighbor = GetNode(currentNode.gridX - 1, currentNode.gridZ);
+            if (neighbor != null) neighborList.Add(neighbor);
+        }
         //Right
-        if (currentNode.gridX + 1 < Width) neighborList.Add(GetNode(currentNode.gridX + 1, currentNode.gridZ));
+        if (currentNode.gridX + 1 < Width)
+        {
+            var neighbor = GetNode(currentNode.gridX + 1, currentNode.gridZ);
+            if (neighbor != null) neighborList.Add(neighbor);
+        }
 
         return neighborList;
     }

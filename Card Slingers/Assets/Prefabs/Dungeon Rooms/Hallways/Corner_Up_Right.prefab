@@ -56,8 +56,8 @@ MonoBehaviour:
   _direction: 0
   _room: {fileID: 0}
   _point: {fileID: 7967647643897890641}
-  _hallwayFog: {fileID: 0}
   _neighborNode: {fileID: 0}
+  coll: {fileID: -1239225690775962153}
   _secondNeighbor: {fileID: 0}
   _pointSecondary: {fileID: 556574477403855797}
 --- !u!65 &-1239225690775962153

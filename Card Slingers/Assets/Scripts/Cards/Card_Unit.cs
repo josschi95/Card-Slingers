@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
+[System.Serializable]
 public class Card_Unit : Card_Permanent
 {
     public delegate void OnAnimatorEventCallback();

@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class IntermediaryNode : PathNode
 {
-    [SerializeField] private PathNode _secondNeighbor;
+    [SerializeField] private Collider coll;
+    private PathNode _secondNeighbor;
     [SerializeField] private Transform _pointSecondary;
     public Transform PointTwo => _pointSecondary;
 
@@ -20,9 +21,13 @@ public class IntermediaryNode : PathNode
         //Debug.DrawLine(transform.position, _secondNeighbor.transform.position, Color.blue, int.MaxValue);
     }
 
-    /*public override PathNode OnWaypointReached(PathNode fromWaypoint)
+    public void OnComplete()
     {
-        if (fromWaypoint == _neighborNode) return _secondNeighbor;
-        else return _neighborNode;
-    }*/
+        coll.enabled = false;
+        var colls = GetComponentsInChildren<Collider>();
+        for (int i = 0; i < colls.Length; i++)
+        {
+            colls[i].enabled = false;
+        }
+    }
 }

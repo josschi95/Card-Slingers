@@ -16,8 +16,8 @@ public class DuelManager : MonoBehaviour
     #endregion
 
     #region - Callbacks -
-    public delegate void OnEncounterStartCallback(CombatEncounter encounter);
-    public OnEncounterStartCallback onMatchStarted;
+    public delegate void OnCombatBeginCallback(EnemyGroupManager group);
+    public OnCombatBeginCallback onCombatBegin;
 
     public delegate void OnEncounterEndCallback();
     public OnEncounterEndCallback onPlayerVictory;
@@ -54,7 +54,6 @@ public class DuelManager : MonoBehaviour
     private BattlefieldManager battleField;
     private MonsterManager monsterManager;
     private PlayerCommander playerCommander;
-    private CombatEncounter _currentEncounter;
     private LineRenderer arcLine;
 
     private Quaternion _playerRotation;
@@ -78,21 +77,18 @@ public class DuelManager : MonoBehaviour
     #endregion
 
     #region - Properties -
-    public CombatEncounter CurrentEncounter => _currentEncounter;
     public BattlefieldManager Battlefield => battleField;
     public PlayerCommander Player_Commander => playerCommander;
     public int TurnCount => _turnCount;
     #endregion
 
-    private void Start()
+    private IEnumerator Start()
     {
-        playerController = PlayerController.instance;
-        playerCommander = playerController.GetComponent<PlayerCommander>();
-        monsterManager = GetComponent<MonsterManager>();
         battleField = BattlefieldManager.instance;
+        monsterManager = GetComponent<MonsterManager>();
         arcLine = GetComponent<LineRenderer>();
 
-        onMatchStarted += OnMatchStart;
+        onCombatBegin += OnMatchStart;
         onPlayerDefeat += OnMatchEnd;
         onPlayerVictory += OnMatchEnd;
         onPlayerVictory += OnPlayerVictory;
@@ -108,10 +104,15 @@ public class DuelManager : MonoBehaviour
         onCardEndAction += OnCardEndAction;
 
         onCardInHandSelected += OnCardInHandSelected;
+
+        while (PlayerController.instance == null) yield return null;
+
+        playerController = PlayerController.instance;
+        playerCommander = playerController.GetComponent<PlayerCommander>();
     }
 
     #region - Match Start -
-    private void OnMatchStart(MonsterGroupManager monsters)
+    private void OnMatchStart(EnemyGroupManager enemies)
     {
         var playerRot = playerController.transform.localEulerAngles;
         playerRot.y = SnapFloat(playerRot.y);
@@ -125,66 +126,10 @@ public class DuelManager : MonoBehaviour
         _turnCount = 1;
         _isPlayerTurn = true;
 
-        monsterManager.OnMatchStart(monsters);
+        playerCommander.OnMatchStart();
+        monsterManager.OnMatchStart(enemies, Quaternion.Euler(enemyRot));
 
         onNewTurn?.Invoke(_isPlayerTurn);
-    }
-
-    private void OnMatchStart(CombatEncounter encounter)
-    {
-        var playerRot = playerController.transform.localEulerAngles;
-        playerRot.y = SnapFloat(playerRot.y);
-        _playerRotation = Quaternion.Euler(playerRot);
-        playerCommander.DefaultRotation = Quaternion.Euler(playerRot);
-
-        var enemyRot = playerRot;
-        enemyRot.y += 180;
-        _enemyRotation = Quaternion.Euler(enemyRot);
-
-        _currentEncounter = encounter;
-
-        _turnCount = 1;
-        _isPlayerTurn = true;
-
-        var room = playerController.currentRoom;
-        battleField.CreateGrid(room.Transform.position, room.Orientation, room.BoardDimensions);
-
-        Physics.SyncTransforms();
-        for (int i = 0; i < room.Obstacles.Count; i++)
-        {
-            room.Obstacles[i].OnOccupyNode();
-        }
-
-        SetCommanderStartingNode(playerCommander);
-        if (encounter is CommanderEncounter opponent)
-        {
-            opponent.Commander.DefaultRotation = Quaternion.Euler(enemyRot);
-            SetCommanderStartingNode(opponent.Commander);
-        }
-        else monsterManager.OnMatchStart(encounter as MonsterEncounter, Quaternion.Euler(enemyRot));
-
-        onNewTurn?.Invoke(_isPlayerTurn);
-    }
-
-    private void SetCommanderStartingNode(CommanderController commander)
-    {
-        commander.OnMatchStart();
-        
-        float width = battleField.Width;
-
-        int nodeZ = 0;
-        int nodeX = Mathf.RoundToInt(width * 0.5f);
-        int frontNode = 1;
-
-        if (commander is not PlayerCommander)
-        {
-            nodeX = Mathf.CeilToInt(width * 0.5f) - 1;
-            nodeZ = battleField.Depth - 1;
-            frontNode = battleField.Depth - 2;
-        }
-
-        var node = battleField.GetNode(nodeX, nodeZ);
-        commander.SetStartingNode(node, battleField.GetNode(nodeX, frontNode).transform.position);
     }
 
     public void SetMatchReward(int gold)
@@ -333,7 +278,7 @@ public class DuelManager : MonoBehaviour
     {
         if (card is Card_Permanent)
         {
-            _validTargetNodes.AddRange(battleField.GetSummonableNodes(card.isPlayerCard));
+            _validTargetNodes.AddRange(battleField.GetSummonableNodes(playerCommander.CommanderCard.Node, playerCommander.CommanderInfo.SummonRange));
         }
         else if (card is Card_Spell spell)
         {
@@ -467,7 +412,6 @@ public class DuelManager : MonoBehaviour
     {
         //ClearLineArc();
         _nodeMarker.SetActive(false);
-        battleField.DestroyGrid();
         monsterManager.ClearEncounter(); //Clears all cards and wipes board
     }
 

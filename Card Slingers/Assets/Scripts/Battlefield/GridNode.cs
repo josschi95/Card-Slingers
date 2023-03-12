@@ -9,6 +9,7 @@ public class GridNode : MonoBehaviour, IInteractable
 
     [SerializeField] private Transform _transform;
     public Transform Transform => _transform;
+
     #region - Callbacks -
     public delegate void OnGridNodeValueChanged(GridNode node);
     public OnGridNodeValueChanged onNodeValueChanged;
@@ -26,10 +27,10 @@ public class GridNode : MonoBehaviour, IInteractable
     #endregion
 
     #region - Node Contents -
-    [SerializeField] private Card_Permanent _occupant;
-    [SerializeField] private Card_Trap _trap;
-    [SerializeField] private Card _terrain;
-    [SerializeField] private Obstacle _obstacle;
+    [SerializeField] private Card_Permanent _occupant = null;
+    [SerializeField] private Card_Trap _trap = null;
+    [SerializeField] private Card _terrain = null;
+    [SerializeField] private Obstacle _obstacle = null;
     public Card_Permanent Occupant
     {
         get => _occupant;
@@ -113,9 +114,7 @@ public class GridNode : MonoBehaviour, IInteractable
     #region - Interactions -
     public void OnLeftClick()
     {
-        //if (Occupant != null) Debug.Log(gridX + "," + gridZ + ": " + Occupant.gameObject.name);
-        //else Debug.Log(gridX + "," + gridZ);
-
+        PlayerController.instance.onNodeSelected?.Invoke(this);
         DuelManager.instance.onNodeSelected?.Invoke(this);
     }
 
@@ -165,15 +164,10 @@ public class GridNode : MonoBehaviour, IInteractable
     #endregion
 
     #region - Queries -
-    public bool CanBeOccupied(Card_Permanent card)
+    public bool CanBeOccupied()
     {
-        if (_obstacle != null) return false;
-
-        if (_occupant == null) return true; //not occupied at all
-        if (_occupant.isPlayerCard != card.isPlayerCard) return false; //occupied by an enemy unit/structure
-        if (_occupant is Card_Structure structure && structure.CanBeOccupied) return true; //can move into structure
-
-        return false; //there is an (allied) occupant here
+        if (_obstacle != null || _occupant != null) return false;
+        return true; //there is an occupant here
     }
 
     public bool CanBeAttacked(Card_Permanent attacker)

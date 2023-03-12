@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class Card_Structure : Card_Permanent
 {
     [Header("Structure Info")]
-    [SerializeField] private Card_Unit _occupant;
     [SerializeField] private int _maxHealth;
     [SerializeField] private int _currentHealth;
 
@@ -13,9 +13,6 @@ public class Card_Structure : Card_Permanent
     public int MaxHealth => _maxHealth;
     public int Defense => NetDefense();
     public int CurrentHealth => _currentHealth;
-    public Card_Permanent Occupant => _occupant;
-    public bool CanBeOccupied => StructureCanBeOccupied();
-    public bool IsOccupied => _occupant != null;
     public bool canBeTraversed => CanBeTraversed();
 
     public Card_Structure(StructureSO structure, bool isPlayerCard) : base(structure, isPlayerCard)
@@ -74,16 +71,6 @@ public class Card_Structure : Card_Permanent
     {
         var card = CardInfo as StructureSO;
         return card.Focus;
-    }
-
-    private bool StructureCanBeOccupied()
-    {
-        var info = CardInfo as StructureSO;
-
-        if (!info.canBeOccupied) return false;
-        if (IsOccupied) return false;
-
-        return true;
     }
 
     private bool CanBeTraversed()

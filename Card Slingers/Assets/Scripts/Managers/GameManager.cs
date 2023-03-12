@@ -75,6 +75,7 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region - Scene Loading -
+    [SerializeField] private CommanderSO _playerCommander;
     private Dungeons _dungeonToLoad;
     private int _dungeonLevelToLoad;
 
@@ -97,6 +98,7 @@ public class GameManager : MonoBehaviour
     private IEnumerator WaitForDungeonToLoad()
     {
         while (!DungeonManager.instance.DungeonIsReady) yield return null;
+        DungeonManager.instance.SpawnPlayer(_playerCommander);
         StartCoroutine(Fade(Color.black, Color.clear));
     }
 

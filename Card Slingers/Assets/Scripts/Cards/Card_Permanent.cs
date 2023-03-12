@@ -20,6 +20,7 @@ public class Card_Permanent : Card
 
     public GridNode Node => _occupiedNode;
     public Summon Summon => _summon;
+
     public int ThreatLevel => GetThreatLevel();
     //For ordering player cards based on their perceived threat based on power and position
     [SerializeField] private float _modifiedThreatLevel;
@@ -79,7 +80,8 @@ public class Card_Permanent : Card
         _occupiedNode = newNode;
         _occupiedNode.Occupant = this;
         //_occupiedNode.SetOccupant(this);
-
+        if (_summon == null) Debug.LogError("Summon is null.");
+        if (newNode == null) Debug.LogError("New Node is null.");
         _summon.transform.position = newNode.transform.position;
     }
 

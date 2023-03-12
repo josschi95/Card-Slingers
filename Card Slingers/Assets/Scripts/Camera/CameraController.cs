@@ -36,7 +36,7 @@ public class CameraController : MonoBehaviour
     private float zoomInput;
 
     private Vector3 homePosition, homeRotation = new Vector3(35, 0, 0);
-    private float boundsX, boundsZ; //limit the movement of the free cam to the current room
+    //private float boundsX, boundsZ; //limit the movement of the free cam to the current room
 
     #region - Unity Methods -
     private void Start()
@@ -44,7 +44,12 @@ public class CameraController : MonoBehaviour
         SetActiveCamera(CameraView.Follow);
 
          _battlefieldCenter = BattlefieldManager.instance.Center;
-        DuelManager.instance.onMatchStarted += delegate { OnMatchStart(); };
+        DuelManager.instance.onCombatBegin += delegate { OnMatchStart(); };
+    }
+
+    private void OnDestroy()
+    {
+        DuelManager.instance.onCombatBegin -= delegate { OnMatchStart(); };
     }
 
     private void Update()
@@ -57,6 +62,30 @@ public class CameraController : MonoBehaviour
         HandleCameraPositions();
     }
     #endregion
+
+    private void SetActiveCamera(CameraView view)
+    {
+        _currentView = view;
+
+        switch (view)
+        {
+            case CameraView.Follow:
+                followCam.enabled = true;
+                freeCam.enabled = false;
+                aerialCam.enabled = false;
+                break;
+            case CameraView.Free:
+                followCam.enabled = false;
+                freeCam.enabled = true;
+                aerialCam.enabled = false;
+                break;
+            case CameraView.Aerial:
+                followCam.enabled = false;
+                freeCam.enabled = false;
+                aerialCam.enabled = true;
+                break;
+        }
+    }
 
     private void GetInput()
     {
@@ -88,9 +117,9 @@ public class CameraController : MonoBehaviour
         freeCam.transform.position += freeCamMoveDirection * inputSensitivity * Time.deltaTime;
         
         var camPos = freeCam.transform.position;
-        camPos.x = Mathf.Clamp(camPos.x, _battlefieldCenter.position.x - boundsX, _battlefieldCenter.position.x + boundsX);
+        //camPos.x = Mathf.Clamp(camPos.x, _battlefieldCenter.position.x - boundsX, _battlefieldCenter.position.x + boundsX);
         camPos.y = Mathf.Clamp(camPos.y, _battlefieldCenter.position.y + 5, _battlefieldCenter.position.y + 15);
-        camPos.z = Mathf.Clamp(camPos.z, _battlefieldCenter.position.z - boundsZ, _battlefieldCenter.position.z + boundsZ);
+        //camPos.z = Mathf.Clamp(camPos.z, _battlefieldCenter.position.z - boundsZ, _battlefieldCenter.position.z + boundsZ);
         freeCam.transform.position = camPos;
 
         freeCam.transform.localEulerAngles += freeCamRotation * inputSensitivity * 4 * Time.deltaTime;
@@ -113,20 +142,6 @@ public class CameraController : MonoBehaviour
         else if (aerialCam.m_Lens.FieldOfView > aerialCamMaxFOV) aerialCam.m_Lens.FieldOfView = aerialCamMaxFOV;
     }
 
-    public void SetHome(Vector3 position, float rotation)
-    {
-        homePosition = position;
-        homeRotation.y = rotation;
-    }
-
-    public void ReturnHome()
-    {
-        if (_currentView == CameraView.Follow) return;
-
-        freeCam.transform.position = homePosition;
-        freeCam.transform.localEulerAngles = homeRotation;
-    }
-
     //Switch between free camera and aerial cam during combat
     public void SwitchView()
     {
@@ -144,31 +159,6 @@ public class CameraController : MonoBehaviour
         {
             //Switch to Free
             SetActiveCamera(CameraView.Free);
-            ReturnHome();
-        }
-    }
-
-    private void SetActiveCamera(CameraView view)
-    {
-        _currentView = view;
-
-        switch (view)
-        {
-            case CameraView.Follow:
-                followCam.enabled = true;
-                freeCam.enabled = false;
-                aerialCam.enabled = false;
-                break;
-            case CameraView.Free:
-                followCam.enabled = false;
-                freeCam.enabled = true;
-                aerialCam.enabled = false;
-                break;
-            case CameraView.Aerial:
-                followCam.enabled = false;
-                freeCam.enabled = false;
-                aerialCam.enabled = true;
-                break;
         }
     }
 
@@ -180,11 +170,6 @@ public class CameraController : MonoBehaviour
     private void OnCombatStart()
     {
         SetActiveCamera(CameraView.Free);
-        ReturnHome();
-
-        var room = PlayerController.instance.currentRoom;
-        boundsX = room.RoomDimensions.x * 0.5f;
-        boundsZ = room.RoomDimensions.y * 0.5f;
 
         aerialCam.transform.eulerAngles = new Vector3(90, _battlefieldCenter.eulerAngles.x, 0);
     }
