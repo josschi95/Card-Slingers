@@ -30,11 +30,17 @@ public class GameManager : MonoBehaviour
     public OnPlayerGoldChange onTempGoldChange;
     public OnPlayerGoldChange onTotalGoldChange;
 
+    [SerializeField] private float _version;
+    
+    [Space] [Space]
+
     [SerializeField] private Image screenFade;
 
     [SerializeField] private EffectManager effectManager;
     [SerializeField] private ParticlePool _bloodParticlePool;
     [SerializeField] private ParticlePool _unsummonParticlePool;
+
+    public float Version => _version;
 
     private void Start()
     {
@@ -69,6 +75,7 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region - Scene Loading -
+    [SerializeField] private CommanderSO _playerCommander;
     private Dungeons _dungeonToLoad;
     private int _dungeonLevelToLoad;
 
@@ -91,6 +98,7 @@ public class GameManager : MonoBehaviour
     private IEnumerator WaitForDungeonToLoad()
     {
         while (!DungeonManager.instance.DungeonIsReady) yield return null;
+        DungeonManager.instance.SpawnPlayer(_playerCommander);
         StartCoroutine(Fade(Color.black, Color.clear));
     }
 

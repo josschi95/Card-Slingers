@@ -51,3 +51,4 @@ MonoBehaviour:
     - {fileID: 11400000, guid: c47cfe035bb57f140976872d431dd7c8, type: 2}
     - {fileID: 11400000, guid: c47cfe035bb57f140976872d431dd7c8, type: 2}
     - {fileID: 11400000, guid: c47cfe035bb57f140976872d431dd7c8, type: 2}
+  _playerCommander: 1

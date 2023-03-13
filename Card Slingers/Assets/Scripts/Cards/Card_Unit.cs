@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
+[System.Serializable]
 public class Card_Unit : Card_Permanent
 {
     public delegate void OnAnimatorEventCallback();
@@ -378,7 +379,7 @@ public class Card_Unit : Card_Permanent
         }
 
         OnRemoveFromField();
-        Object.Destroy(Summon); //Destroy unit
+        Object.Destroy(Summon.gameObject); //Destroy unit
 
         //Invoke an event for the commander to listen to
         onRemovedFromField?.Invoke(this);

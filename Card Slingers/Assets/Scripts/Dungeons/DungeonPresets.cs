@@ -8,7 +8,7 @@ public class DungeonPresets : ScriptableObject
     [SerializeField] private Dungeons _dungeon;
 
     [Header("Combat Encounters")]
-    [SerializeField] private CombatEncounter[] _encounters;
+    [SerializeField] private EnemyGroupPreset[] _encounters;
 
     [Header("Room Prefabs")]
     [SerializeField] private DungeonRoom[] _roomPrefabs;
@@ -24,7 +24,7 @@ public class DungeonPresets : ScriptableObject
     [SerializeField] private Obstacle[] _obstacles;
 
     public Dungeons Dungeon => _dungeon;
-    public CombatEncounter[] Encounters => _encounters;
+    public EnemyGroupPreset[] Encounters => _encounters;
     public DungeonRoom[] RoomPrefabs => _roomPrefabs;
     public IntermediaryNode[] Corners => _corners;
     public DungeonRoom StartRoomPrefab => _startRoomPrefab;

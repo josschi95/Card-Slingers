@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerHandDisplay : MonoBehaviour
 {
-    [SerializeField] private PlayerCommander _player;
+    private PlayerCommander _player;
     [SerializeField] private CardDisplay[] _playerCards;
 
     [Space]
@@ -13,8 +13,11 @@ public class PlayerHandDisplay : MonoBehaviour
     [SerializeField] private float _cardSpacing;
     private int _cardsInHand;
 
-    private void Start()
+    private IEnumerator Start()
     {
+        while (PlayerController.instance == null) yield return null;
+
+        _player = PlayerController.instance.gameObject.GetComponent<PlayerCommander>();
         _player.onCardsInHandChange += UpdateCardDisplay;
 
         for (int i = 0; i < _playerCards.Length; i++)
@@ -22,8 +25,6 @@ public class PlayerHandDisplay : MonoBehaviour
             _playerCards[i].gameObject.SetActive(false);
         }
     }
-
-
 
     private void UpdateCardDisplay()
     {

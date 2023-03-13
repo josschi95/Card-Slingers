@@ -11,14 +11,23 @@ public class Obstacle : MonoBehaviour
     [SerializeField] private int _maxHealth;
     [SerializeField] private int _currentHealth;
 
-    public void OnOccupyNode()
+    public void OnOccupyNode(GridNode node)
     {
-        var colls = Physics.OverlapSphere(transform.position, 0.5f);
-        var node = colls[0].GetComponent<GridNode>();
-
-        if (node == null || node.transform.position != transform.position) Debug.LogWarning("Fuck off.");
+        //var node = BattlefieldManager.instance.GetNode(transform.position);
+        if (node == null || node.transform.position != transform.position) Debug.LogError("Obstacle placed incorrectly.");
 
         Node = node;
         node.Obstacle = this;
+    }
+
+    private void AbandonNode()
+    {
+        Node.Obstacle = null;
+    }
+
+    public void OnObstacleRemoved()
+    {
+        AbandonNode();
+        Destroy(gameObject);
     }
 }

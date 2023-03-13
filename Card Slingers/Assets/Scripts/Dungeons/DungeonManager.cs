@@ -2,17 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//Down the line, I can possibly make some Scriptable Objects for each dungeon which will house the room/hallway prefabs 
-//As well as the encounters, and then I only need one dungeon scene which will read the dungeon type and then spawn the correct 
-//items from there. Obviously I will still need separate scenes for the pre-built boss dungeons, but that's minor. 
-
 public class DungeonManager : MonoBehaviour
 {
+    #region - Singleton -
     public static DungeonManager instance;
     private void Awake()
     {
         instance = this;
     }
+    #endregion
 
     private bool _dungeonIsReady = false;
     public bool DungeonIsReady
@@ -24,29 +22,15 @@ public class DungeonManager : MonoBehaviour
         }
     }
 
-    [SerializeField] private DungeonPresets[] _dungeonPresets;
-
-    [SerializeField] private DungeonGenerator _generator;
-
-    [Space]
-
     [SerializeField] private DungeonSize _dungeonSize; //For Testing Only
-
+    [SerializeField] private DungeonGenerator _generator;
+    [SerializeField] private Transform _playerChildren;
     [Space]
-
-    [SerializeField] 
-    private List<CombatEncounter> _encounters;
-
-    public bool AllEncountersComplete()
-    {
-        if (_encounters.Count == 0) return true;
-        return false;
-    }
-
-    private void Start()
-    {
-        DuelManager.instance.onMatchStarted += OnEncounterInitiated;
-    }
+    [SerializeField] private DungeonPresets[] _dungeonPresets;
+    [SerializeField] private List<EnemyGroupManager> _monsterGroups;
+    [SerializeField] private LayerMask _layerMask;
+    public LayerMask Mask => _layerMask;
+    public DungeonGenerator Generator => _generator;
 
     public void CreateDungeon(Dungeons dungeon, int floor)
     {
@@ -55,27 +39,52 @@ public class DungeonManager : MonoBehaviour
         _generator.BeginGeneration(_dungeonPresets[(int)dungeon], _dungeonSize);
     }
 
-    //FOR TESTING ONLY
-    /*public void CreateDungeon(int floor)
+    public void SpawnPlayer(CommanderSO playerSO)
     {
-        _dungeonIsReady = false;
-        Debug.Log("Floor set to " + floor);
-        _generator.BeginGeneration(_dungeonSize);
-        //Change this to take in the level and set number of rooms and combats accordingly
-    }*/
+        var player = playerSO.SpawnCommander(BattlefieldManager.instance.GetNode(Vector3.zero));
+        
+        var capsule = player.gameObject.AddComponent<CapsuleCollider>();
+        var center = new Vector3(0, 1f, 0);
+        capsule.center = center;
+        capsule.height = 2;
 
-    public void SetEncounters(List<CombatEncounter> encounters)
-    {
-        _encounters = new List<CombatEncounter>(encounters);
+        player.gameObject.AddComponent<PlayerController>();
+        _playerChildren.SetParent(player.gameObject.transform);
     }
 
-    private void OnEncounterInitiated(CombatEncounter encounter)
+    public void AddGroups(List<EnemyGroupManager> monsterGroups)
     {
-        _encounters.Remove(encounter); //There is currently no "fleeing" from combat
+        _monsterGroups = new List<EnemyGroupManager>(monsterGroups);
+
+        for (int i = 0; i < _monsterGroups.Count; i++)
+        {
+            _monsterGroups[i].onGroupEliminated += OnGroupEliminated;
+        }
+    }
+
+    private void OnGroupEliminated(EnemyGroupManager group)
+    {
+        group.onGroupEliminated -= OnGroupEliminated;
+        _monsterGroups.Remove(group);
+    }
+
+    public bool AllEncountersComplete()
+    {
+        if (_monsterGroups.Count == 0) return true;
+        return false;
+    }
+
+    private void OnDestroy()
+    {
+        for (int i = 0; i < _monsterGroups.Count; i++)
+        {
+            _monsterGroups[i].onGroupEliminated -= OnGroupEliminated;
+        }
     }
 
     //Criteria to leave
-    // 1. Defeat all
-    // 2. Defeat most
-    // 3. Defeat boss
+    // 1. Defeat all groups
+    // 2. Defeat most groups
+    // 3. Defeat most monsters
+    // 4. Defeat boss
 }

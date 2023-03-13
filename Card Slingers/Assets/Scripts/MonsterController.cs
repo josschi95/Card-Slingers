@@ -5,6 +5,25 @@ using UnityEngine;
 
 public class MonsterController : MonoBehaviour
 {
+    [SerializeField] private LayerMask _layerMask;
+    public LayerMask Mask
+    {
+        get => _layerMask;
+        set
+        {
+            _layerMask = value;
+        }
+    }
+    private EnemyGroupManager _groupManager;
+    public EnemyGroupManager GroupManager
+    {
+        get => _groupManager;
+        set
+        {
+            _groupManager = value;
+        }
+    }
+
     private Card_Unit _unit;
     public Card_Unit Unit
     {
@@ -16,10 +35,53 @@ public class MonsterController : MonoBehaviour
     }
 
     private List<TargetPriority> priorityList;
+    private bool _isInCombat;
+
+    public bool IsInCombat
+    {
+        get => _isInCombat;
+        set
+        {
+            _isInCombat = value;
+        }
+    }
+    private Transform _target;
+    private float _sightDistance = 25f;
+    private Transform _eyes;
+    RaycastHit hit;
+    Ray ray;
 
     private void Awake()
     {
         priorityList = new List<TargetPriority>();
+        _eyes = GetComponent<Summon>().Eyes;
+    }
+
+    private IEnumerator Start()
+    {
+        while (PlayerController.instance == null) yield return null;
+        yield return new WaitForSeconds(1f);
+        _target = PlayerController.instance.Transform;
+    }
+
+    private void Update()
+    {
+        LookForPlayer();
+    }
+
+    private void LookForPlayer()
+    {
+        if (_isInCombat) return;
+
+        if (_target != null) _unit.Summon.FaceTarget(_target.position);
+
+        ray = new Ray(_eyes.position, _eyes.forward);
+        Debug.DrawRay(_eyes.position, _eyes.forward);
+        if (Physics.Raycast(ray, out hit, _sightDistance, _layerMask, QueryTriggerInteraction.Collide) && hit.collider != null)
+        {
+            if (hit.collider.GetComponent<PlayerController>()) _groupManager.OnPlayerSpotted();
+
+        }
     }
 
     public void AssignCard(Card_Unit unit)
@@ -126,7 +188,7 @@ public class MonsterController : MonoBehaviour
                     else //able to reach these nodes
                     {
                         //Find the furthest node that can be occupied
-                        if (path[p].CanBeOccupied(_unit)) break;
+                        if (path[p].CanBeOccupied()) break;
                         else path.RemoveAt(p);
                     }
                 }

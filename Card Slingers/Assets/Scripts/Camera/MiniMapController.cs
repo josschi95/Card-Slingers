@@ -34,7 +34,12 @@ public class MiniMapController : MonoBehaviour, IScrollHandler, IBeginDragHandle
         _mapRect.anchoredPosition = _hiddenPos;
 
         _mapToggleButton.onClick.AddListener(ToggleDisplay);
-        DuelManager.instance.onMatchStarted += delegate { HideMap(); };
+        DuelManager.instance.onCombatBegin += delegate { HideMap(); };
+    }
+
+    private void OnDestroy()
+    {
+        DuelManager.instance.onCombatBegin -= delegate { HideMap(); };
     }
 
     private void HideMap()

@@ -6,9 +6,12 @@ using UnityEngine.UI;
 public class MainMenuManager : MonoBehaviour
 {
     [SerializeField] private Button _continueButton, _newGameButton, _settingsButton, _creditsButton, _quitButton;
+    [Space]
+    [SerializeField] private Text _versionText;
 
     private void Start()
     {
+        _versionText.text = "v" + GameManager.instance.Version.ToString();
         _continueButton.onClick.AddListener(OnContinue);
         _newGameButton.onClick.AddListener(OnNewGame);
         _settingsButton.onClick.AddListener(OnSettings);

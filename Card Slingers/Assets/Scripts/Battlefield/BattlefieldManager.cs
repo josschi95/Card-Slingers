@@ -13,7 +13,6 @@ public class BattlefieldManager : MonoBehaviour
 
     private GridNode[,] gridArray;
     private Vector2Int _dimensions;
-    [SerializeField] private int[] _laneThreatArray;
     [Space]
     [SerializeField] private Transform _center;
     [SerializeField] private Transform _cameraHome;
@@ -26,60 +25,31 @@ public class BattlefieldManager : MonoBehaviour
     public int Width => _dimensions.x; //These are currently only being used for early testing
     public int Depth => _dimensions.y;
     public float CellSize => CELL_SIZE;
-    public int[] LaneThreatArray => _laneThreatArray;
     #endregion
 
     #region - Grid -
-    public void CreateGrid(Vector3 center, Vector3 rotation, Vector2Int dimensions)
+    public void CreateGrid(Vector3 origin, Vector2Int dimensions)
     {
-        _center.position = center;
+        Physics.SyncTransforms();
+
         _dimensions = dimensions;
-
-        _origin = new Vector3(
-            (-Width * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + Center.position.x,
-            Center.position.y, 
-            (-Depth * CELL_SIZE * 0.5f) + (CELL_SIZE * 0.5f) + Center.position.z);
-        
-
-        float f = Depth; int playerDepth = Mathf.RoundToInt(f * 0.5f);
+        _origin = origin;
 
         gridArray = new GridNode[Width, Depth];
-        _laneThreatArray = new int[Width];
-
         for (int x = 0; x < gridArray.GetLength(0); x++)
         {
             for (int z = 0; z < gridArray.GetLength(1); z++)
             {
-                var go = Instantiate(node, GetGridPosition(x, z), Quaternion.identity, Center);
+                var nodePos = GetGridPosition(x, z);
+
+                if (!Physics.CheckSphere(nodePos, 0.5f)) continue;
+
+                var go = Instantiate(node, nodePos, Quaternion.identity, Center);
 
                 gridArray[x, z] = go;
-                gridArray[x, z].OnAssignCoordinates(x, z, z < playerDepth);
-                gridArray[x, z].onNodeValueChanged += OnNodeValueChanged;
+                gridArray[x, z].OnAssignCoordinates(x, z);
             }
         }
-
-        _center.localEulerAngles = rotation;
-
-        float initZ = 27 + ((Depth - 6) * 2.5f);
-        _cameraHome.localPosition = new Vector3(0, 12, -initZ);
-
-        CameraController.instance.SetHome(_cameraHome.position, Center.localEulerAngles.y);
-    }
-
-    public void DestroyGrid()
-    {
-        for (int x = 0; x < gridArray.GetLength(0); x++)
-        {
-            for (int z = 0; z < gridArray.GetLength(1); z++)
-            {
-                var node = gridArray[x, z];
-                node.onNodeValueChanged -= OnNodeValueChanged;
-                node.ReleaseToPool();
-                //Destroy(node.gameObject);
-            }
-        }
-
-        _center.localEulerAngles = Vector3.zero;
     }
 
     public GridNode GetNode(int x, int z)
@@ -88,8 +58,23 @@ public class BattlefieldManager : MonoBehaviour
         {
             return gridArray[x, z];
         }
+        return null;
 
-        throw new System.Exception("parameter " + x + "," + z + " outside bounds of array");
+        //throw new System.Exception("parameter " + x + "," + z + " outside bounds of array");
+    }
+
+    public GridNode GetNode(Vector3 worldPosition)
+    {
+        int x = Mathf.FloorToInt(((Mathf.Abs(worldPosition.x - _origin.x)) + 2.5f) / CELL_SIZE);
+        int z = Mathf.FloorToInt(((Mathf.Abs(worldPosition.z - _origin.z)) + 2.5f) / CELL_SIZE);
+        return GetNode(x, z);
+    }
+
+    public GridNode GetNode(float worldXPos, float worldZPos)
+    {
+        int x = Mathf.FloorToInt(((Mathf.Abs(worldXPos - _origin.x)) + 2.5f) / CELL_SIZE);
+        int z = Mathf.FloorToInt(((Mathf.Abs(worldZPos - _origin.z)) + 2.5f) / CELL_SIZE);
+        return GetNode(x, z);
     }
 
     private Vector3 GetLocalGridPosition(int x, int z)
@@ -112,12 +97,36 @@ public class BattlefieldManager : MonoBehaviour
             {
                 var vertical = Mathf.Abs(originNode.gridZ - z);
                 var horizontal = Mathf.Abs(originNode.gridX - x);
-                if (vertical + horizontal <= range) nodeList.Add(gridArray[x, z]);
+                if (vertical + horizontal > range) continue;
+                var node = GetNode(x, z);
+                if (node == null) continue;
+                nodeList.Add(node);
             }
         }
         return nodeList;
     }
 
+    public List<GridNode> GetSummonableNodes(GridNode originNode, int range)
+    {
+        var nodeList = new List<GridNode>();
+
+        for (int x = 0; x < gridArray.GetLength(0); x++)
+        {
+            for (int z = 0; z < gridArray.GetLength(1); z++)
+            {
+                var vertical = Mathf.Abs(originNode.gridZ - z);
+                var horizontal = Mathf.Abs(originNode.gridX - x);
+                if (vertical + horizontal > range) continue;
+
+                var node = GetNode(x, z);
+
+                if (node == null) continue;
+                if (node.Occupant != null || node.Obstacle != null) continue;
+                nodeList.Add(node);
+            }
+        }
+        return nodeList;
+    }
 
     public List<GridNode> GetControlledNodesInLane(bool isPlayer, int lane)
     {
@@ -149,55 +158,41 @@ public class BattlefieldManager : MonoBehaviour
         return tempList;
     }
 
-
-
-    public List<GridNode> GetSummonableNodes(bool isplayer)
+    public List<GridNode> GetNodesInRoom(DungeonRoom room, bool excludePerimeter = false, bool excludeEntrances = true)
     {
-        var tempList = new List<GridNode>();
-        int halfDepth = Mathf.RoundToInt(Depth * 0.5f);
+        var nodeList = new List<GridNode>();
+        //Debug.Log("Center: " + room.transform.position);
+        var origin = room.Transform.position;
+        origin.x -= (room.RoomDimensions.x - CELL_SIZE) * 0.5f;
+        origin.z -= (room.RoomDimensions.y - CELL_SIZE) * 0.5f;
+        //Debug.Log("Origin: " + origin);
 
-        if (isplayer)
+        for (int x = 0; x < room.BoardDimensions.x; x++)
         {
-            //Goes lane by lane from 0 to width
-            for (int x = 0; x < Width; x++)
+            for (int z = 0; z < room.BoardDimensions.y; z++)
             {
-                for (int z = 0; z < halfDepth; z++)
+                if (excludePerimeter) //Don't include the outside ring of nodes
                 {
-                    var node = GetNode(x, z);
-
-                    if (node.Obstacle != null) continue;
-                    if (node.Occupant != null)
-                    {
-                        if (!node.Occupant.isPlayerCard) break;
-                        else continue;
-                    }
-
-                    tempList.Add(node);
+                    if (x == 0 || z == 0) continue;
+                    if (x == room.BoardDimensions.x - 1 || z == room.BoardDimensions.y - 1) continue; //break?
                 }
-            }
-        }
-        else
-        {
-            //Goes lane by lane from 0 to width
-            for (int x = 0; x < Width; x++)
-            {
-                for (int z = Depth - 1; z >= halfDepth; z--)
+
+                if (excludeEntrances) //Don't include the nodes in the outside ring in the middle of that side
                 {
-                    var node = GetNode(x, z);
+                    int middleX = Mathf.CeilToInt(room.BoardDimensions.x);
+                    int middleZ = Mathf.CeilToInt(room.BoardDimensions.y);
 
-                    if (node.Obstacle != null) continue;
-                    if (node.Occupant != null)
-                    {
-                        if (node.Occupant.isPlayerCard) break;
-                        else continue;
-                    }
-
-                    tempList.Add(node);
+                    if (z == middleZ && x == 0) continue;
+                    else if (z == middleZ && x == room.BoardDimensions.x - 1) continue;
+                    else if (x == middleX && z == 0) continue;
+                    else if (x == middleX && z == room.BoardDimensions.y - 1) continue;
                 }
+
+                nodeList.Add(GetNode(new Vector3(origin.x + x * CELL_SIZE, 0, origin.z + z * CELL_SIZE)));
             }
         }
 
-        return tempList;
+        return nodeList;
     }
 
     /// <summary>
@@ -213,18 +208,6 @@ public class BattlefieldManager : MonoBehaviour
         }
 
         return tempList;
-    }
-
-    private void OnNodeValueChanged(GridNode node)
-    {
-        int lane = node.gridX;
-        int newLaneValue = 0;
-
-        for (int i = 0; i < gridArray.GetLength(0); i++)
-        {
-            newLaneValue += gridArray[lane, i].occupantPower;
-        }
-        _laneThreatArray[lane] = newLaneValue;
     }
     #endregion
 
@@ -247,6 +230,7 @@ public class BattlefieldManager : MonoBehaviour
             for (int y = 0; y < Depth; y++)
             {
                 GridNode pathNode = GetNode(x, y);
+                if (pathNode == null) continue;
                 pathNode.gCost = int.MaxValue;
                 pathNode.CalculateFCost();
                 pathNode.cameFromNode = null;
@@ -261,7 +245,7 @@ public class BattlefieldManager : MonoBehaviour
         {
             GridNode currentNode = GetLowestFCostNode(openList);
 
-            if (stopInRange && GetDistanceInNodes(currentNode, endNode) <= unit.Range && currentNode.CanBeOccupied(unit))
+            if (stopInRange && GetDistanceInNodes(currentNode, endNode) <= unit.Range && currentNode.CanBeOccupied())
             {
                 //Don't need to move any further
                 //Debug.Log("Found closest node within range, located at " + currentNode.gridX + "," + currentNode.gridZ);
@@ -323,7 +307,9 @@ public class BattlefieldManager : MonoBehaviour
             for (int y = 0; y < Depth; y++)
             {
                 GridNode pathNode = GetNode(x, y);
-                if (pathNode.CanBeTraversed(unit) && pathNode.CanBeOccupied(unit) && GetDistanceInNodes(startNode, pathNode) <= unit.MovesLeft + 1)
+                if (pathNode == null) continue;
+
+                if (pathNode.CanBeTraversed(unit) && pathNode.CanBeOccupied() && GetDistanceInNodes(startNode, pathNode) <= unit.MovesLeft + 1)
                 {
                     nodes.Add(pathNode);
                     //Debug.Log(pathNode.x + "," + pathNode.y);
@@ -357,9 +343,11 @@ public class BattlefieldManager : MonoBehaviour
             for (int y = 0; y < Depth; y++)
             {
                 GridNode pathNode = GetNode(x, y);
+                if (pathNode == null) continue;
+
                 var dist = GetDistanceInNodes(startNode, pathNode);
                 if (dist <= unit.MovesLeft + unit.Range && pathNode.CanBeAttacked(unit)) attackNodes.Add(pathNode);
-                if (dist <= unit.MovesLeft && pathNode.CanBeOccupied(unit)) walkNodes.Add(pathNode);
+                if (dist <= unit.MovesLeft && pathNode.CanBeOccupied()) walkNodes.Add(pathNode);
             }
         }
 
@@ -379,6 +367,7 @@ public class BattlefieldManager : MonoBehaviour
             for (int y = 0; y < Depth; y++)
             {
                 GridNode pathNode = GetNode(x, y);
+                if (pathNode == null) continue;
                 //Add all walkable nodes which can be accessed 
                 if (pathNode.CanBeAttacked(unit) && GetDistanceInNodes(startNode, pathNode) <= range + unit.MovesLeft)
                 {
@@ -407,7 +396,7 @@ public class BattlefieldManager : MonoBehaviour
 
             //The node path has at least two nodes in it - Checking this to not throw an error for the next check
             //The final node in the path can be occupied
-            else if (path.Count >= 2 && !path[path.Count - 1].CanBeOccupied(unit))
+            else if (path.Count >= 2 && !path[path.Count - 1].CanBeOccupied())
             {
                 //Ok this is where I'm running into an issue
                 //Debug.Log("Cannot occupy node needed to move to");
@@ -443,6 +432,8 @@ public class BattlefieldManager : MonoBehaviour
 
     public int GetDistanceInNodes(GridNode fromNode, GridNode toNode)
     {
+        if (fromNode == null) throw new UnityException("FromNode is null!");
+        if (toNode == null) throw new UnityException("ToNode is null!");
         var vertical = Mathf.Abs(fromNode.gridZ - toNode.gridZ);
         var horizontal = Mathf.Abs(fromNode.gridX - toNode.gridX);
         return vertical + horizontal;
@@ -467,13 +458,29 @@ public class BattlefieldManager : MonoBehaviour
         List<GridNode> neighborList = new List<GridNode>();
 
         //Up
-        if (currentNode.gridZ + 1 < Depth) neighborList.Add(GetNode(currentNode.gridX, currentNode.gridZ + 1));
+        if (currentNode.gridZ + 1 < Depth)
+        {
+            var neighbor = GetNode(currentNode.gridX, currentNode.gridZ + 1);
+            if (neighbor != null) neighborList.Add(neighbor);
+        }
         //Down
-        if (currentNode.gridZ - 1 >= 0) neighborList.Add(GetNode(currentNode.gridX, currentNode.gridZ - 1));
+        if (currentNode.gridZ - 1 >= 0)
+        {
+            var neighbor = GetNode(currentNode.gridX, currentNode.gridZ - 1);
+            if (neighbor != null) neighborList.Add(neighbor);
+        }
         //Left
-        if (currentNode.gridX - 1 >= 0) neighborList.Add(GetNode(currentNode.gridX - 1, currentNode.gridZ));
+        if (currentNode.gridX - 1 >= 0)
+        {
+            var neighbor = GetNode(currentNode.gridX - 1, currentNode.gridZ);
+            if (neighbor != null) neighborList.Add(neighbor);
+        }
         //Right
-        if (currentNode.gridX + 1 < Width) neighborList.Add(GetNode(currentNode.gridX + 1, currentNode.gridZ));
+        if (currentNode.gridX + 1 < Width)
+        {
+            var neighbor = GetNode(currentNode.gridX + 1, currentNode.gridZ);
+            if (neighbor != null) neighborList.Add(neighbor);
+        }
 
         return neighborList;
     }

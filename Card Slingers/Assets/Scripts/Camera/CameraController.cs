@@ -18,8 +18,8 @@ public class CameraController : MonoBehaviour
     [Range(1, 10)]
     [SerializeField] private float _zoomSensitivity = 5f;
     [Space]
-    [SerializeField] private CinemachineVirtualCamera followCam;
-    [SerializeField] private CinemachineVirtualCamera freeCam;
+    [SerializeField] private CinemachineFreeLook _freeCam;
+    [SerializeField] private CinemachineVirtualCamera _unlockedCam;
     [Space]
     [Header("Aerial Camera")]
     [SerializeField] private CinemachineVirtualCamera aerialCam;
@@ -36,15 +36,20 @@ public class CameraController : MonoBehaviour
     private float zoomInput;
 
     private Vector3 homePosition, homeRotation = new Vector3(35, 0, 0);
-    private float boundsX, boundsZ; //limit the movement of the free cam to the current room
+    //private float boundsX, boundsZ; //limit the movement of the free cam to the current room
 
     #region - Unity Methods -
     private void Start()
     {
-        SetActiveCamera(CameraView.Follow);
+        SetActiveCamera(CameraView.FreeLook);
 
          _battlefieldCenter = BattlefieldManager.instance.Center;
-        DuelManager.instance.onMatchStarted += delegate { OnMatchStart(); };
+        DuelManager.instance.onCombatBegin += delegate { OnMatchStart(); };
+    }
+
+    private void OnDestroy()
+    {
+        DuelManager.instance.onCombatBegin -= delegate { OnMatchStart(); };
     }
 
     private void Update()
@@ -58,6 +63,38 @@ public class CameraController : MonoBehaviour
     }
     #endregion
 
+    private void SetActiveCamera(CameraView view)
+    {
+        _currentView = view;
+
+        switch (view)
+        {
+            case CameraView.FreeLook:
+                _freeCam.enabled = true;
+                _unlockedCam.enabled = false;
+                aerialCam.enabled = false;
+                break;
+            case CameraView.Unlocked:
+                _freeCam.enabled = false;
+                _unlockedCam.enabled = true;
+                aerialCam.enabled = false;
+
+                _unlockedCam.transform.position = _freeCam.transform.position;
+                _unlockedCam.transform.localEulerAngles = new Vector3(_unlockedCam.transform.localEulerAngles.x, cam.transform.localEulerAngles.y, 0);
+                break;
+            case CameraView.Aerial:
+                _freeCam.enabled = false;
+                _unlockedCam.enabled = false;
+                aerialCam.enabled = true;
+
+                var newPos = aerialCam.transform.position;
+                newPos.x = PlayerController.instance.transform.position.x;
+                newPos.z = PlayerController.instance.transform.position.z;
+                aerialCam.transform.position = newPos;
+                break;
+        }
+    }
+
     private void GetInput()
     {
         movementInput = InputHandler.GetMoveInput();
@@ -69,7 +106,7 @@ public class CameraController : MonoBehaviour
 
     private void HandleCameraPositions()
     {
-        if (_currentView == CameraView.Free)
+        if (_currentView == CameraView.Unlocked)
         {
             HandleFreeCameraZoom();
             HandleFreeCamPosition();
@@ -85,25 +122,25 @@ public class CameraController : MonoBehaviour
     {
         freeCamMoveDirection = cam.transform.forward * cameraDelta.z + cam.transform.right * cameraDelta.x;
         freeCamMoveDirection.y = 0;
-        freeCam.transform.position += freeCamMoveDirection * inputSensitivity * Time.deltaTime;
+        _unlockedCam.transform.position += freeCamMoveDirection * inputSensitivity * Time.deltaTime;
         
-        var camPos = freeCam.transform.position;
-        camPos.x = Mathf.Clamp(camPos.x, _battlefieldCenter.position.x - boundsX, _battlefieldCenter.position.x + boundsX);
+        var camPos = _unlockedCam.transform.position;
+        //camPos.x = Mathf.Clamp(camPos.x, _battlefieldCenter.position.x - boundsX, _battlefieldCenter.position.x + boundsX);
         camPos.y = Mathf.Clamp(camPos.y, _battlefieldCenter.position.y + 5, _battlefieldCenter.position.y + 15);
-        camPos.z = Mathf.Clamp(camPos.z, _battlefieldCenter.position.z - boundsZ, _battlefieldCenter.position.z + boundsZ);
-        freeCam.transform.position = camPos;
+        //camPos.z = Mathf.Clamp(camPos.z, _battlefieldCenter.position.z - boundsZ, _battlefieldCenter.position.z + boundsZ);
+        _unlockedCam.transform.position = camPos;
 
-        freeCam.transform.localEulerAngles += freeCamRotation * inputSensitivity * 4 * Time.deltaTime;
+        _unlockedCam.transform.localEulerAngles += freeCamRotation * inputSensitivity * 4 * Time.deltaTime;
     }
 
     private void HandleFreeCameraZoom()
     {
-        if (freeCam.transform.position.y <= _battlefieldCenter.position.y + 5 && zoomInput > 0) return;
-        else if (freeCam.transform.position.y >= _battlefieldCenter.position.y + 15 && zoomInput < 0) return;
+        if (_unlockedCam.transform.position.y <= _battlefieldCenter.position.y + 5 && zoomInput > 0) return;
+        else if (_unlockedCam.transform.position.y >= _battlefieldCenter.position.y + 15 && zoomInput < 0) return;
 
         //var camForward = cam.transform.forward * zoomInput + cam.transform.right * cameraDelta.x;
         var camForward = Vector3.down * zoomInput; //move camera up/down
-        freeCam.transform.position += camForward * _zoomSensitivity * Time.deltaTime;
+        _unlockedCam.transform.position += camForward * _zoomSensitivity * Time.deltaTime;
     }
 
     private void HandleAerialCameraFOV()
@@ -113,25 +150,11 @@ public class CameraController : MonoBehaviour
         else if (aerialCam.m_Lens.FieldOfView > aerialCamMaxFOV) aerialCam.m_Lens.FieldOfView = aerialCamMaxFOV;
     }
 
-    public void SetHome(Vector3 position, float rotation)
-    {
-        homePosition = position;
-        homeRotation.y = rotation;
-    }
-
-    public void ReturnHome()
-    {
-        if (_currentView == CameraView.Follow) return;
-
-        freeCam.transform.position = homePosition;
-        freeCam.transform.localEulerAngles = homeRotation;
-    }
-
     //Switch between free camera and aerial cam during combat
     public void SwitchView()
     {
-        if (_currentView == CameraView.Follow) return;
-        else if (_currentView == CameraView.Free)
+        if (_currentView == CameraView.FreeLook) return;
+        else if (_currentView == CameraView.Unlocked)
         {
             //Switch to Aerial
             var battlefieldPos = _battlefieldCenter.position;
@@ -143,56 +166,19 @@ public class CameraController : MonoBehaviour
         else
         {
             //Switch to Free
-            SetActiveCamera(CameraView.Free);
-            ReturnHome();
-        }
-    }
-
-    private void SetActiveCamera(CameraView view)
-    {
-        _currentView = view;
-
-        switch (view)
-        {
-            case CameraView.Follow:
-                followCam.enabled = true;
-                freeCam.enabled = false;
-                aerialCam.enabled = false;
-                break;
-            case CameraView.Free:
-                followCam.enabled = false;
-                freeCam.enabled = true;
-                aerialCam.enabled = false;
-                break;
-            case CameraView.Aerial:
-                followCam.enabled = false;
-                freeCam.enabled = false;
-                aerialCam.enabled = true;
-                break;
+            SetActiveCamera(CameraView.Unlocked);
         }
     }
 
     private void OnMatchStart()
     {
-        Invoke("OnCombatStart", 1.5f);
-    }
-
-    private void OnCombatStart()
-    {
-        SetActiveCamera(CameraView.Free);
-        ReturnHome();
-
-        var room = PlayerController.instance.currentRoom;
-        boundsX = room.RoomDimensions.x * 0.5f;
-        boundsZ = room.RoomDimensions.y * 0.5f;
-
-        aerialCam.transform.eulerAngles = new Vector3(90, _battlefieldCenter.eulerAngles.x, 0);
+        SetActiveCamera(CameraView.Unlocked);
     }
 
     public void OnCombatEnd()
     {
-        SetActiveCamera(CameraView.Follow);
+        SetActiveCamera(CameraView.FreeLook);
     }
 }
 
-public enum CameraView { Follow, Free, Aerial }
+public enum CameraView { FreeLook, Unlocked, Aerial }

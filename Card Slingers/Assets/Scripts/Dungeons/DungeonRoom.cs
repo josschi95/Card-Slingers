@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class DungeonRoom : MonoBehaviour
 {
-    [SerializeField] private CombatEncounter _encounter;
     [SerializeField] private Vector2 _fullDimensions;
     [SerializeField] private Vector2Int _boardDimensions;
 
@@ -21,23 +20,15 @@ public class DungeonRoom : MonoBehaviour
     [SerializeField] private GameObject _fogOfWar;
 
     private DungeonRoom[] connectedRooms = new DungeonRoom[4]; // up/down/left/right
-    private List<Obstacle> _obstacles = new List<Obstacle>();
-    public List<Obstacle> Obstacles => _obstacles;
-
-    [Space]
-
-    [Space]
-
-    private Vector3 _orientation;
-    private bool _encounterTriggered;
+    private bool _containsEnemies = false;
 
     #region - Properties - 
-    public CombatEncounter Encounter
+    public bool ContainsEnemies
     {
-        get => _encounter;
+        get => _containsEnemies;
         set
         {
-            _encounter = value;
+            _containsEnemies = value;
         }
     }
     public Vector2 RoomDimensions => _fullDimensions;
@@ -50,14 +41,6 @@ public class DungeonRoom : MonoBehaviour
         set
         {
             connectedRooms = value;
-        }
-    }
-    public Vector3 Orientation
-    {
-        get => _orientation;
-        private set
-        {
-            _orientation = value;
         }
     }
     #endregion
@@ -80,10 +63,8 @@ public class DungeonRoom : MonoBehaviour
         }
     }
 
-    public void OnConfirmLayout()
+    public void CloseEmptyEntrances()
     {
-        _collider.enabled = false;
-        //_fogOfWar.SetActive(true);
         for (int i = 0; i < connectedRooms.Length; i++)
         {
             _entranceParents[i].SetActive(connectedRooms[i] != null);
@@ -96,48 +77,15 @@ public class DungeonRoom : MonoBehaviour
         }
     }
 
-    public void AddObjstacle(Obstacle obstacle)
+    public void OnConfirmLayout()
     {
-        _obstacles.Add(obstacle);
-    }
+        //_collider.enabled = false;
+        //_fogOfWar.SetActive(true);
 
-    public void OnRoomEntered(Direction direction)
-    {
-        PlayerController.instance.onRoomEntered?.Invoke(this);
-
-        switch (direction)
+        var colls = GetComponentsInChildren<Collider>();
+        for (int i = 0; i < colls.Length; i++)
         {
-            case Direction.Up:
-                _orientation = Vector3.up * 180;
-                break;
-            case Direction.Down:
-                _orientation = Vector3.zero;
-                break;
-            case Direction.Left:
-                _orientation = Vector3.up * 90;
-                break;
-            case Direction.Right:
-                _orientation = Vector3.up * -90;
-                break;
+            //colls[i].enabled = false;
         }
-
-        _fogOfWar.SetActive(false);
-
-        if (TESTING_NO_ENCOUNTER)
-        {
-            PlayerController.SetDestination(transform.position);
-            return;
-        }
-
-        if (_encounter != null && !_encounterTriggered) OnCombatEncounter();
-        else PlayerController.SetDestination(transform.position);
-    }
-
-    private void OnCombatEncounter()
-    {
-        _encounter.OnCombatTriggered(); //Call this first to summon units
-        _encounterTriggered = true;
-
-        DuelManager.instance.onMatchStarted?.Invoke(_encounter);
     }
 }

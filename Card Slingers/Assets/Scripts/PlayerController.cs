@@ -4,85 +4,206 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public delegate void OnRoomEnteredCallback(DungeonRoom room);
-    public OnRoomEnteredCallback onRoomEntered;
-
+    #region - Singleton -
     public static PlayerController instance;
     private void Awake()
     {
         instance = this;
     }
+    #endregion
+
+    public delegate void OnGridNodeSelected(GridNode node);
+    public OnGridNodeSelected onNodeSelected;
 
     [SerializeField] private Transform _transform;
-    [SerializeField] private CommanderSO playerCommander;
-    [SerializeField] private float _inputSensitivity = 7.5f;
     [SerializeField] private float _rotationSpeed = 10f;
-    [SerializeField] private Transform _deckPocket;
-    private PathNode _currentWaypoint;
+    private PlayerCommander _playerCommander;
 
-    public DungeonRoom currentRoom { get; private set; }
-    public Transform DeckPocket => _deckPocket;
-    private Vector3 rotationInput;
+    private Vector2 moveInput;
+    private float rotationInput;
 
     private Animator _animator;
     private bool _isMoving;
     private bool _inCombat;
 
-    public Transform rayPos;
-    /*
-     * For changing to manual input for movement, basically keep the same set up but the player would have to hold down W to change the animator speed from 0 to 1
-     * Of course there would also have to be a bool for _allowInput so player can't move during combat, or when they're being sent to the middle after combat
-     * This actually works pretty well even when not on a track. The only issue is that I'll then have to add colliders back onto walls
-     * And I can't do that without majorly fucking up the dungeon generation
-    */
+    public Transform Transform => _transform;
 
-    private void Start()
+    private IEnumerator Start()
     {
-        CreateCommander();
-        DuelManager.instance.onMatchStarted += delegate { _inCombat = true; };
+        _transform = transform;
+        _playerCommander = GetComponent<PlayerCommander>();
+        _animator = GetComponent<Animator>();
+
+        onNodeSelected += SetNodeDestination;
+        DuelManager.instance.onCombatBegin += delegate { _inCombat = true; };
         DuelManager.instance.onPlayerDefeat += delegate { _inCombat = false; };
         DuelManager.instance.onPlayerVictory += delegate { _inCombat = false; };
 
-        onRoomEntered += (room) => currentRoom = room;
+        while (!DungeonManager.instance.DungeonIsReady) yield return null;
+
+        SetInitialFacingDirection();
     }
 
+    private void OnDestroy()
+    {
+        onNodeSelected -= SetNodeDestination;
+        DuelManager.instance.onCombatBegin -= delegate { _inCombat = true; };
+        DuelManager.instance.onPlayerDefeat -= delegate { _inCombat = false; };
+        DuelManager.instance.onPlayerVictory -= delegate { _inCombat = false; };
+    }
+    
     private void Update()
     {
-        rotationInput.y = InputHandler.GetRotationInput();
+        moveInput = InputHandler.GetMoveInput();
+        rotationInput = InputHandler.GetRotationInput();
     }
 
     private void LateUpdate()
     {
-        RotatePlayer();
+        //HandleMovement();
+        //RotatePlayer();
+    }
+
+    private void SetInitialFacingDirection()
+    {
+        //Set correct starting direction
+        var room = DungeonManager.instance.Generator.transform.GetChild(0).GetComponent<DungeonRoom>();
+        for (int i = 0; i < room.Nodes.Length; i++)
+        {
+            if (room.Nodes[i].ConnectedNode != null)
+            {
+                StartCoroutine(RotatePlayer(room.Nodes[i].Point.position, 0.05f));
+                break;
+            }
+        }
+    }
+
+    private void HandleMovement()
+    {
+        if (_inCombat || _isMoving) return;
+
+        if (moveInput.y == 1)
+        {
+            var node = BattlefieldManager.instance.GetNode(_transform.position + _transform.forward * 5);
+            if (node != null) StartCoroutine(MovePlayer(node));
+        }
     }
 
     private void RotatePlayer()
     {
         if (_inCombat || _isMoving) return;
-        transform.localEulerAngles += rotationInput * 10 * _inputSensitivity * Time.deltaTime;
+
+        if (rotationInput == 1) StartCoroutine(RotatePlayer(_transform.position + transform.right));
+        else if (rotationInput == -1) StartCoroutine(RotatePlayer(_transform.position - transform.right));
+        else if (moveInput.y == -1) StartCoroutine(RotatePlayer(_transform.position - transform.forward, 1.4f));
     }
 
-    private void OnDestroy()
+    #region - Manual Movement -
+    private IEnumerator MovePlayer(GridNode node)
     {
-        DuelManager.instance.onMatchStarted -= delegate { _inCombat = true; };
-        DuelManager.instance.onPlayerDefeat -= delegate { _inCombat = false; };
-        DuelManager.instance.onPlayerVictory -= delegate { _inCombat = false; };
+        if (node.Occupant != null) yield break;
+
+        _isMoving = true;
+        _playerCommander.CommanderCard.OnAbandonNode();
+        
+        while (Vector3.Distance(_transform.position, node.Transform.position) > 0.15f)
+        {
+            _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
+            yield return null;
+        }
+        
+        _playerCommander.CommanderCard.OnOccupyNode(node);
+
+        if (moveInput.y == 1)
+        {
+            var nextNode = BattlefieldManager.instance.GetNode(_transform.position + _transform.forward * 5);
+            if (nextNode != null)
+            {
+                StartCoroutine(MovePlayer(nextNode));
+                yield break;
+            }
+        }
+
+        _transform.position = node.Transform.position;
+        _animator.SetFloat("speed", 0);
+        _isMoving = false;
     }
 
-    private void CreateCommander()
+    private IEnumerator RotatePlayer(Vector3 pos, float timeToMove = 0.8f)
     {
-        var player = GetComponent<PlayerCommander>();
-        player.OnAssignCommander(playerCommander);
-        player.CommanderCard.OnCommanderSummon(_transform);
-        _animator = player.CommanderCard.Summon.GetComponent<Animator>();
+        _isMoving = true;
 
-        //_animator.speed = 2;
+        Vector3 direction = (pos - transform.position).normalized;
+        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+
+        float t = 0;
+        while (t < timeToMove)
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, t / timeToMove);
+
+            t += Time.deltaTime;
+            yield return null;
+        }
+        _isMoving = false;
     }
 
-    #region - Movement -
-    public static void SetWaypoint(PathNode point)
+    private void FaceTarget(Vector3 pos) //update this to accept a Transform transform?
     {
-        instance.SetPlayerWaypoint(point);
+        Vector3 direction = (pos - transform.position).normalized;
+        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * _rotationSpeed);
+    }
+    #endregion
+
+    #region - Auto Movement -
+
+    private void SetNodeDestination(GridNode node)
+    {
+        if (_inCombat || _isMoving) return;
+        if (node.Occupant != null || node.Obstacle != null)
+        {
+            StartCoroutine(RotatePlayer(node.Transform.position));
+            return;
+        }
+
+        var nodePath = BattlefieldManager.instance.FindNodePath(_playerCommander.CommanderCard, node);
+        if (nodePath == null)
+        {
+            StartCoroutine(RotatePlayer(node.Transform.position));
+            return;
+        }
+
+        StartCoroutine(FollowNodePath(nodePath));
+    }
+
+    private IEnumerator FollowNodePath(List<GridNode> nodePath)
+    {
+        _isMoving = true;
+        var currentNode = _playerCommander.CommanderCard.Node;
+        if (nodePath[0] == currentNode) nodePath.RemoveAt(0);
+
+        while (nodePath.Count > 0)
+        {
+            if (_inCombat) break; //stop movement if combat starts
+
+            while (Vector3.Distance(_transform.position, nodePath[0].transform.position) > 0.1f)
+            {
+                _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
+                FaceTarget(nodePath[0].Transform.position);
+                yield return null;
+            }
+
+            nodePath[0].onNodeEntered?.Invoke(_playerCommander.CommanderCard);
+            currentNode = nodePath[0];
+            nodePath.RemoveAt(0);
+
+            yield return null;
+        }
+
+        _animator.SetFloat("speed", 0);
+        _playerCommander.CommanderCard.OnOccupyNode(currentNode);
+        _transform.position = currentNode.Transform.position;
+        _isMoving = false;
     }
 
     public static void SetDestination(Vector3 destination)
@@ -90,35 +211,10 @@ public class PlayerController : MonoBehaviour
         instance.SetPlayerDestination(destination);
     }
 
-    private void SetPlayerWaypoint(PathNode point)
-    {
-        if (_isMoving || _inCombat) return;
-        StartCoroutine(MoveToWaypoint(point));
-    }
-
     private void SetPlayerDestination(Vector3 destination)
     {
         if (_isMoving || _inCombat) return;
         StartCoroutine(MoveToPosition(destination));
-    }
-
-    private IEnumerator MoveToWaypoint(PathNode point)
-    {
-        _isMoving = true;
-
-        while (Vector3.Distance(transform.position, point.transform.position) > 0.15f)
-        {
-            _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
-            FaceTarget(point.transform.position);
-            yield return null;
-        }
-
-        transform.position = point.transform.position;
-        _isMoving = false; //set to false so SetPlayerWaypoint/SetPlayerDestination can be called
-        var nextPoint = point.OnWaypointReached(_currentWaypoint);
-        _currentWaypoint = point; //Set this after reaching the destination
-        if (nextPoint != null) SetPlayerWaypoint(nextPoint);
-        else _animator.SetFloat("speed", 0);
     }
 
     private IEnumerator MoveToPosition(Vector3 point)
@@ -136,12 +232,35 @@ public class PlayerController : MonoBehaviour
         _animator.SetFloat("speed", 0);
         _isMoving = false;
     }
-
-    private void FaceTarget(Vector3 pos) //update this to accept a Transform transform?
+    
+    /*public static void SetWaypoint(PathNode point)
     {
-        Vector3 direction = (pos - transform.position).normalized;
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * _rotationSpeed);
+        instance.SetPlayerWaypoint(point);
     }
+    
+    private void SetPlayerWaypoint(PathNode point)
+    {
+        if (_isMoving || _inCombat) return;
+        StartCoroutine(MoveToWaypoint(point));
+    }
+    
+    private IEnumerator MoveToWaypoint(PathNode point)
+    {
+        _isMoving = true;
+
+        while (Vector3.Distance(transform.position, point.transform.position) > 0.15f)
+        {
+            _animator.SetFloat("speed", 1, 0.1f, Time.deltaTime);
+            FaceTarget(point.transform.position);
+            yield return null;
+        }
+
+        transform.position = point.transform.position;
+        _isMoving = false; //set to false so SetPlayerWaypoint/SetPlayerDestination can be called
+        var nextPoint = point.OnWaypointReached(_currentWaypoint);
+        _currentWaypoint = point; //Set this after reaching the destination
+        if (nextPoint != null) SetPlayerWaypoint(nextPoint);
+        else _animator.SetFloat("speed", 0);
+    }*/
     #endregion
 }

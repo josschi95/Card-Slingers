@@ -2,15 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PathNode : MonoBehaviour, IInteractable
+public class PathNode : MonoBehaviour
 {
     [SerializeField] private Transform _transform;
     [SerializeField] private Direction _direction;
     [SerializeField] private DungeonRoom _room;
     [SerializeField] protected Transform _point;
-    [SerializeField] private ParticleSystem _hallwayFog;
-    [Space]
-    [SerializeField] protected PathNode _neighborNode;
+    protected PathNode _neighborNode;
 
     public Transform Transform
     {
@@ -39,37 +37,5 @@ public class PathNode : MonoBehaviour, IInteractable
 
             _neighborNode = value;
         }
-    }
-
-    public void OnLeftClick()
-    {
-        PlayerController.SetWaypoint(this);
-    }
-
-    public void OnRightClick()
-    {
-        //Do nothing
-    }
-
-    private void OnMouseEnter()
-    {
-        //Outline highlight
-    }
-
-    private void OnMouseExit()
-    {
-        //Remove highlight
-    }
-
-    public virtual PathNode OnWaypointReached(PathNode fromWaypoint)
-    {
-        _hallwayFog.Stop();
-
-        if (fromWaypoint == _neighborNode)
-        {
-            _room.OnRoomEntered(_direction);
-            return null;
-        }
-        else return _neighborNode;
     }
 }
