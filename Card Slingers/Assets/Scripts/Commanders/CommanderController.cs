@@ -312,6 +312,7 @@ public class CommanderController : MonoBehaviour
         var info = card.CardInfo as PermanentSO;
         var summon = Instantiate(info.Prefab, node.Transform.position, _defaultRotation);
         card.OnSummoned(summon, node);
+        card.SubscribeToEvents();
         //Move the card to its new position
         //StartCoroutine(MoveCardToField(card, node));
     }

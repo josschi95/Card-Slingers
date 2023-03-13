@@ -23,7 +23,7 @@ public class Card_Permanent : Card
 
     public int ThreatLevel => GetThreatLevel();
     //For ordering player cards based on their perceived threat based on power and position
-    [SerializeField] private float _modifiedThreatLevel;
+    private float _modifiedThreatLevel;
     public float ModifiedThreatLevel
     {
         get => _modifiedThreatLevel;
@@ -39,7 +39,7 @@ public class Card_Permanent : Card
         this.isPlayerCard = isPlayerCard;
     }
 
-    protected void SubscribeToEvents()
+    public void SubscribeToEvents()
     {
         if (isPlayerCard)
         {
@@ -71,7 +71,7 @@ public class Card_Permanent : Card
     {
         _summon = summon;
         OnOccupyNode(node); //Occupy the given node
-        SubscribeToEvents();
+        //SubscribeToEvents();
     }
 
     //Set current node and occupy it

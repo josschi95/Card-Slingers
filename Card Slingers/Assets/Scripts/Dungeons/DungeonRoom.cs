@@ -63,10 +63,8 @@ public class DungeonRoom : MonoBehaviour
         }
     }
 
-    public void OnConfirmLayout()
+    public void CloseEmptyEntrances()
     {
-        _collider.enabled = false;
-        //_fogOfWar.SetActive(true);
         for (int i = 0; i < connectedRooms.Length; i++)
         {
             _entranceParents[i].SetActive(connectedRooms[i] != null);
@@ -77,11 +75,17 @@ public class DungeonRoom : MonoBehaviour
                 Debug.LogError("Lost Reference to Neighor Node " + transform.position + ", " + _nodes[i].direction);
             }
         }
+    }
+
+    public void OnConfirmLayout()
+    {
+        //_collider.enabled = false;
+        //_fogOfWar.SetActive(true);
 
         var colls = GetComponentsInChildren<Collider>();
         for (int i = 0; i < colls.Length; i++)
         {
-            colls[i].enabled = false;
+            //colls[i].enabled = false;
         }
     }
 }

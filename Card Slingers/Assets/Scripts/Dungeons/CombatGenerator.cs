@@ -64,6 +64,7 @@ public class CombatGenerator : MonoBehaviour
             summon.FaceTargetCoroutine(entrances[Random.Range(0, entrances.Count)]);
 
             var controller = summon.gameObject.AddComponent<MonsterController>();
+            controller.Mask = DungeonManager.instance.Mask;
             controller.AssignCard(newMonster);
             monsterList.Add(controller);
         }
@@ -102,6 +103,7 @@ public class CombatGenerator : MonoBehaviour
             monsterSummon.FaceTargetCoroutine(entrances[Random.Range(0, entrances.Count)]);
 
             var controller = monsterSummon.gameObject.AddComponent<MonsterController>();
+            controller.Mask = DungeonManager.instance.Mask;
             controller.AssignCard(newMonster);
             monsterList.Add(controller);
         }

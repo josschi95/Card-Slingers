@@ -28,6 +28,8 @@ public class DungeonManager : MonoBehaviour
     [Space]
     [SerializeField] private DungeonPresets[] _dungeonPresets;
     [SerializeField] private List<EnemyGroupManager> _monsterGroups;
+    [SerializeField] private LayerMask _layerMask;
+    public LayerMask Mask => _layerMask;
     public DungeonGenerator Generator => _generator;
 
     public void CreateDungeon(Dungeons dungeon, int floor)

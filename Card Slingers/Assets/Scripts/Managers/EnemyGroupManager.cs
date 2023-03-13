@@ -58,7 +58,9 @@ public class EnemyGroupManager
         }
         for (int i = 0; i < _monsters.Count; i++)
         {
+            _monsters[i].IsInCombat = true;
             _monsters[i].Unit.Summon.FaceTargetCoroutine(PlayerController.instance.transform.position);
+            _monsters[i].Unit.SubscribeToEvents();
         }
 
         //Initiate combat through the Duel Manager

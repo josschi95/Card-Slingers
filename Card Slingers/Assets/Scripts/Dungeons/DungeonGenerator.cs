@@ -120,6 +120,11 @@ public class DungeonGenerator : MonoBehaviour
         }
 
         TryConnectLoops();
+
+        for (int i = 0; i < dungeonRooms.Count; i++)
+        {
+            dungeonRooms[i].CloseEmptyEntrances();
+        }
     }
 
     //connect waypoints and build out hallways
@@ -386,7 +391,7 @@ public class DungeonGenerator : MonoBehaviour
         }
         for (int i = 0; i < _corners.Count; i++)
         {
-            _corners[i].OnComplete();
+            //_corners[i].OnComplete();
         }
 
         miniMap.SetBounds(dungeonRooms.ToArray());

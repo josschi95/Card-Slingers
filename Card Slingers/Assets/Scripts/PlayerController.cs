@@ -26,6 +26,8 @@ public class PlayerController : MonoBehaviour
     private bool _isMoving;
     private bool _inCombat;
 
+    public Transform Transform => _transform;
+
     private IEnumerator Start()
     {
         _transform = transform;
@@ -157,7 +159,7 @@ public class PlayerController : MonoBehaviour
 
     private void SetNodeDestination(GridNode node)
     {
-        if (_inCombat) return;
+        if (_inCombat || _isMoving) return;
         if (node.Occupant != null || node.Obstacle != null)
         {
             StartCoroutine(RotatePlayer(node.Transform.position));

@@ -6,6 +6,7 @@ public class Summon : MonoBehaviour
 {
     [SerializeField] private Transform _transform;
     [SerializeField] private Transform _eyes;
+    [SerializeField] private float _rotationSpeed = 25f;
     private Card_Permanent _card;
     public Transform Transform => _transform;
     public Transform Eyes => _eyes;
@@ -17,6 +18,7 @@ public class Summon : MonoBehaviour
             _card = value;
         }
     }
+
 
     public void OnDamage()
     {
@@ -50,7 +52,7 @@ public class Summon : MonoBehaviour
     {
         Vector3 direction = (pos - transform.position).normalized;
         Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 25f);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * _rotationSpeed);
     }
     #endregion
 

@@ -432,6 +432,8 @@ public class BattlefieldManager : MonoBehaviour
 
     public int GetDistanceInNodes(GridNode fromNode, GridNode toNode)
     {
+        if (fromNode == null) throw new UnityException("FromNode is null!");
+        if (toNode == null) throw new UnityException("ToNode is null!");
         var vertical = Mathf.Abs(fromNode.gridZ - toNode.gridZ);
         var horizontal = Mathf.Abs(fromNode.gridX - toNode.gridX);
         return vertical + horizontal;

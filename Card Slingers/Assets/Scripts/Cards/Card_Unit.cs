@@ -379,7 +379,7 @@ public class Card_Unit : Card_Permanent
         }
 
         OnRemoveFromField();
-        Object.Destroy(Summon); //Destroy unit
+        Object.Destroy(Summon.gameObject); //Destroy unit
 
         //Invoke an event for the commander to listen to
         onRemovedFromField?.Invoke(this);

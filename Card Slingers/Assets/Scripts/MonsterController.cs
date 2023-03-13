@@ -5,6 +5,15 @@ using UnityEngine;
 
 public class MonsterController : MonoBehaviour
 {
+    [SerializeField] private LayerMask _layerMask;
+    public LayerMask Mask
+    {
+        get => _layerMask;
+        set
+        {
+            _layerMask = value;
+        }
+    }
     private EnemyGroupManager _groupManager;
     public EnemyGroupManager GroupManager
     {
@@ -28,6 +37,15 @@ public class MonsterController : MonoBehaviour
     private List<TargetPriority> priorityList;
     private bool _isInCombat;
 
+    public bool IsInCombat
+    {
+        get => _isInCombat;
+        set
+        {
+            _isInCombat = value;
+        }
+    }
+    private Transform _target;
     private float _sightDistance = 25f;
     private Transform _eyes;
     RaycastHit hit;
@@ -39,6 +57,12 @@ public class MonsterController : MonoBehaviour
         _eyes = GetComponent<Summon>().Eyes;
     }
 
+    private IEnumerator Start()
+    {
+        while (PlayerController.instance == null) yield return null;
+        yield return new WaitForSeconds(1f);
+        _target = PlayerController.instance.Transform;
+    }
 
     private void Update()
     {
@@ -49,9 +73,11 @@ public class MonsterController : MonoBehaviour
     {
         if (_isInCombat) return;
 
+        if (_target != null) _unit.Summon.FaceTarget(_target.position);
+
         ray = new Ray(_eyes.position, _eyes.forward);
         Debug.DrawRay(_eyes.position, _eyes.forward);
-        if (Physics.Raycast(ray, out hit, _sightDistance) && hit.collider != null)
+        if (Physics.Raycast(ray, out hit, _sightDistance, _layerMask, QueryTriggerInteraction.Collide) && hit.collider != null)
         {
             if (hit.collider.GetComponent<PlayerController>()) _groupManager.OnPlayerSpotted();
 
